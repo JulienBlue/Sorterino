@@ -1,0 +1,247 @@
+{
+  "rules": [
+
+    {
+      "category": "Arbeit",
+      "document_type": "Gehaltsabrechnung",
+      "keywords": [
+        "gehaltsabrechnung",
+        "lohnabrechnung",
+        "netto gage",
+        "auszahlung",
+        "steuerbrutto",
+        "abrechnungsmonat"
+      ]
+    },
+
+    {
+      "category": "Arbeit",
+      "document_type": "Arbeitsvertrag",
+      "keywords": [
+        "arbeitsvertrag",
+        "anstellungsvertrag",
+        "beginn des arbeitsverhältnisses",
+        "kündigungsfrist",
+        "vertragspartner"
+      ]
+    },
+
+    {
+      "category": "Arbeit",
+      "document_type": "Arbeitsbescheinigung",
+      "keywords": [
+        "arbeitsbescheinigung",
+        "beschäftigungsverhältnis",
+        "§ 312 sgb iii"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Lohnsteuerbescheinigung",
+      "keywords": [
+        "elektronische lohnsteuerbescheinigung",
+        "ausdruck der elektronischen lohnsteuerbescheinigung",
+        "bescheinigungszeitraum",
+        "identifikationsnummer",
+        "finanzamt, an das die lohnsteuer abgeführt wurde"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Steuerbescheid",
+      "keywords": [
+        "steuerbescheid",
+        "festsetzung der einkommensteuer",
+        "festsetzung der umsatzsteuer"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Bewilligungsbescheid",
+      "keywords": [
+        "bewilligungsbescheid",
+        "weiterbildungsgeld",
+        "förderung der beruflichen weiterbildung",
+        "sgb iii"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Umsatzsteuer",
+      "keywords": [
+        "umsatzsteuer-voranmeldung",
+        "umsatzsteuererklärung",
+        "ust-va"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Einkommensteuer",
+      "keywords": [
+        "einkommensteuererklärung",
+        "elster",
+        "einkommensteuerbescheid"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Fahrtkosten",
+      "keywords": [
+        "fahrkarte",
+        "deutsche bahn",
+        "verkehrs-betriebe",
+        "kvb",
+        "bvg",
+        "mvg",
+        "flug",
+        "lufthansa",
+        "taxi",
+        "uber"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Übernachtungskosten",
+      "keywords": [
+        "hotel",
+        "übernachtung",
+        "airbnb",
+        "booking.com"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Bewirtungskosten",
+      "keywords": [
+        "bewirtungskosten",
+        "restaurantrechnung",
+        "bewirtungsbeleg"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Kontoabschluss",
+      "keywords": [
+        "kontoabschluss",
+        "rechnungsabschluss",
+        "quartalsabschluss"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Kontoauszug",
+      "keywords": [
+        "kontoauszug",
+        "wertstellung",
+        "buchungstag",
+        "kontonummer",
+        "iban"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Kreditvertrag",
+      "keywords": [
+        "kreditvertrag",
+        "darlehensvertrag",
+        "zinsbindung",
+        "tilgungsplan"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Mahnung",
+      "keywords": [
+        "zahlungserinnerung",
+        "mahnung",
+        "fristsetzung"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Gutschrift",
+      "keywords": [
+        "gutschrift",
+        "erstattungsbetrag",
+        "credit note"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Rechnung",
+      "keywords": [
+        "rechnungsnummer",
+        "rechnung vom",
+        "gesamtbetrag",
+        "zahlung bis"
+      ]
+    },
+
+    {
+      "category": "Versicherungen",
+      "document_type": "Versicherungsschein",
+      "keywords": [
+        "versicherungsschein",
+        "versicherungspolice",
+        "policennummer"
+      ]
+    },
+
+    {
+      "category": "Versicherungen",
+      "document_type": "Beitragsrechnung",
+      "keywords": [
+        "versicherungsbeitrag",
+        "beitragsrechnung",
+        "jahresbeitrag"
+      ]
+    },
+
+    {
+      "category": "IT",
+      "document_type": "Cloud-Rechnung",
+      "keywords": [
+        "amazon web services",
+        "aws billing",
+        "azure invoice",
+        "google cloud billing"
+      ]
+    },
+
+    {
+      "category": "IT",
+      "document_type": "Lizenz",
+      "keywords": [
+        "software license agreement",
+        "product key",
+        "serial number",
+        "subscription agreement"
+      ]
+    },
+
+    {
+      "category": "IT",
+      "document_type": "Hosting & Domain",
+      "keywords": [
+        "webhosting vertrag",
+        "domainregistrierung",
+        "dns eintrag",
+        "hostingrechnung"
+      ]
+    }
+  ]
+}

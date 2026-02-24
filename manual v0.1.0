@@ -1,0 +1,113 @@
+# Sorterino – Kurzanleitung für Benutzer
+
+## 1. Einzige notwendige Konfiguration
+
+Damit Sorterino bei Ihnen funktioniert, muss lediglich die Datei `config.json` angepasst werden.
+
+### Schritt
+
+Öffnen Sie `config.json` und passen Sie folgenden Eintrag an:
+
+```json
+"user_path": "C:\\Pfad\\Zu\\Ihrem\\Dokumente-Ordner"
+```
+
+Tragen Sie hier den Ordner ein, in dem sich Ihre bestehenden Dokumentenordner befinden, zum Beispiel:
+
+```json
+"user_path": "C:\\Users\\MaxMustermann\\Dokumente"
+```
+
+Dieser Ordner ist die Basis Ihrer persönlichen Dokumentenstruktur.
+
+Weitere Einstellungen sind für den Grundbetrieb nicht erforderlich.
+
+---
+
+## 2. Was Sorterino automatisch erstellt
+
+Beim ersten Start erzeugt Sorterino im gewählten `user_path`:
+
+```
+Dokumente/
+└── Sorterino/
+    └── .runtime/
+```
+
+Zusätzlich werden folgende Verknüpfungen angelegt:
+
+- Input  
+- Manuelle Sortierung  
+- Backup  
+
+Diese verweisen intern auf die isolierte Laufzeitumgebung.
+
+Sie müssen diese Ordner nicht manuell anlegen.
+
+---
+
+## 3. Wie Dokumente verarbeitet werden
+
+Dokumente werden verarbeitet, wenn sie in den Ordner
+
+```
+Input
+```
+
+gelegt werden.
+
+### Ablauf
+
+- Dokument wird gesichert (Backup)  
+- OCR-Texterkennung erfolgt offline  
+- Klassifikation anhand definierter Regeln  
+- Kontext-Extraktion (z. B. Jahr, Zeitraum, Arbeitgeber, Bank)  
+- Kontextbasierte Umbenennung  
+- Ablage in bestehender Zielstruktur  
+
+Die Verarbeitung erfolgt vollständig lokal ohne Internetverbindung.
+
+---
+
+## 4. Unterstützte Dateiformate
+
+- PDF  
+- Bilddateien (z. B. PNG, JPG)  
+
+Nicht unterstützte Formate werden erkannt und separat behandelt.
+
+---
+
+## 5. Was bereits funktioniert
+
+- Vollständige Offline-OCR mit Tesseract  
+- Score-basierte Dokumentklassifikation  
+- Wortgrenzen-basierte Regelprüfung  
+- Kontext-Extraktion aus Dokumentinhalten  
+- Struktur-Routing anhand definierter Ordnerstruktur  
+- Backup vor jeder Verarbeitung  
+- Zentrales Logging  
+- Automatische Workspace-Initialisierung  
+- Isolierte Runtime-Umgebung  
+
+---
+
+## 6. Was derzeit noch nicht vorgesehen ist
+
+- Keine automatische Erstellung neuer Business-Ordner  
+- Keine KI-Modelle oder Machine Learning  
+- Keine Cloud-Anbindung  
+- Keine Serverarchitektur  
+- Keine Datenbank  
+- Keine grafische Benutzeroberfläche  
+- Keine automatische E-Mail-Anbindung  
+
+---
+
+## 7. Wichtiger Hinweis
+
+Sorterino verändert keine bestehenden Ordnerstrukturen.
+
+Dokumente werden ausschließlich in bereits definierte Zielordner verschoben.
+
+Die gesamte Verarbeitung erfolgt lokal und datenschutzkonform.

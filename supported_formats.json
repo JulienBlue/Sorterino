@@ -1,0 +1,12 @@
+{
+  "supported_extensions": [
+    ".pdf",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".tiff",
+    ".bmp"
+  ],
+
+  "unsupported_target": "Manuelle Sortierung/Nicht unterstützt"
+}
