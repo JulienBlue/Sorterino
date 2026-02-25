@@ -1,15 +1,12 @@
 {
-  "user_path": "C:\\Users\\JulienBlueHirte\\Desktop\\Dokumente",
+  "user_path": "C:\\Users\\JulienBlueHirte\\OneDrive - Hades IT GmbH\\Desktop\\Dokumente",
 
-  "sorterino_folder_name": "Sorterino",
-  "runtime_folder_name": ".runtime",
+  "runtime_folder_name": ".sorterino_runtime",
 
-  "input_folder_name": "Input",
-  "manual_sort_folder_name": "Manuelle Sortierung",
-  "backup_folder_name": "Backup",
-  "processing_folder_name": "In Verarbeitung",
+  "input_folder_name": "Sorterino - Input",
+  "manual_sort_folder_name": "Sorterino - Manuelle Sortierung",
 
-  "scan_interval_seconds": 5,
+  "scan_interval_seconds": 10,
 
   "poppler_path": "third_party/poppler-25.12.0/Library/bin",
   "tesseract_path": "third_party/Tesseract-OCR/tesseract.exe",

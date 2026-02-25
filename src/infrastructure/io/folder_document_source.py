@@ -1,5 +1,6 @@
 import os
 from typing import List
+from pathlib import Path
 
 from domain.document import Document
 from interfaces.document_source import DocumentSource
@@ -7,17 +8,20 @@ from interfaces.document_source import DocumentSource
 
 class FolderDocumentSource(DocumentSource):
 
-    def __init__(self, workspace_path: str):
-        self.workspace_path = workspace_path
-        self.input_path = os.path.join(workspace_path, "Input")
-        os.makedirs(self.input_path, exist_ok=True)
+    def __init__(self, root_path: Path):
+        # Erwartet z.B. config.incoming_root
+        self.root_path = Path(root_path)
+
+        # Falls Ordner noch nicht existiert (Safety)
+        self.root_path.mkdir(parents=True, exist_ok=True)
 
     def fetch_documents(self) -> List[Document]:
-        documents = []
 
-        for root, _, files in os.walk(self.input_path):
+        documents: List[Document] = []
 
-            # Hidden folders ignorieren
+        for root, _, files in os.walk(self.root_path):
+
+            # Hidden folders ignorieren (.sorterino_runtime intern etc.)
             if os.path.basename(root).startswith("."):
                 continue
 
@@ -38,6 +42,8 @@ class FolderDocumentSource(DocumentSource):
                 if not ext:
                     continue
 
-                documents.append(Document(source_path=full_path))
+                documents.append(
+                    Document(source_path=full_path)
+                )
 
         return documents

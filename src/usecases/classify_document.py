@@ -74,7 +74,7 @@ def extract_employer(text: str) -> Optional[str]:
 
 def extract_bescheinigungszeitraum(text: str):
     match = re.search(
-        r"(\d{2}\.\d{2}).{0,5}(\d{2}\.\d{2})",
+        r"(\d{2}\.\d{2})\.?\s*[-–]\s*(\d{2}\.\d{2})\.?",
         text
     )
 

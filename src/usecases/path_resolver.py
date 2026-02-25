@@ -4,14 +4,9 @@ import os
 class PathResolver:
 
     def __init__(self, structure: dict):
-        self.structure = structure
-        self.root = structure["root"]
-        self.tree = structure["structure"]
+        self.tree = structure
 
     def resolve(self, metadata) -> str:
-        """
-        Returns relative path inside Bürokratie (WITHOUT root)
-        """
 
         category = metadata.category
 
@@ -19,19 +14,16 @@ class PathResolver:
             return "99_Sonstiges"
 
         path_parts = [category]
-
         node = self.tree[category]
 
         resolved = self._walk(node, metadata)
 
         if resolved:
             path_parts.extend(resolved)
-        else:
-            path_parts.append("99_Sonstiges")
 
         return os.path.join(*path_parts)
 
-    def _walk(self, node: dict, metadata) -> list | None:
+    def _walk(self, node: dict, metadata):
 
         if not isinstance(node, dict):
             return None
@@ -47,17 +39,17 @@ class PathResolver:
 
         for key, value in node.items():
 
-            # Dynamic placeholders
+            # Dynamischer Platzhalter
             if key in dynamic_values:
-                next_node = value
-                sub_path = self._walk(next_node, metadata)
+                sub_path = self._walk(value, metadata)
                 return [dynamic_values[key]] + (sub_path or [])
 
-            # Match document type
+            # Dokumenttyp
             if key == metadata.document_type:
-                return [key]
+                sub_path = self._walk(value, metadata)
+                return [key] + (sub_path or [])
 
-            # Continue recursion
+            # Rekursiv weiter
             if isinstance(value, dict):
                 sub_path = self._walk(value, metadata)
                 if sub_path:

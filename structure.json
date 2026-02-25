@@ -1,149 +1,145 @@
 {
-  "root": "Bürokratie",
-  "structure": {
+  "Arbeit": {
+    "Arbeitgeber": {
+      "{Firma}": {
 
-    "Arbeit": {
-      "Arbeitgeber": {
-        "{Firma}": {
-
-          "00_Stammdaten": {
-            "Personalbogen": {},
-            "Steuerdaten": {},
-            "Sozialversicherungsdaten": {}
-          },
-
-          "01_Verträge": {
-            "Arbeitsvertrag": {},
-            "Zusatzvereinbarungen": {},
-            "Änderungsverträge": {},
-            "Kündigung": {},
-            "Aufhebungsvertrag": {}
-          },
-
-          "02_Lohn": {
-            "{Jahr}": {
-              "Gehaltsabrechnung": {},
-              "Bonus_und_Prämien": {},
-              "Einmalzahlungen": {}
-            }
-          },
-
-          "03_Steuer": {
-            "{Jahr}": {
-              "Lohnsteuerbescheinigung": {},
-              "ELStAM": {}
-            }
-          },
-
-          "04_Sozialversicherung": {
-            "{Jahr}": {
-              "SV_Meldungen": {},
-              "Krankenkasse": {},
-              "Rentenversicherung": {},
-              "Arbeitslosenversicherung": {}
-            }
-          },
-
-          "99_Sonstiges": {}
-        }
-      }
-    },
-
-    "Steuer": {
-      "{Jahr}": {
-
-        "01_Bescheide": {
-          "Steuerbescheid": {},
-          "Bewilligungsbescheid": {},
-          "Einkommensteuer": {},
-          "Umsatzsteuer": {},
-          "Gewerbesteuer": {},
-          "Kirchensteuer": {}
+        "00_Stammdaten": {
+          "Personalbogen": {},
+          "Steuerdaten": {},
+          "Sozialversicherungsdaten": {}
         },
 
-        "03_Rechnungen": {
-          "Werbungskosten": {
-            "Fahrtkosten": {},
-            "Fortbildung": {},
-            "Arbeitsmittel": {},
-            "Homeoffice": {},
-            "Fachliteratur": {}
-          },
-          "Versicherungen": {},
-          "Spenden": {},
-          "Sonderausgaben": {},
-          "Aussergewoehnliche_Belastungen": {}
+        "01_Verträge": {
+          "Arbeitsvertrag": {},
+          "Zusatzvereinbarungen": {},
+          "Änderungsverträge": {},
+          "Kündigung": {},
+          "Aufhebungsvertrag": {}
         },
 
-        "04_Kontoauszuege": {},
-        "99_Sonstiges": {}
-      }
-    },
-
-    "Versicherungen": {
-      "{Gesellschaft}": {
-        "01_Vertraege": {},
-        "02_Rechnungen": { "{Jahr}": {} },
-        "03_Schaeden": {},
-        "04_Leistungsabrechnungen": {},
-        "99_Sonstiges": {}
-      }
-    },
-
-    "Finanzen": {
-
-      "Banken": {
-        "{Bank}": {
-          "Girokonto": {
-            "{Jahr}": {
-              "Kontoauszug": {},
-              "Kontoabschluss": {}
-            }
-          },
-          "Kreditkarte": { "{Jahr}": {} },
-          "Kredite": {},
-          "Darlehen": {},
-          "Schriftverkehr": {}
-        }
-      },
-
-      "Sparprodukte": {
-        "ETF_und_Depot": {
-          "{Depotbank}": {
-            "Kaufabrechnungen": {},
-            "Verkaufsabrechnungen": {},
-            "Dividenden": {},
-            "Jahressteuerbescheinigung": {}
+        "02_Lohn": {
+          "{Jahr}": {
+            "Gehaltsabrechnung": {},
+            "Bonus_und_Prämien": {},
+            "Einmalzahlungen": {}
           }
-        }
+        },
+
+        "03_Steuer": {
+          "{Jahr}": {
+            "Lohnsteuerbescheinigung": {},
+            "ELStAM": {}
+          }
+        },
+
+        "04_Sozialversicherung": {
+          "{Jahr}": {
+            "SV_Meldungen": {},
+            "Krankenkasse": {},
+            "Rentenversicherung": {},
+            "Arbeitslosenversicherung": {}
+          }
+        },
+
+        "99_Sonstiges": {}
+      }
+    }
+  },
+
+  "Steuer": {
+    "{Jahr}": {
+
+      "01_Bescheide": {
+        "Steuerbescheid": {},
+        "Bewilligungsbescheid": {},
+        "Einkommensteuer": {},
+        "Umsatzsteuer": {},
+        "Gewerbesteuer": {},
+        "Kirchensteuer": {}
       },
 
+      "03_Rechnungen": {
+        "Werbungskosten": {
+          "Fahrtkosten": {},
+          "Fortbildung": {},
+          "Arbeitsmittel": {},
+          "Homeoffice": {},
+          "Fachliteratur": {}
+        },
+        "Versicherungen": {},
+        "Spenden": {},
+        "Sonderausgaben": {},
+        "Aussergewoehnliche_Belastungen": {}
+      },
+
+      "04_Kontoauszuege": {},
       "99_Sonstiges": {}
+    }
+  },
+
+  "Versicherungen": {
+    "{Gesellschaft}": {
+      "01_Vertraege": {},
+      "02_Rechnungen": { "{Jahr}": {} },
+      "03_Schaeden": {},
+      "04_Leistungsabrechnungen": {},
+      "99_Sonstiges": {}
+    }
+  },
+
+  "Finanzen": {
+
+    "Banken": {
+      "{Bank}": {
+        "Girokonto": {
+          "{Jahr}": {
+            "Kontoauszug": {},
+            "Kontoabschluss": {}
+          }
+        },
+        "Kreditkarte": { "{Jahr}": {} },
+        "Kredite": {},
+        "Darlehen": {},
+        "Schriftverkehr": {}
+      }
     },
 
-    "IT": {
-      "Lizenzen": {},
-      "Rechnungen": {},
-      "Hosting": {},
-      "Domains": {},
-      "Vertraege": {},
-      "Backup": {},
-      "Zertifikate": {},
-      "Zugangsdaten": {}
-    },
-
-    "Dokumente": {
-      "Identitaet": {},
-      "Urkunden": {},
-      "99_Sonstiges": {}
-    },
-
-    "Eigentum": {
-      "Fahrzeuge": {},
-      "Immobilie": {},
-      "99_Sonstiges": {}
+    "Sparprodukte": {
+      "ETF_und_Depot": {
+        "{Depotbank}": {
+          "Kaufabrechnungen": {},
+          "Verkaufsabrechnungen": {},
+          "Dividenden": {},
+          "Jahressteuerbescheinigung": {}
+        }
+      }
     },
 
     "99_Sonstiges": {}
-  }
+  },
+
+  "IT": {
+    "Lizenzen": {},
+    "Rechnungen": {},
+    "Hosting": {},
+    "Domains": {},
+    "Vertraege": {},
+    "Backup": {},
+    "Zertifikate": {},
+    "Zugangsdaten": {}
+  },
+
+  "Dokumente": {
+    "Identitaet": {},
+    "Urkunden": {},
+    "99_Sonstiges": {}
+  },
+
+  "Eigentum": {
+    "Fahrzeuge": {},
+    "Immobilie": {},
+    "99_Sonstiges": {}
+  },
+
+  "99_Sonstiges": {}
 }

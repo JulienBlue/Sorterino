@@ -16,7 +16,8 @@ class DocumentPipeline:
         rules,
         supported_extensions,
         unsupported_target,
-        structure
+        structure,
+        manual_sort_target
     ):
         self.sources = sources
         self.ocr_service = ocr_service
@@ -53,8 +54,26 @@ class DocumentPipeline:
         print("🟢 Pipeline beendet")
 
     # --------------------------------------------------
-    # PROCESS DOCUMENT
+    # Helper
     # --------------------------------------------------
+
+    def _move_to_manual_sort(self, document):
+
+        original_name = os.path.basename(document.source_path)
+
+        final_path = self.storage_service.store(
+            document.source_path,
+            self.manual_sort_target,
+            original_name
+        )
+
+        print(f"   📂 Verschoben nach Manual Sort: {final_path}")
+
+        self.logger.log(
+            f"Document {document.id} moved to manual sort."
+        )
+
+
 
     def _process_document(self, document):
 
@@ -84,10 +103,10 @@ class DocumentPipeline:
         text = self.ocr_service.extract_text(document.source_path)
         print("   ✅ OCR fertig")
 
-        # 🔥 WICHTIG: Kein Crash bei leerem Text
         if not text or not text.strip():
-            print("   ⚠️ Kein OCR-Text gefunden → Manuelle Sortierung")
-            text = ""
+            print("   ⚠️ Kein OCR-Text → Manuelle Sortierung")
+            self._move_to_manual_sort(document)
+            return
 
         document.mark_analyzed(text)
 
@@ -97,8 +116,13 @@ class DocumentPipeline:
 
         print("   🟡 Klassifikation starte...")
         classification = classify_document(document, self.rules)
-        print(f"   ✅ Kategorie: {classification.category}")
 
+        if not classification or not classification.category:
+            print("   ⚠️ Keine Kategorie erkannt → Manuelle Sortierung")
+            self._move_to_manual_sort(document)
+            return
+
+        print(f"   ✅ Kategorie: {classification.category}")
         document.mark_classified(classification)
 
         # ------------------------------------------
@@ -117,6 +141,12 @@ class DocumentPipeline:
         target_directory = self.path_resolver.resolve(
             document.metadata
         )
+
+        if not target_directory:
+            print("   ⚠️ Kein Zielordner ermittelbar → Manuelle Sortierung")
+            self._move_to_manual_sort(document)
+            return
+
         print(f"   ✅ Zielordner: {target_directory}")
 
         # ------------------------------------------

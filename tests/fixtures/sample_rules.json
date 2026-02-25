@@ -1,0 +1,41 @@
+[
+  {
+    "category": "Steuer",
+    "document_type": "Lohnsteuerbescheinigung",
+    "keywords": [
+      "lohnsteuerbescheinigung",
+      "einkommensteuer",
+      "steueridentifikationsnummer"
+    ]
+  },
+  {
+    "category": "Finanzen",
+    "document_type": "Kontoauszug",
+    "keywords": [
+      "kontoauszug",
+      "kontonummer",
+      "iban",
+      "saldo"
+    ]
+  },
+  {
+    "category": "Finanzen",
+    "document_type": "Rechnung",
+    "keywords": [
+      "rechnung",
+      "rechnungsnummer",
+      "betrag",
+      "zahlbar bis"
+    ]
+  },
+  {
+    "category": "Versicherungen",
+    "document_type": "Versicherungsnachweis",
+    "keywords": [
+      "versicherung",
+      "versicherungsschein",
+      "policennummer",
+      "beitrag"
+    ]
+  }
+]

@@ -1,50 +1,65 @@
+from pathlib import Path
+import subprocess
+
+
 def initialize_workspace(config):
 
     # ----------------------------------------
-    # 1. Sorterino Root erstellen
-    # ----------------------------------------
-    config.sorterino_root.mkdir(parents=True, exist_ok=True)
-
-    # ----------------------------------------
-    # 2. Runtime Root erstellen
+    # Runtime Root erstellen
     # ----------------------------------------
     config.runtime_root.mkdir(parents=True, exist_ok=True)
 
+    # Runtime verstecken (Windows)
+    try:
+        subprocess.run(
+            ["attrib", "+h", str(config.runtime_root)],
+            shell=True
+        )
+    except Exception:
+        pass
+
     # ----------------------------------------
-    # 3. Runtime-Unterordner
+    # Runtime-Unterordner erstellen
     # ----------------------------------------
     runtime_folders = [
         config.incoming_root,
-        config.manual_incoming_root,
-        config.mail_drop_root,
-        config.temp_root,
-        config.attachments_root,
+        config.manual_sort_root,
         config.processed_root,
         config.error_root,
         config.logs_root,
+        config.temp_root,
+        config.attachments_root,
     ]
 
     for folder in runtime_folders:
         folder.mkdir(parents=True, exist_ok=True)
 
     # ----------------------------------------
-    # 4. Junctions im user_path
+    # Sichtbare Junctions im user_path
     # ----------------------------------------
-
-    # Input → manual incoming
     create_junction(
-        config.user_path / config.input_folder_name,
-        config.manual_incoming_root
+        config.user_path / config.visible_input_name,
+        config.incoming_root
     )
 
-    # Manuelle Sortierung → manual incoming
     create_junction(
-        config.user_path / config.manual_sort_folder_name,
-        config.manual_incoming_root
+        config.user_path / config.visible_manual_sort_name,
+        config.manual_sort_root
     )
 
-    # Backup → processed root
-    create_junction(
-        config.user_path / config.backup_folder_name,
-        config.processed_root
+
+def create_junction(link_path: Path, target_path: Path):
+
+    if link_path.exists():
+        return
+
+    subprocess.run(
+        [
+            "cmd", "/c", "mklink", "/J",
+            str(link_path),
+            str(target_path)
+        ],
+        check=True
     )
+
+    print(f"Verbindung erstellt für {link_path} <<===>> {target_path}")
