@@ -222,10 +222,6 @@ def extract_supplier(text: str, company_profile: Dict[str, Any]) -> Optional[str
 # CUSTOMER
 # --------------------------------------------------
 
-import re
-from typing import Dict, Any, Optional
-
-
 def extract_customer(text: str, company_profile: Dict[str, Any]) -> Optional[str]:
 
     own_company = re.sub(r"\W+", "", company_profile.get("name", "").lower())
@@ -296,7 +292,7 @@ def classify_document(
             contexts={}
         )
         document.set_metadata(metadata)
-        return Classification(None, 0.0)
+        return Classification("MANUELL", 0.0)
 
     invoice_number = extract_invoice_number(text)
     invoice_date = extract_invoice_date(text)
@@ -379,4 +375,4 @@ def classify_document(
         contexts=contexts
    )
     document.set_metadata(metadata)
-    return Classification("Manuell", 0.0)
+    return Classification("MANUELL", 0.0)

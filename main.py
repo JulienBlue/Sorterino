@@ -25,9 +25,6 @@ from infrastructure.storage.filesystem_storage import FilesystemStorage
 
 from usecases.document_pipeline import DocumentPipeline
 
-logger = FileLogger(Path("logs"))
-
-
 def main() -> None:
 
     config_path = BASE_DIR / "config.json"
@@ -85,4 +82,4 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        logger.log("🔵 Ausführung manuell beendet.")
+        print("🔵 Ausführung manuell beendet.")

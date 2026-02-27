@@ -46,6 +46,20 @@ def initialize_workspace(config):
         config.manual_sort_root
     )
 
+    # ----------------------------------------
+    # MailDrop BAS dynamisch generieren
+    # ----------------------------------------
+    generate_maildrop_bas(config)
+
+    # ----------------------------------------
+    # Rückgabe für GUI (MailDrop Info)
+    # ----------------------------------------
+    return {
+        "runtime_root": config.runtime_root,
+        "incoming_root": config.incoming_root,
+        "maildrop_path": config.incoming_root
+    }
+
 
 def create_junction(link_path: Path, target_path: Path):
 
@@ -60,3 +74,38 @@ def create_junction(link_path: Path, target_path: Path):
         ],
         check=True
     )
+
+
+def generate_maildrop_bas(config):
+
+    template_path = (
+        config.project_root
+        / "src"
+        / "infrastructure"
+        / "maildrop"
+        / "maildrop_template.bas"
+    )
+
+    output_dir = config.project_root / "docs" / "maildrop"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    output_path = output_dir / "sorterino_maildrop.bas"
+
+    # Falls kein Template existiert → nichts tun
+    if not template_path.exists():
+        return
+
+    with open(template_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    # Incoming-Pfad korrekt für VBA escapen
+    incoming_path = str(config.incoming_root)
+    escaped_path = incoming_path.replace("\\", "\\\\") + "\\\\"
+
+    content = content.replace(
+        "{{INCOMING_PATH}}",
+        escaped_path
+    )
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(content)

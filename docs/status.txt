@@ -112,42 +112,8 @@ IHK-konforme Systemabgrenzung
 📘 Ziel im neuen Chat
 
 Im neuen Chat sollen wir:
-
 Outlook MailDrop sauber definieren
-
 Eine klare Schritt-für-Schritt-Anleitung für Nutzer formulieren
-
 README oder Anwenderdokumentation erweitern
-
 Optional: Screenshots strukturieren (Platzhalter)
-
 Text IHK-tauglich formulieren
-
-🔎 Offene Designfrage für v0.3.0
-
-Im neuen Chat klären wir:
-
-Möchtest du:
-
-A) Nur Mail → Input
-B) Mail → separater Unterordner in incoming
-C) Mail-Metadaten später berücksichtigen
-
-Aktuell tendierst du zu:
-A – Minimaler MVP MailDrop
-
-🚀 Startpunkt für neuen Chat
-
-Im neuen Chat bitte:
-
-„Wir implementieren v0.3.0 – MailDrop über Outlook-Regel. Ich möchte die Nutzeranleitung formulieren.“
-
-Dann bauen wir:
-
-technische Anleitung
-
-Anwenderleitfaden
-
-saubere Dokumentationserweiterung
-
-IHK-konforme Beschreibung

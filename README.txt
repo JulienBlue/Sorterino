@@ -1,41 +1,63 @@
-🧠 Sorterino v0.2.5
+# Sorterino v0.3.0
 
-Automatisierte OCR-Dokumenten-Engine mit strukturierter Ablage, intelligenter Rollen-Erkennung und modularer Architektur.
+Automatisierte OCR-Dokumenten-Engine mit strukturierter Ablage, intelligenter Rollen-Erkennung, modularer Architektur und optionalem MailDrop-Workflow.
 
-🚀 Schnellstart
-Voraussetzungen
+---
 
-Python 3.10+
+## 🚀 Schnellstart
 
-pip
+### Voraussetzungen
 
-Windows (für automatische Junction-Erstellung)
+- Python 3.10+
+- pip
+- Windows (für automatische Junction-Erstellung)
+- Tesseract und Poppler sind im Ordner `third_party/` enthalten und werden automatisch eingebunden.
+- Optional für MailDrop: Microsoft Outlook (Classic)
 
-Tesseract und Poppler sind im Ordner third_party/ enthalten und werden automatisch eingebunden.
+---
 
-1️⃣ Konfiguration
+## 1️⃣ Konfiguration
 
 Öffne:
 
-config.json
+`config.json`
 
 Setze dein Arbeitsverzeichnis:
 
+```json
 "user_path": "C:\\Users\\DEINNAME\\Dokumente"
+```
 
 Sorterino erstellt dort automatisch eine interne Runtime-Struktur.
 
-2️⃣ Virtuelle Umgebung
+---
+
+## 2️⃣ Virtuelle Umgebung
+
+```bash
 python -m venv .venv
 .venv\Scripts\activate
-3️⃣ Abhängigkeiten installieren
+```
+
+## 3️⃣ Abhängigkeiten installieren
+
+```bash
 pip install -r requirements.txt
-4️⃣ Start
+```
+
+## 4️⃣ Start
+
+```bash
 python main.py
-📂 Arbeitsweise
+```
+
+---
+
+## 📂 Arbeitsweise
 
 Beim ersten Start wird im Arbeitsverzeichnis erzeugt:
 
+```
 .sorterino_runtime/
     incoming/
     processed/
@@ -43,97 +65,138 @@ Beim ersten Start wird im Arbeitsverzeichnis erzeugt:
     error/
     logs/
     temp/
+```
 
 Zusätzlich werden sichtbare Verknüpfungen erstellt:
 
-Sorterino - Input
+- Sorterino - Input
+- Sorterino - Manuelle Sortierung
 
-Sorterino - Manuelle Sortierung
+---
 
-🔄 Verarbeitungsablauf
+## 🔄 Verarbeitungsablauf
 
 Sorterino führt folgende Schritte automatisch aus:
 
-OCR (PDF & Bildformate)
-
-Textanalyse & Rollen-Erkennung (Eingang / Ausgang)
-
-Metadaten-Extraktion
-
-Rechnungsnummer
-
-Rechnungsdatum
-
-Betrag
-
-Geschäftspartner
-
-Regelbasierte Klassifikation
-
-Kontextbasierte Dateibenennung
-
-Strukturierte Archivierung
-
-Duplikatschutz bei Dateinamen
-
-Tagesbasiertes Logging
+- OCR (PDF und Bildformate)
+- Textanalyse und Rollen-Erkennung (Eingang / Ausgang)
+- Metadaten-Extraktion
+  - Rechnungsnummer
+  - Rechnungsdatum
+  - Betrag
+  - Geschäftspartner
+- Regelbasierte Klassifikation
+- Kontextbasierte Dateibenennung
+- Strukturierte Archivierung
+- Duplikatschutz bei Dateinamen
+- Tagesbasiertes Logging
 
 Unklare Dokumente werden automatisch verschoben nach:
 
-Sorterino - Manuelle Sortierung
+**Sorterino - Manuelle Sortierung**
 
-🧠 Architektur
+---
 
-Projektstruktur nach Clean-Architecture-Prinzip:
+## 📧 MailDrop (ab v0.3.0 – optional)
 
-Domain
+Sorterino kann E-Mail-Anhänge automatisch verarbeiten. Die E-Mail-Integration erfolgt bewusst nicht über eine API, sondern über eine clientseitige, digital signierte Outlook-VBA-Komponente.
 
-Usecases
+### Funktionsweise
 
-Infrastructure
+Outlook speichert bei Eingang einer E-Mail mit Anlage die Anhänge automatisch in:
 
-Interfaces
+```
+.sorterino_runtime/incoming
+```
 
-Konfiguration erfolgt vollständig über JSON:
+Sorterino verarbeitet diese Dateien wie regulär abgelegte Dokumente.
 
-config.json
+---
 
-rules.json
+## 🔐 Sicherheitskonzept
 
-structure.json
+- Keine globale Makrofreigabe erforderlich
+- Nur digital signierte Makros werden ausgeführt
+- Keine IMAP-Anbindung
+- Keine Microsoft Graph API
+- Keine Cloud-Abhängigkeit
+- Klare Systemtrennung zwischen Outlook und Sorterino
 
-supported_formats.json
+---
 
-📄 Logging
+## 📦 Bereitgestellte Dateien (docs/maildrop)
+
+- `sorterino_maildrop.bas`
+- `sorterino_maildrop_certificate.cer`
+
+---
+
+## 🧑‍💼 Einrichtung für Nutzer (z. B. Tanja)
+
+1️⃣ **Zertifikat installieren**
+   - `.cer` Datei öffnen
+   - In „Vertrauenswürdige Herausgeber“ installieren
+
+2️⃣ **Makroeinstellung prüfen**
+   - Outlook → Trust Center → Makroeinstellungen
+   - Nur digital signierte Makros, alle anderen deaktivieren
+
+3️⃣ **VBA-Code importieren**
+   - Alt + F11
+   - Datei importieren: `sorterino_maildrop.bas`
+   - Digitale Signatur auswählen
+   - Speichern
+   - Outlook neu starten
+
+---
+
+## 🧠 Architektur
+
+- Projektstruktur nach Clean-Architecture-Prinzip:
+  - Domain
+  - Usecases
+  - Infrastructure
+  - Interfaces
+- MailDrop ist eine optionale, externe Erweiterung und kein Bestandteil der Kernlogik.
+- Konfiguration erfolgt vollständig über JSON:
+  - `config.json`
+  - `rules.json`
+  - `structure.json`
+  - `supported_formats.json`
+
+---
+
+## 📄 Logging
 
 Logs werden automatisch erzeugt unter:
 
+```
 .sorterino_runtime/logs/
+```
 
 Dateiname:
 
+```
 sorterino_logs_YYYY-MM-DD.log
+```
 
-📦 Release v0.2.5
+---
 
-Stabilisierungs- und Architektur-Release:
+## 📦 Release v0.3.0
 
-Runtime-Isolation (.sorterino_runtime)
+Erweiterung um optionalen MailDrop-Workflow:
 
-Interface-basierte Services
+- Clientseitige Ereignisautomatisierung via Outlook VBA
+- Digitale Signierung der Makro-Komponente
+- Keine API-Integration
+- Keine Systemkopplung
+- Saubere Sicherheitsarchitektur
+- Beibehaltung der Clean Architecture
 
-Integriertes Logging-System
+---
 
-Rollen-Erkennung (Eingangs- / Ausgangsrechnung)
+## 🎯 Status
 
-Kontextbasierte Dateibenennung
+**Release v0.3.0 – MailDrop Extension**
 
-Duplikatschutz im Storage
-
-Modular erweiterbare Pipeline
-
-Struktur-Resolver für dynamische Ordnerpfade
-
-🎯 Status
-
-Release v0.3.0 – Clean Baseline - markiert einen stabilen Architekturstand mit klarer Trennung von Domain, Usecases und Infrastructure.
+Erweitert den stabilen Clean-Baseline-Stand um eine optionale, sicher signierte Client-Automatisierung zur E-Mail-Anlagenverarbeitung.
