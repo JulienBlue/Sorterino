@@ -1,116 +1,97 @@
 param (
-    [string]$Version = "0.1.0"
+    [string]$Version = ""
 )
 
 Write-Host "Script started"
 
-# -------------------------------------------------
 # Projekt-Root bestimmen
-# -------------------------------------------------
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir   = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Resolve-Path (Join-Path $ScriptDir "..")
 
-# -------------------------------------------------
-# Ignorierte Oberordner definieren
-# -------------------------------------------------
+# Ignorierte Root-Ordner
 $IgnoredFolders = @(
-    ".git",
-    ".venv",
-    "third_party",
-    "__pycache__",
     ".pytest_cache",
-    ".sorterino_runtime"
+    ".venv",
+    ".vscode",
+    "backups",
+    "docs",
+    "logs",
+    "third_party",
+    "__pycache__"
 )
 
-# -------------------------------------------------
-# Ignorierte Inhalte sammeln
-# -------------------------------------------------
-$IgnoredDetails = @{}
+# Nur existierende Root-Ordner berücksichtigen
+$IgnoredFolders = $IgnoredFolders | Where-Object {
+    Test-Path (Join-Path $ProjectRoot $_)
+}
+
+# Terminal-Ausgabe
+Write-Host "`nIgnorierte Root-Ordner:`n"
 
 foreach ($folder in $IgnoredFolders) {
 
-    $fullPath = Join-Path $ProjectRoot $folder
-
-    if (Test-Path $fullPath) {
-
-        $subItems = Get-ChildItem $fullPath -Directory | Select-Object -ExpandProperty Name
-        $IgnoredDetails[$folder] = $subItems
-    }
-}
-
-# -------------------------------------------------
-# Ausgabe im Terminal
-# -------------------------------------------------
-Write-Host ""
-Write-Host "Ignorierte Oberordner und deren erste Ebene:"
-Write-Host ""
-
-foreach ($folder in $IgnoredDetails.Keys) {
-
     Write-Host " - $folder"
 
-    foreach ($sub in $IgnoredDetails[$folder]) {
-        Write-Host "    -> $sub"
-    }
+    $subItems = Get-ChildItem (Join-Path $ProjectRoot $folder) -Directory -ErrorAction SilentlyContinue
 
-    if (-not $IgnoredDetails[$folder]) {
+    if ($subItems) {
+        $subItems | ForEach-Object {
+            Write-Host "    -> $($_.Name)"
+        }
+    }
+    else {
         Write-Host "    (leer oder keine Unterordner)"
     }
 
     Write-Host ""
 }
 
-# -------------------------------------------------
-# Output-Datei in docs speichern
-# -------------------------------------------------
-$OutputFile = Join-Path $ScriptDir "Projektstand_$Version.txt"
+# Output-Datei
+$OutputFile = Join-Path $ScriptDir "Produktstände/Projektstand_$Version.txt"
+if (Test-Path $OutputFile) { Remove-Item $OutputFile }
 
-if (Test-Path $OutputFile) {
-    Remove-Item $OutputFile
-}
+# Ignore-Regex robuster
+$IgnorePattern = ($IgnoredFolders | ForEach-Object { "(\\|^)$_(\\|$)" }) -join "|"
 
-# -------------------------------------------------
-# Ignorier-Regex bauen
-# -------------------------------------------------
-$IgnorePattern = ($IgnoredFolders | ForEach-Object { "\\$_\\" }) -join "|"
+# Dateiinhalt sammeln
+$Content = @()
 
-# -------------------------------------------------
-# Projekt scannen
-# -------------------------------------------------
-Get-ChildItem $ProjectRoot -Recurse -File `
-| Where-Object {
+Get-ChildItem $ProjectRoot -Recurse -File |
+Where-Object {
     $_.FullName -notmatch $IgnorePattern -and
     $_.Extension -match "\.(py|json|md|txt)$"
-} `
-| Sort-Object FullName `
-| ForEach-Object {
+} |
+Sort-Object FullName |
+ForEach-Object {
 
-    Add-Content $OutputFile "===== $($_.FullName) ====="
-    Add-Content $OutputFile ""
-    Get-Content $_.FullName | Add-Content $OutputFile
-    Add-Content $OutputFile "`n"
+    $Content += "===== $($_.FullName) ====="
+    $Content += ""
+    $Content += Get-Content $_.FullName
+    $Content += "`n"
 }
 
-# -------------------------------------------------
-# Ignorierte Ordner auch ins File schreiben
-# -------------------------------------------------
-Add-Content $OutputFile "`n"
-Add-Content $OutputFile "===== Ignorierte Oberordner ====="
-Add-Content $OutputFile ""
+# Ignorierte Ordner ins File schreiben
+$Content += "`n===== Ignorierte Root-Ordner =====`n"
 
-foreach ($folder in $IgnoredDetails.Keys) {
+foreach ($folder in $IgnoredFolders) {
 
-    Add-Content $OutputFile $folder
+    $Content += $folder
 
-    foreach ($sub in $IgnoredDetails[$folder]) {
-        Add-Content $OutputFile "  - $sub"
+    $subItems = Get-ChildItem (Join-Path $ProjectRoot $folder) -Directory -ErrorAction SilentlyContinue
+
+    if ($subItems) {
+        $subItems | ForEach-Object {
+            $Content += "  - $($_.Name)"
+        }
+    }
+    else {
+        $Content += "  (leer oder keine Unterordner)"
     }
 
-    if (-not $IgnoredDetails[$folder]) {
-        Add-Content $OutputFile "  (leer oder keine Unterordner)"
-    }
-
-    Add-Content $OutputFile ""
+    $Content += ""
 }
 
-Write-Host "Projektstand wurde gespeichert unter: $OutputFile"
+# Einmaliges Schreiben (sauberer)
+$Content | Set-Content $OutputFile -Encoding UTF8
+
+Write-Host "Projektstand gespeichert unter: $OutputFile"

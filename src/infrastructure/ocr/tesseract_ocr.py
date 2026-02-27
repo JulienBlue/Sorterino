@@ -13,7 +13,14 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class TesseractOCR:
 
-    def __init__(self, poppler_path: str, tesseract_path: str):
+    def __init__(
+            self, 
+            poppler_path: str, 
+            tesseract_path: str,
+            logger: LoggerService
+        ):
+
+        self.logger = logger
 
         # ----------------------------------------
         # Tesseract setzen (aus Config)
@@ -51,7 +58,7 @@ class TesseractOCR:
     def extract_text(self, file_path: str) -> str:
 
         if not os.path.exists(file_path):
-            print(f"OCR Fehler: Datei existiert nicht: {file_path}")
+            self.logger.error(f"OCR Fehler: Datei existiert nicht: {file_path}")
             return ""
 
         try:
@@ -61,13 +68,13 @@ class TesseractOCR:
                 text = self._extract_from_image(file_path)
 
             if not text or not text.strip():
-                print("   ⚠️ Kein OCR-Text gefunden")
+                self.logger.warning("⚠️ Kein OCR-Text gefunden")
                 return ""
 
             return text
 
         except Exception as e:
-            print(f"OCR Fehler bei {file_path}: {e}")
+            self.logger.error(f"OCR Fehler bei {file_path}: {e}")
             return ""
 
     # =====================================================
@@ -85,7 +92,7 @@ class TesseractOCR:
                 dpi=300
             )
         except Exception as e:
-            print(f"PDF-Konvertierungsfehler bei {file_path}: {e}")
+            self.logger.error(f"PDF-Konvertierungsfehler bei {file_path}: {e}")
             return ""
 
         for index, img in enumerate(images):
@@ -101,7 +108,7 @@ class TesseractOCR:
                     text_output.append(text)
 
             except Exception as e:
-                print(
+                self.logger.warning(
                     f"OCR Seitenfehler bei {file_path} "
                     f"(Seite {index + 1}): {e}"
                 )
@@ -128,5 +135,5 @@ class TesseractOCR:
                 return text or ""
 
         except Exception as e:
-            print(f"OCR Bildfehler bei {file_path}: {e}")
+            self.logger.error(f"OCR Bildfehler bei {file_path}: {e}")
             return ""

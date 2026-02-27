@@ -10,6 +10,8 @@ class Config:
 
         with open(config_path, "r", encoding="utf-8") as f:
             data = json.load(f)
+            self.raw = data
+            self.company_profile = data.get("company_profile", {})      
 
         # ----------------------------------------
         # Basis
@@ -38,7 +40,6 @@ class Config:
         self.error_folder_name = "error"
         self.logs_folder_name = "logs"
         self.temp_folder_name = "temp"
-        self.attachments_folder_name = "attachments"
 
         # ----------------------------------------
         # Third-Party
@@ -53,8 +54,6 @@ class Config:
         # ----------------------------------------
         # Sonstiges
         # ----------------------------------------
-        self.scan_interval_seconds = data["scan_interval_seconds"]
-        self.identities = data.get("identities", [])
 
     def _resolve_project_path(self, path_str: str) -> Path:
         path = Path(path_str)
@@ -87,7 +86,3 @@ class Config:
     @property
     def temp_root(self) -> Path:
         return self.runtime_root / self.temp_folder_name
-
-    @property
-    def attachments_root(self) -> Path:
-        return self.temp_root / self.attachments_folder_name

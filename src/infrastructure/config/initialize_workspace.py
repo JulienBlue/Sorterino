@@ -27,8 +27,7 @@ def initialize_workspace(config):
         config.processed_root,
         config.error_root,
         config.logs_root,
-        config.temp_root,
-        config.attachments_root,
+        config.temp_root
     ]
 
     for folder in runtime_folders:
@@ -61,5 +60,3 @@ def create_junction(link_path: Path, target_path: Path):
         ],
         check=True
     )
-
-    print(f"Verbindung erstellt für {link_path} <<===>> {target_path}")

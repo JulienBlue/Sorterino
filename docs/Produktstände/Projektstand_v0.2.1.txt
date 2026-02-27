@@ -7,7 +7,7 @@
 }
 
 
-===== F:\DevBox\01_PROJECTS\Sorterino\config.json =====
+===== F:\DevBox\01_PROJECTS\Sorterino\backups\config_private.json =====
 
 {
   "user_path": "C:\\Users\\JulienBlueHirte\\OneDrive - Hades IT GmbH\\Desktop\\Dokumente",
@@ -42,7 +42,649 @@
 }
 
 
-===== F:\DevBox\01_PROJECTS\Sorterino\docs\Projektstand_0.2.0.txt =====
+===== F:\DevBox\01_PROJECTS\Sorterino\backups\rules_private.json =====
+
+{
+  "rules": [
+
+    {
+      "category": "Arbeit",
+      "document_type": "Gehaltsabrechnung",
+      "keywords": [
+        "gehaltsabrechnung",
+        "lohnabrechnung",
+        "netto gage",
+        "auszahlung",
+        "steuerbrutto",
+        "abrechnungsmonat"
+      ]
+    },
+
+    {
+      "category": "Arbeit",
+      "document_type": "Arbeitsvertrag",
+      "keywords": [
+        "arbeitsvertrag",
+        "anstellungsvertrag",
+        "beginn des arbeitsverhältnisses",
+        "kündigungsfrist",
+        "vertragspartner"
+      ]
+    },
+
+    {
+      "category": "Arbeit",
+      "document_type": "Arbeitsbescheinigung",
+      "keywords": [
+        "arbeitsbescheinigung",
+        "beschäftigungsverhältnis",
+        "§ 312 sgb iii"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Lohnsteuerbescheinigung",
+      "keywords": [
+        "elektronische lohnsteuerbescheinigung",
+        "ausdruck der elektronischen lohnsteuerbescheinigung",
+        "bescheinigungszeitraum",
+        "identifikationsnummer",
+        "finanzamt, an das die lohnsteuer abgeführt wurde"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Steuerbescheid",
+      "keywords": [
+        "steuerbescheid",
+        "festsetzung der einkommensteuer",
+        "festsetzung der umsatzsteuer"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Bewilligungsbescheid",
+      "keywords": [
+        "bewilligungsbescheid",
+        "weiterbildungsgeld",
+        "förderung der beruflichen weiterbildung",
+        "sgb iii"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Umsatzsteuer",
+      "keywords": [
+        "umsatzsteuer-voranmeldung",
+        "umsatzsteuererklärung",
+        "ust-va"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Einkommensteuer",
+      "keywords": [
+        "einkommensteuererklärung",
+        "elster",
+        "einkommensteuerbescheid"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Fahrtkosten",
+      "keywords": [
+        "fahrkarte",
+        "deutsche bahn",
+        "verkehrs-betriebe",
+        "kvb",
+        "bvg",
+        "mvg",
+        "flug",
+        "lufthansa",
+        "taxi",
+        "uber"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Übernachtungskosten",
+      "keywords": [
+        "hotel",
+        "übernachtung",
+        "airbnb",
+        "booking.com"
+      ]
+    },
+
+    {
+      "category": "Steuer",
+      "document_type": "Bewirtungskosten",
+      "keywords": [
+        "bewirtungskosten",
+        "restaurantrechnung",
+        "bewirtungsbeleg"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Kontoabschluss",
+      "keywords": [
+        "kontoabschluss",
+        "rechnungsabschluss",
+        "quartalsabschluss"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Kontoauszug",
+      "keywords": [
+        "kontoauszug",
+        "wertstellung",
+        "buchungstag",
+        "kontonummer",
+        "iban"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Kreditvertrag",
+      "keywords": [
+        "kreditvertrag",
+        "darlehensvertrag",
+        "zinsbindung",
+        "tilgungsplan"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Mahnung",
+      "keywords": [
+        "zahlungserinnerung",
+        "mahnung",
+        "fristsetzung"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Gutschrift",
+      "keywords": [
+        "gutschrift",
+        "erstattungsbetrag",
+        "credit note"
+      ]
+    },
+
+    {
+      "category": "Finanzen",
+      "document_type": "Rechnung",
+      "keywords": [
+        "rechnungsnummer",
+        "rechnung vom",
+        "gesamtbetrag",
+        "zahlung bis"
+      ]
+    },
+
+    {
+      "category": "Versicherungen",
+      "document_type": "Versicherungsschein",
+      "keywords": [
+        "versicherungsschein",
+        "versicherungspolice",
+        "policennummer"
+      ]
+    },
+
+    {
+      "category": "Versicherungen",
+      "document_type": "Beitragsrechnung",
+      "keywords": [
+        "versicherungsbeitrag",
+        "beitragsrechnung",
+        "jahresbeitrag"
+      ]
+    },
+
+    {
+      "category": "IT",
+      "document_type": "Cloud-Rechnung",
+      "keywords": [
+        "amazon web services",
+        "aws billing",
+        "azure invoice",
+        "google cloud billing"
+      ]
+    },
+
+    {
+      "category": "IT",
+      "document_type": "Lizenz",
+      "keywords": [
+        "software license agreement",
+        "product key",
+        "serial number",
+        "subscription agreement"
+      ]
+    },
+
+    {
+      "category": "IT",
+      "document_type": "Hosting & Domain",
+      "keywords": [
+        "webhosting vertrag",
+        "domainregistrierung",
+        "dns eintrag",
+        "hostingrechnung"
+      ]
+    }
+  ]
+}
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\backups\structure_private.json =====
+
+{
+  "Arbeit": {
+    "Arbeitgeber": {
+      "{Firma}": {
+
+        "00_Stammdaten": {
+          "Personalbogen": {},
+          "Steuerdaten": {},
+          "Sozialversicherungsdaten": {}
+        },
+
+        "01_Verträge": {
+          "Arbeitsvertrag": {},
+          "Zusatzvereinbarungen": {},
+          "Änderungsverträge": {},
+          "Kündigung": {},
+          "Aufhebungsvertrag": {}
+        },
+
+        "02_Lohn": {
+          "{Jahr}": {
+            "Gehaltsabrechnung": {},
+            "Bonus_und_Prämien": {},
+            "Einmalzahlungen": {}
+          }
+        },
+
+        "03_Steuer": {
+          "{Jahr}": {
+            "Lohnsteuerbescheinigung": {},
+            "ELStAM": {}
+          }
+        },
+
+        "04_Sozialversicherung": {
+          "{Jahr}": {
+            "SV_Meldungen": {},
+            "Krankenkasse": {},
+            "Rentenversicherung": {},
+            "Arbeitslosenversicherung": {}
+          }
+        },
+
+        "99_Sonstiges": {}
+      }
+    }
+  },
+
+  "Steuer": {
+    "{Jahr}": {
+
+      "01_Bescheide": {
+        "Steuerbescheid": {},
+        "Bewilligungsbescheid": {},
+        "Einkommensteuer": {},
+        "Umsatzsteuer": {},
+        "Gewerbesteuer": {},
+        "Kirchensteuer": {}
+      },
+
+      "03_Rechnungen": {
+        "Werbungskosten": {
+          "Fahrtkosten": {},
+          "Fortbildung": {},
+          "Arbeitsmittel": {},
+          "Homeoffice": {},
+          "Fachliteratur": {}
+        },
+        "Versicherungen": {},
+        "Spenden": {},
+        "Sonderausgaben": {},
+        "Aussergewoehnliche_Belastungen": {}
+      },
+
+      "04_Kontoauszuege": {},
+      "99_Sonstiges": {}
+    }
+  },
+
+  "Versicherungen": {
+    "{Gesellschaft}": {
+      "01_Vertraege": {},
+      "02_Rechnungen": { "{Jahr}": {} },
+      "03_Schaeden": {},
+      "04_Leistungsabrechnungen": {},
+      "99_Sonstiges": {}
+    }
+  },
+
+  "Finanzen": {
+
+    "Banken": {
+      "{Bank}": {
+        "Girokonto": {
+          "{Jahr}": {
+            "Kontoauszug": {},
+            "Kontoabschluss": {}
+          }
+        },
+        "Kreditkarte": { "{Jahr}": {} },
+        "Kredite": {},
+        "Darlehen": {},
+        "Schriftverkehr": {}
+      }
+    },
+
+    "Sparprodukte": {
+      "ETF_und_Depot": {
+        "{Depotbank}": {
+          "Kaufabrechnungen": {},
+          "Verkaufsabrechnungen": {},
+          "Dividenden": {},
+          "Jahressteuerbescheinigung": {}
+        }
+      }
+    },
+
+    "99_Sonstiges": {}
+  },
+
+  "IT": {
+    "Lizenzen": {},
+    "Rechnungen": {},
+    "Hosting": {},
+    "Domains": {},
+    "Vertraege": {},
+    "Backup": {},
+    "Zertifikate": {},
+    "Zugangsdaten": {}
+  },
+
+  "Dokumente": {
+    "Identitaet": {},
+    "Urkunden": {},
+    "99_Sonstiges": {}
+  },
+
+  "Eigentum": {
+    "Fahrzeuge": {},
+    "Immobilie": {},
+    "99_Sonstiges": {}
+  },
+
+  "99_Sonstiges": {}
+}
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\config.json =====
+
+{
+  "user_path": "C:\\Users\\JulienBlueHirte\\OneDrive - Hades IT GmbH\\Tanja\\Hades IT GmbH - Autotest",
+
+  "company_profile": {
+    "name": "Hades IT GmbH",
+    "iban": "DE77202208000026631589",
+    "address_keywords": [
+      "Am Frankenturm 5",
+      "50667 Köln"
+    ]
+  }
+}
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\docs\history.md =====
+
+# 📦 Sorterino – Rekonstruierte Versionshistorie
+
+Diese Historie ist technisch-architektonisch gegliedert und nicht rein chronologisch aufgebaut.
+
+---
+
+## 🟢 V0.0.1 – Projektgrundlage & Pipeline-Prototyp
+
+**Charakter:** Technischer Rohbau
+
+### Enthalten
+
+- Erste `DocumentPipeline`
+- Basis-OCR Integration
+- Erste Klassifikation mit einfachen `if`-Abfragen
+- Rename-Logik
+- `FilesystemStorage`
+- Backup-Modul (erste Version)
+- Workspace-Initialisierung
+- Ordnerstruktur: `Input / Backup / Manuell / Processing`
+
+### Architektur
+
+- Noch relativ monolithisch
+- Harte Keyword-Logik
+- Keine externe Konfiguration für Rules
+- Keine Struktur-Engine
+
+---
+
+## 🟢 V0.1.0 – Struktur-Engine & Package-Refactor
+
+**Charakter:** Architektur-Sprung
+
+Diese Version markiert den Übergang von einer funktionalen Pipeline zu einer konfigurierbaren Systemarchitektur.
+
+### 🔹 1. Strukturgetriebene Ablage
+
+- Einführung von `structure.json`
+- Dynamischer `PathResolver`
+- Platzhalter-System `{Jahr}`, `{Firma}`, `{Bank}`, etc.
+- Lazy Folder Creation (Ordner nur bei Bedarf)
+
+### 🔹 2. Metadata-Refactor
+
+- Weg von starren Feldern (`bank`, `employer`, etc.)
+- Einführung von `contexts: dict`
+- Generisches Kontextsystem
+
+### 🔹 3. Config-Externalisierung
+
+- `rules.json`
+- `supported_formats.json`
+- `structure.json`
+- Loader-Klassen für Konfigurationen
+
+### 🔹 4. Python-Package-Fix
+
+- Relative Imports
+- Start via `python -m src.main`
+- Einführung von `__init__.py`
+- Saubere Package-Struktur
+
+> Erste Version mit echter Systemarchitektur.
+
+---
+
+## 🟢 V0.2.0 – Architektur-Stabilisierung & Release
+
+**Charakter:** Stabilisierung & Produktionsreife
+
+### Enthalten
+
+- Testarchitektur
+- Qualitätssicherung
+- Runtime-Isolation
+- Bugfixes in:
+  - `determine_target_path`
+  - `rename_document`
+  - Backup-Integration
+- Fallback für nicht unterstützte Dateitypen
+- Cleanup leerer Input-Ordner
+- Stabilisierung von `FilesystemStorage`
+
+> Fokus lag auf Robustheit, Fehlerbehandlung und Edge-Cases.
+
+---
+
+## 🟢 V0.2.1 – Klassifikations-Erweiterung
+
+**Charakter:** Fachliche Vertiefung
+
+### Erweiterungen
+
+- Massive Erweiterung der RULES
+- Buchhalterische Kategorien
+- Spesen-Unterarten
+- Öffentliche Verkehrsunternehmen (DB, KVB, BVG, etc.)
+- Differenzierte Versicherungsarten
+- Werbungskosten-Kategorien
+- Steuer-Unterkategorien
+- Business-only Fokus
+
+> Starke fachliche Erweiterung der Klassifikationslogik.
+
+---
+
+## 🟢 V0.2.2 – Workspace & Ordnermodell-Reorganisation
+
+**Charakter:** Prozess- vs Archiv-Trennung
+
+### Änderungen
+
+Neue Top-Level Struktur:
+
+- `Backup`
+- `Input`
+- `In Verarbeitung`
+- `Bürokratie`
+- `Manuelle Sortierung`
+
+Weitere Anpassungen:
+
+- `Manuelle Sortierung` nur noch innerhalb von `Bürokratie`
+- Doppelte Ordner-Erstellung entfernt
+- Workspace-Neuinitialisierung angepasst
+
+---
+
+## 🟢 V0.3.0 (geplanter nächster Schritt)
+
+**Charakter:** Intelligente Analyse & Systemerweiterung
+
+### Geplante Inhalte
+
+- Intelligenter Metadata-Analyzer
+- Firmen-, Bank-, Versicherungs-Erkennung via Pattern
+- Priorisierte Rule-Engine
+- Confidence-basierte Strukturwahl
+- Multi-Identity-System (Business / Private)
+- Struktur-Baustein-Konfiguration
+
+---
+
+# 🧠 Gesamtentwicklungsmuster
+
+| Version | Fokus |
+|----------|--------|
+| 0.0.1 | Funktional lauffähig |
+| 0.1.0 | Architektur & Struktur-Engine |
+| 0.2.0 | Stabilisierung |
+| 0.2.1 | Fachliche Erweiterung |
+| 0.2.2 | Workspace & Struktur-Reorganisation |
+
+---
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\docs\manual_v0.2.0.md =====
+
+# 📘 Sorterino – Benutzerhandbuch v0.2.0
+
+## 1. Installation
+
+1. Python 3.10+ installieren
+2. Projekt entpacken
+3. Virtuelle Umgebung erstellen
+4. pip install -r requirements.txt
+
+Tesseract und Poppler sind im Projekt enthalten.
+
+---
+
+## 2. Konfiguration
+
+In config.json muss gesetzt werden:
+
+"user_path": "C:\\Users\\DEINNAME\\Dokumente"
+
+Sorterino erstellt dort automatisch:
+
+- .sorterino_runtime (versteckt)
+- Sorterino - Input
+- Sorterino - Manuelle Sortierung
+
+---
+
+## 3. Dokumente verarbeiten
+
+1. Dateien in „Sorterino - Input“ legen
+2. main.py starten
+3. Dokumente werden automatisch verarbeitet
+
+---
+
+## 4. Fallback-Regeln
+
+Ein Dokument wird manuell verschoben wenn:
+
+- kein OCR-Text erkannt wird
+- keine Regel passt
+- kein Zielpfad ermittelt werden kann
+- Dateityp nicht unterstützt ist
+
+---
+
+## 5. Erweiterung
+
+Neue Dokumenttypen können ergänzt werden über:
+
+- rules.json
+- structure.json
+
+Keine Codeänderung notwendig.
+
+---
+
+## 6. Technischer Hinweis
+
+- OCR: Tesseract (portable)
+- PDF Rendering: Poppler
+- Struktur-Routing: JSON-basiert
+- Speicher: Interface-konformes FilesystemStorage
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\docs\Projektstand_v0.2.0.txt =====
 
 ===== F:\DevBox\01_PROJECTS\Sorterino\.vscode\settings.json =====
 
@@ -88,349 +730,230 @@
 }
 
 
-===== F:\DevBox\01_PROJECTS\Sorterino\docs\README.txt =====
+===== F:\DevBox\01_PROJECTS\Sorterino\docs\history.md =====
 
-# 🧠 SORTERINO – Projektkontext (Stand: stabile Lohnsteuer-Engine)
+# 📦 Sorterino – Rekonstruierte Versionshistorie
 
-Dieses Dokument dient als vollständiger Projekt-Kontext für neue Chats.  
-Es enthält:
-
-1. Projektziel  
-2. Architekturüberblick  
-3. Aktuelle Kernfeatures  
-4. Vollständige relevante Dateien (aktuellste Versionen)  
-5. Projektordnerstruktur  
+Diese Historie ist technisch-architektonisch gegliedert und nicht rein chronologisch aufgebaut.
 
 ---
 
-# 🎯 Projektziel
+## 🟢 V0.0.1 – Projektgrundlage & Pipeline-Prototyp
 
-Sorterino ist eine modulare Dokumenten-Engine zur:
+**Charakter:** Technischer Rohbau
 
-- OCR-Verarbeitung (Tesseract + Poppler, portable im Projekt)
-- Score-basierter Klassifikation mit Wortgrenzen
-- Kontext-Extraktion (Arbeitgeber, Bank, Zeitraum)
-- Dynamischer Dateibenennung
-- Strukturierter Pfadauflösung
-- Robuster Verarbeitung (OCR-Toleranz)
+### Enthalten
 
-Aktueller Schwerpunkt:
-✔ Lohnsteuerbescheinigungen mit Arbeitgeber + Zeitraum im Dateinamen  
-✔ Robuste Zeitraum-Erkennung trotz OCR-Artefakten  
+- Erste `DocumentPipeline`
+- Basis-OCR Integration
+- Erste Klassifikation mit einfachen `if`-Abfragen
+- Rename-Logik
+- `FilesystemStorage`
+- Backup-Modul (erste Version)
+- Workspace-Initialisierung
+- Ordnerstruktur: `Input / Backup / Manuell / Processing`
 
-Beispiel Ziel-Dateiname:
+### Architektur
 
-```
-09.08.-12.11._Theater_Hagen_gGmbH_Lohnsteuerbescheinigung.pdf
-```
-
----
-
-# 🏗 Architekturüberblick
-
-- Clean-ish Layer Separation
-- Domain Layer (Entities, Metadata)
-- Usecases Layer (Business Logic)
-- Infrastructure Layer (OCR, Storage, Config)
-- JSON-basierte Struktur- und Regeldefinition
+- Noch relativ monolithisch
+- Harte Keyword-Logik
+- Keine externe Konfiguration für Rules
+- Keine Struktur-Engine
 
 ---
 
-# 📁 AKTUELLE RELEVANTE DATEIEN (Vollständig)
+## 🟢 V0.1.0 – Struktur-Engine & Package-Refactor
+
+**Charakter:** Architektur-Sprung
+
+Diese Version markiert den Übergang von einer funktionalen Pipeline zu einer konfigurierbaren Systemarchitektur.
+
+### 🔹 1. Strukturgetriebene Ablage
+
+- Einführung von `structure.json`
+- Dynamischer `PathResolver`
+- Platzhalter-System `{Jahr}`, `{Firma}`, `{Bank}`, etc.
+- Lazy Folder Creation (Ordner nur bei Bedarf)
+
+### 🔹 2. Metadata-Refactor
+
+- Weg von starren Feldern (`bank`, `employer`, etc.)
+- Einführung von `contexts: dict`
+- Generisches Kontextsystem
+
+### 🔹 3. Config-Externalisierung
+
+- `rules.json`
+- `supported_formats.json`
+- `structure.json`
+- Loader-Klassen für Konfigurationen
+
+### 🔹 4. Python-Package-Fix
+
+- Relative Imports
+- Start via `python -m src.main`
+- Einführung von `__init__.py`
+- Saubere Package-Struktur
+
+> Erste Version mit echter Systemarchitektur.
 
 ---
 
-## 1️⃣ domain/document_metadata.py
+## 🟢 V0.2.0 – Architektur-Stabilisierung & Release
 
-```python
-from dataclasses import dataclass, field
-from typing import Optional, Dict
+**Charakter:** Stabilisierung & Produktionsreife
 
+### Enthalten
 
-@dataclass
-class DocumentMetadata:
-    year: Optional[int] = None
-    month: Optional[int] = None
-    day: Optional[int] = None
+- Testarchitektur
+- Qualitätssicherung
+- Runtime-Isolation
+- Bugfixes in:
+  - `determine_target_path`
+  - `rename_document`
+  - Backup-Integration
+- Fallback für nicht unterstützte Dateitypen
+- Cleanup leerer Input-Ordner
+- Stabilisierung von `FilesystemStorage`
 
-    category: Optional[str] = None
-    document_type: Optional[str] = None
-
-    invoice_number: Optional[str] = None
-
-    # Kontexte wie Firma, Zeitraum, Bank etc.
-    contexts: Dict[str, str] = field(default_factory=dict)
-```
+> Fokus lag auf Robustheit, Fehlerbehandlung und Edge-Cases.
 
 ---
 
-## 2️⃣ usecases/classify_document.py (aktuellste Version)
+## 🟢 V0.2.1 – Klassifikations-Erweiterung
 
-```python
-import re
-from typing import Optional, List, Dict, Any
+**Charakter:** Fachliche Vertiefung
 
-from domain.classification import Classification
-from domain.document import Document
-from domain.document_metadata import DocumentMetadata
+### Erweiterungen
 
+- Massive Erweiterung der RULES
+- Buchhalterische Kategorien
+- Spesen-Unterarten
+- Öffentliche Verkehrsunternehmen (DB, KVB, BVG, etc.)
+- Differenzierte Versicherungsarten
+- Werbungskosten-Kategorien
+- Steuer-Unterkategorien
+- Business-only Fokus
 
-# ------------------------------------------
-# Keyword Matching mit Wortgrenzen
-# ------------------------------------------
-
-def keyword_matches(text: str, keyword: str) -> bool:
-    pattern = rf"\b{re.escape(keyword.lower())}\b"
-    return re.search(pattern, text) is not None
-
-
-def score_rule(text: str, rule: Dict[str, Any]) -> int:
-    return sum(1 for k in rule["keywords"] if keyword_matches(text, k))
-
-
-def apply_rules(text_lower: str, rules: List[Dict[str, Any]]):
-    best_score = 0
-    best_rule = None
-
-    for rule in rules:
-        score = score_rule(text_lower, rule)
-        if score > best_score:
-            best_score = score
-            best_rule = rule
-
-    if best_rule and best_score >= 1:
-        return best_rule["category"], best_rule["document_type"]
-
-    return None, None
-
-
-# ------------------------------------------
-# Jahr extrahieren
-# ------------------------------------------
-
-def extract_year(text: str) -> Optional[int]:
-    match = re.search(r"für\s+(20\d{2})", text.lower())
-    if match:
-        return int(match.group(1))
-
-    fallback = re.search(r"\b(20\d{2})\b", text)
-    if fallback:
-        return int(fallback.group(1))
-
-    return None
-
-
-# ------------------------------------------
-# Arbeitgeber extrahieren
-# ------------------------------------------
-
-def sanitize(value: str) -> str:
-    value = value.strip()
-    value = value.replace(" ", "_")
-    value = re.sub(r"[^A-Za-z0-9_äöüÄÖÜß\-]", "", value)
-    return value
-
-
-def extract_employer(text: str) -> Optional[str]:
-    match = re.search(
-        r"\n([A-ZÄÖÜa-zäöüß\s&\-]+(?:GmbH|GbR|AG|KG|UG|gGmbH))",
-        text
-    )
-    if match:
-        return sanitize(match.group(1).strip())
-    return None
-
-
-# ------------------------------------------
-# Hardcore Zeitraum-Erkennung
-# ------------------------------------------
-
-def extract_bescheinigungszeitraum(text: str):
-    match = re.search(
-        r"(\d{2}\.\d{2}).{0,5}(\d{2}\.\d{2})",
-        text
-    )
-
-    if match:
-        start = match.group(1)
-        end = match.group(2)
-        return f"{start}.-{end}."
-
-    return None
-
-
-# ------------------------------------------
-# Hauptklassifikation
-# ------------------------------------------
-
-def classify_document(document: Document, rules: List[Dict[str, Any]]):
-
-    text = document.extracted_text or ""
-
-    if not text.strip():
-        return Classification(category="Manuell", confidence=0.1)
-
-    text_lower = text.lower()
-
-    category, document_type = apply_rules(text_lower, rules)
-
-    contexts: Dict[str, str] = {}
-
-    year = extract_year(text)
-
-    if document_type == "Lohnsteuerbescheinigung":
-
-        employer = extract_employer(text)
-        if employer:
-            contexts["Firma"] = employer
-
-        zeitraum = extract_bescheinigungszeitraum(text)
-        if zeitraum:
-            contexts["Zeitraum"] = zeitraum
-
-    metadata = DocumentMetadata(
-        year=year,
-        category=category,
-        document_type=document_type,
-        contexts=contexts
-    )
-
-    document.set_metadata(metadata)
-
-    if category:
-        return Classification(category=category, confidence=0.9)
-
-    return Classification(category="Manuell", confidence=0.2)
-```
+> Starke fachliche Erweiterung der Klassifikationslogik.
 
 ---
 
-## 3️⃣ usecases/rename_document.py (aktuellste Version)
+## 🟢 V0.2.2 – Workspace & Ordnermodell-Reorganisation
 
-```python
-import re
+**Charakter:** Prozess- vs Archiv-Trennung
 
+### Änderungen
 
-def sanitize(value: str) -> str:
-    value = value.strip()
-    value = value.replace(" ", "_")
-    value = re.sub(r"[^A-Za-z0-9_äöüÄÖÜß\-\.]", "", value)
-    return value
+Neue Top-Level Struktur:
 
+- `Backup`
+- `Input`
+- `In Verarbeitung`
+- `Bürokratie`
+- `Manuelle Sortierung`
 
-def rename_document(document):
+Weitere Anpassungen:
 
-    metadata = document.metadata
-
-    # ------------------------------------------
-    # Lohnsteuerbescheinigung
-    # ------------------------------------------
-
-    if metadata.document_type == "Lohnsteuerbescheinigung":
-
-        parts = []
-
-        zeitraum = metadata.contexts.get("Zeitraum")
-        if zeitraum:
-            parts.append(zeitraum)
-
-        firma = metadata.contexts.get("Firma")
-        if firma:
-            parts.append(firma)
-
-        parts.append("Lohnsteuerbescheinigung")
-
-        return "_".join(parts) + ".pdf"
-
-    # ------------------------------------------
-    # Standard
-    # ------------------------------------------
-
-    parts = []
-
-    if metadata.year:
-        parts.append(str(metadata.year))
-
-    if metadata.document_type:
-        parts.append(metadata.document_type)
-
-    if not parts:
-        return "Unbenannt.pdf"
-
-    return "_".join(parts) + ".pdf"
-```
+- `Manuelle Sortierung` nur noch innerhalb von `Bürokratie`
+- Doppelte Ordner-Erstellung entfernt
+- Workspace-Neuinitialisierung angepasst
 
 ---
 
-# 📂 Projektstruktur (relevant für Sorterino)
+## 🟢 V0.3.0 (geplanter nächster Schritt)
 
-```
-Sorterino/
-│
-├── src/
-│   ├── main.py
-│   │
-│   ├── domain/
-│   │   ├── document.py
-│   │   ├── classification.py
-│   │   └── document_metadata.py
-│   │
-│   ├── usecases/
-│   │   ├── classify_document.py
-│   │   ├── rename_document.py
-│   │   ├── document_pipeline.py
-│   │   └── path_resolver.py
-│   │
-│   ├── infrastructure/
-│   │   ├── ocr/
-│   │   │   └── tesseract_ocr.py
-│   │   │
-│   │   ├── storage/
-│   │   │   └── filesystem_storage.py
-│   │   │
-│   │   ├── logging/
-│   │   │   └── file_logger.py
-│   │   │
-│   │   └── config/
-│   │       ├── config_loader.py
-│   │       ├── rules_loader.py
-│   │       ├── structure_loader.py
-│   │       ├── formats_loader.py
-│   │       └── initialize_workspace.py
-│
-├── rules.json
-├── structure.json
-├── supported_formats.json
-│
-├── third_party/
-│   ├── Tesseract-OCR/
-│   └── poppler-25.x/
-│
-└── .venv/
-```
+**Charakter:** Intelligente Analyse & Systemerweiterung
+
+### Geplante Inhalte
+
+- Intelligenter Metadata-Analyzer
+- Firmen-, Bank-, Versicherungs-Erkennung via Pattern
+- Priorisierte Rule-Engine
+- Confidence-basierte Strukturwahl
+- Multi-Identity-System (Business / Private)
+- Struktur-Baustein-Konfiguration
 
 ---
 
-# 🔚 Aktueller Funktionsstand
+# 🧠 Gesamtentwicklungsmuster
 
-✔ Score-basierte Klassifikation  
-✔ Wortgrenzen-Matching  
-✔ Portable Tesseract  
-✔ Robuste Zeitraum-Erkennung  
-✔ Arbeitgeber-Erkennung  
-✔ Kontextbasierte Dateibenennung  
-✔ JSON-Struktur-Routing  
+| Version | Fokus |
+|----------|--------|
+| 0.0.1 | Funktional lauffähig |
+| 0.1.0 | Architektur & Struktur-Engine |
+| 0.2.0 | Stabilisierung |
+| 0.2.1 | Fachliche Erweiterung |
+| 0.2.2 | Workspace & Struktur-Reorganisation |
 
 ---
 
-Wenn du das in einen neuen Chat postest, weiß ich exakt:
 
-- Wo wir architektonisch stehen  
-- Welche Version der Dateien aktiv ist  
-- Welche Features stabil sind  
-- Wo wir als nächstes optimieren können  
+===== F:\DevBox\01_PROJECTS\Sorterino\docs\manual_v0.2.0.md =====
 
-🚀 Sorterino ist aktuell eine robuste Dokumenten-Engine.
+# 📘 Sorterino – Benutzerhandbuch v0.2.0
+
+## 1. Installation
+
+1. Python 3.10+ installieren
+2. Projekt entpacken
+3. Virtuelle Umgebung erstellen
+4. pip install -r requirements.txt
+
+Tesseract und Poppler sind im Projekt enthalten.
+
+---
+
+## 2. Konfiguration
+
+In config.json muss gesetzt werden:
+
+"user_path": "C:\\Users\\DEINNAME\\Dokumente"
+
+Sorterino erstellt dort automatisch:
+
+- .sorterino_runtime (versteckt)
+- Sorterino - Input
+- Sorterino - Manuelle Sortierung
+
+---
+
+## 3. Dokumente verarbeiten
+
+1. Dateien in „Sorterino - Input“ legen
+2. main.py starten
+3. Dokumente werden automatisch verarbeitet
+
+---
+
+## 4. Fallback-Regeln
+
+Ein Dokument wird manuell verschoben wenn:
+
+- kein OCR-Text erkannt wird
+- keine Regel passt
+- kein Zielpfad ermittelt werden kann
+- Dateityp nicht unterstützt ist
+
+---
+
+## 5. Erweiterung
+
+Neue Dokumenttypen können ergänzt werden über:
+
+- rules.json
+- structure.json
+
+Keine Codeänderung notwendig.
+
+---
+
+## 6. Technischer Hinweis
+
+- OCR: Tesseract (portable)
+- PDF Rendering: Poppler
+- Struktur-Routing: JSON-basiert
+- Speicher: Interface-konformes FilesystemStorage
 
 
 ===== F:\DevBox\01_PROJECTS\Sorterino\main.py =====
@@ -537,8 +1060,109 @@ if __name__ == "__main__":
         print("\n⏹️  Ausführung manuell beendet.")
 
 
+===== F:\DevBox\01_PROJECTS\Sorterino\README.txt =====
+
+# 🧠 Sorterino v0.2.0
+
+Automatisierte OCR-Dokumenten-Engine mit regelbasierter Klassifikation.
+
+---
+
+# 🚀 Schnellstart
+
+## Voraussetzungen
+
+- Python 3.10+
+- pip
+
+Tesseract und Poppler sind im Ordner `third_party/` enthalten.
+
+---
+
+## 1️⃣ Konfiguration
+
+Öffne:
+
+config.json
+
+Setze:
+
+"user_path": "C:\\Users\\DEINNAME\\Dokumente"
+
+Dieser Ordner ist dein Arbeitsverzeichnis.
+
+---
+
+## 2️⃣ Virtuelle Umgebung
+
+python -m venv .venv
+.venv\Scripts\activate
+
+---
+
+## 3️⃣ Abhängigkeiten installieren
+
+pip install -r requirements.txt
+
+---
+
+## 4️⃣ Start
+
+python main.py
+
+---
+
+# 📂 Verwendung
+
+- Lege Dokumente in „Sorterino - Input“
+- Sorterino verarbeitet automatisch:
+  - OCR
+  - Klassifikation
+  - Umbenennung
+  - Strukturierte Ablage
+
+Unklare Dokumente landen in:
+„Sorterino - Manuelle Sortierung“
+
+---
+
+# 🧠 Architektur
+
+Layer-Struktur:
+
+- Domain
+- Usecases
+- Infrastructure
+- Interfaces
+
+Regeldefinition erfolgt über:
+
+- rules.json
+- structure.json
+- supported_formats.json
+
+---
+
+# 🧪 Tests
+
+pytest
+
+---
+
+# 📦 Release v0.2.0
+
+- Interface-konformes Storage
+- Portable OCR
+- JSON Routing stabil
+- Modular erweiterbar
+
+
 ===== F:\DevBox\01_PROJECTS\Sorterino\requirements.txt =====
 
+pytesseract==0.3.13
+pdf2image==1.17.0
+Pillow==12.1.1
+pytest==9.0.2
 
 
 ===== F:\DevBox\01_PROJECTS\Sorterino\rules.json =====
@@ -1439,22 +2063,37 @@ class TesseractOCR:
 from pathlib import Path
 import shutil
 
+from interfaces.storage_service import StorageService
 
-class FilesystemStorage:
+
+class FilesystemStorage(StorageService):
 
     def __init__(self, base_path: Path):
         # base_path muss config.user_path sein
-        self.base_path = base_path
+        self.base_path = Path(base_path)
 
-    def save(self, source_path: Path, relative_target_path: str):
+    def store(
+        self,
+        source_path: str,
+        target_directory: str,
+        new_name: str
+    ) -> str:
+        """
+        Speichert die Datei im Zielverzeichnis unter neuem Namen
+        und gibt den finalen Pfad zurück.
+        """
 
-        target_path = self.base_path / relative_target_path
+        source = Path(source_path)
 
-        target_path.parent.mkdir(parents=True, exist_ok=True)
+        # Zielverzeichnis relativ zum base_path
+        target_dir = self.base_path / target_directory
+        target_dir.mkdir(parents=True, exist_ok=True)
 
-        shutil.move(str(source_path), str(target_path))
+        target_path = target_dir / new_name
 
-        return target_path
+        shutil.move(str(source), str(target_path))
+
+        return str(target_path)
 
 
 ===== F:\DevBox\01_PROJECTS\Sorterino\src\interfaces\__init__.py =====
@@ -2329,6 +2968,11 @@ third_party
   - poppler-25.12.0
   - Tesseract-OCR
 
+.venv
+  - Include
+  - Lib
+  - Scripts
+
 .pytest_cache
   - v
 
@@ -2339,134 +2983,6 @@ third_party
   - objects
   - refs
 
-.venv
-  - Include
-  - Lib
-  - Scripts
-
-
-
-===== F:\DevBox\01_PROJECTS\Sorterino\docs\README_v0.2.0.txt =====
-
-SORTERINO v0.2.0
-
-============================ NUTZERANLEITUNG (CLI VERSION)
-============================
-
-Voraussetzungen
-
-Folgende Komponenten müssen installiert sein:
-
--   Python 3.10 oder höher
--   pip (Python Paketmanager)
-
-Tesseract und Poppler sind projektintern im Ordner “third_party”
-enthalten und müssen nicht separat installiert werden, sofern die Pfade
-in der config.json korrekt gesetzt sind.
-
-Einrichtung
-
-1.  config.json anpassen
-
-Öffne die Datei:
-
-    config.json
-
-Dort muss der user_path gesetzt werden. Dieser definiert, in welchem
-Ordner Sorterino arbeitet und wo die sichtbaren Ordner erstellt werden.
-
-Beispiel:
-
-    "user_path": "C:\Users\DeinName\Dokumente"
-
-Dieser Ordner ist dein Arbeitsverzeichnis für Sorterino.
-
-2.  Virtuelle Umgebung erstellen (empfohlen)
-
-    python -m venv .venv .venv
-
-3.  Abhängigkeiten installieren
-
-    pip install -r requirements.txt
-
-Anwendung starten
-
-    python main.py
-
-Verwendung
-
-1.  Dokumente in den Ordner “Sorterino - Input” legen.
-
-2.  Sorterino verarbeitet die Dateien automatisch:
-
-    -   OCR-Erkennung
-    -   Klassifikation anhand definierter Regeln
-    -   Automatische Umbenennung
-    -   Strukturierte Ablage im Zielordner
-
-3.  Falls ein Dokument nicht eindeutig verarbeitet werden kann, wird es
-    verschoben nach: “Sorterino - Manuelle Sortierung”
-
-Es ist keine weitere Interaktion notwendig.
-
-============================================================
-ENTWICKLERDOKUMENTATION
-============================================================
-
-Projektziel
-
-Sorterino ist eine modulare, OCR-gestützte Dokumenten-Engine zur
-automatisierten Klassifikation und strukturierten Ablage von Dateien.
-
-Die Engine arbeitet regelbasiert, transparent und vollständig
-konfigurierbar über JSON-Dateien.
-
-Architektur
-
-Layer-Struktur:
-
--   Domain → Entities und Zustände
--   Usecases → Business-Logik
--   Infrastructure→ OCR, Storage, Config
--   Interfaces → Abstraktionen
-
-Konfiguration erfolgt über:
-
--   config.json
--   rules.json
--   structure.json
--   supported_formats.json
-
-Projektstruktur
-
-Sorterino/ │ ├── main.py ├── requirements.txt ├── config.json ├──
-rules.json ├── structure.json ├── supported_formats.json │ ├── src/ │
-├── domain/ │ ├── usecases/ │ ├── infrastructure/ │ ├── interfaces/ │
-└── gui/ │ ├── tests/ └── docs/
-
-Tests ausführen
-
-    pytest
-
-Fallback-Verhalten
-
-Dokumente werden in “Manuelle Sortierung” verschoben, wenn:
-
--   kein OCR-Text extrahiert werden kann
--   keine Kategorie erkannt wird
--   kein Zielpfad bestimmt werden kann
--   der Dateityp nicht unterstützt wird
-
-Status v0.2.0
-
--   Stabile Klassifikations-Engine
--   Zeitraum-Erkennung
--   Arbeitgeber-Erkennung
--   JSON-basiertes Routing
--   Modular erweiterbar
-
-Sorterino ist bewusst regelbasiert aufgebaut, transparent und
-nachvollziehbar erweiterbar.
 
 
 ===== F:\DevBox\01_PROJECTS\Sorterino\main.py =====
@@ -2508,6 +3024,7 @@ def main() -> None:
     # 1. Konfiguration
     config_path = BASE_DIR / "config.json"
     config = Config(config_path)
+    company_profile = config.raw.get("company_profile", {})
 
     if not config.user_path:
         raise ValueError("user_path ist nicht konfiguriert.")
@@ -2550,6 +3067,7 @@ def main() -> None:
         storage_service=storage_service,
         logger=logger,
         rules=rules,
+        company_profile=company_profile,
         supported_extensions=supported_extensions,
         unsupported_target=unsupported_target,
         structure=structure,
@@ -2575,370 +3093,107 @@ if __name__ == "__main__":
 
 ===== F:\DevBox\01_PROJECTS\Sorterino\README.txt =====
 
-# 🧠 SORTERINO – Projektkontext (Stand: stabile Lohnsteuer-Engine)
+# 🧠 Sorterino v0.2.0
 
-Dieses Dokument dient als vollständiger Projekt-Kontext für neue Chats.  
-Es enthält:
-
-1. Projektziel  
-2. Architekturüberblick  
-3. Aktuelle Kernfeatures  
-4. Vollständige relevante Dateien (aktuellste Versionen)  
-5. Projektordnerstruktur  
+Automatisierte OCR-Dokumenten-Engine mit regelbasierter Klassifikation.
 
 ---
 
-# 🎯 Projektziel
+# 🚀 Schnellstart
 
-Sorterino ist eine modulare Dokumenten-Engine zur:
+## Voraussetzungen
 
-- OCR-Verarbeitung (Tesseract + Poppler, portable im Projekt)
-- Score-basierter Klassifikation mit Wortgrenzen
-- Kontext-Extraktion (Arbeitgeber, Bank, Zeitraum)
-- Dynamischer Dateibenennung
-- Strukturierter Pfadauflösung
-- Robuster Verarbeitung (OCR-Toleranz)
+- Python 3.10+
+- pip
 
-Aktueller Schwerpunkt:
-✔ Lohnsteuerbescheinigungen mit Arbeitgeber + Zeitraum im Dateinamen  
-✔ Robuste Zeitraum-Erkennung trotz OCR-Artefakten  
-
-Beispiel Ziel-Dateiname:
-
-```
-09.08.-12.11._Theater_Hagen_gGmbH_Lohnsteuerbescheinigung.pdf
-```
+Tesseract und Poppler sind im Ordner `third_party/` enthalten.
 
 ---
 
-# 🏗 Architekturüberblick
+## 1️⃣ Konfiguration
 
-- Clean-ish Layer Separation
-- Domain Layer (Entities, Metadata)
-- Usecases Layer (Business Logic)
-- Infrastructure Layer (OCR, Storage, Config)
-- JSON-basierte Struktur- und Regeldefinition
+Öffne:
 
----
+config.json
 
-# 📁 AKTUELLE RELEVANTE DATEIEN (Vollständig)
+Setze:
 
----
+"user_path": "C:\\Users\\DEINNAME\\Dokumente"
 
-## 1️⃣ domain/document_metadata.py
-
-```python
-from dataclasses import dataclass, field
-from typing import Optional, Dict
-
-
-@dataclass
-class DocumentMetadata:
-    year: Optional[int] = None
-    month: Optional[int] = None
-    day: Optional[int] = None
-
-    category: Optional[str] = None
-    document_type: Optional[str] = None
-
-    invoice_number: Optional[str] = None
-
-    # Kontexte wie Firma, Zeitraum, Bank etc.
-    contexts: Dict[str, str] = field(default_factory=dict)
-```
+Dieser Ordner ist dein Arbeitsverzeichnis.
 
 ---
 
-## 2️⃣ usecases/classify_document.py (aktuellste Version)
+## 2️⃣ Virtuelle Umgebung
 
-```python
-import re
-from typing import Optional, List, Dict, Any
-
-from domain.classification import Classification
-from domain.document import Document
-from domain.document_metadata import DocumentMetadata
-
-
-# ------------------------------------------
-# Keyword Matching mit Wortgrenzen
-# ------------------------------------------
-
-def keyword_matches(text: str, keyword: str) -> bool:
-    pattern = rf"\b{re.escape(keyword.lower())}\b"
-    return re.search(pattern, text) is not None
-
-
-def score_rule(text: str, rule: Dict[str, Any]) -> int:
-    return sum(1 for k in rule["keywords"] if keyword_matches(text, k))
-
-
-def apply_rules(text_lower: str, rules: List[Dict[str, Any]]):
-    best_score = 0
-    best_rule = None
-
-    for rule in rules:
-        score = score_rule(text_lower, rule)
-        if score > best_score:
-            best_score = score
-            best_rule = rule
-
-    if best_rule and best_score >= 1:
-        return best_rule["category"], best_rule["document_type"]
-
-    return None, None
-
-
-# ------------------------------------------
-# Jahr extrahieren
-# ------------------------------------------
-
-def extract_year(text: str) -> Optional[int]:
-    match = re.search(r"für\s+(20\d{2})", text.lower())
-    if match:
-        return int(match.group(1))
-
-    fallback = re.search(r"\b(20\d{2})\b", text)
-    if fallback:
-        return int(fallback.group(1))
-
-    return None
-
-
-# ------------------------------------------
-# Arbeitgeber extrahieren
-# ------------------------------------------
-
-def sanitize(value: str) -> str:
-    value = value.strip()
-    value = value.replace(" ", "_")
-    value = re.sub(r"[^A-Za-z0-9_äöüÄÖÜß\-]", "", value)
-    return value
-
-
-def extract_employer(text: str) -> Optional[str]:
-    match = re.search(
-        r"\n([A-ZÄÖÜa-zäöüß\s&\-]+(?:GmbH|GbR|AG|KG|UG|gGmbH))",
-        text
-    )
-    if match:
-        return sanitize(match.group(1).strip())
-    return None
-
-
-# ------------------------------------------
-# Hardcore Zeitraum-Erkennung
-# ------------------------------------------
-
-def extract_bescheinigungszeitraum(text: str):
-    match = re.search(
-        r"(\d{2}\.\d{2}).{0,5}(\d{2}\.\d{2})",
-        text
-    )
-
-    if match:
-        start = match.group(1)
-        end = match.group(2)
-        return f"{start}.-{end}."
-
-    return None
-
-
-# ------------------------------------------
-# Hauptklassifikation
-# ------------------------------------------
-
-def classify_document(document: Document, rules: List[Dict[str, Any]]):
-
-    text = document.extracted_text or ""
-
-    if not text.strip():
-        return Classification(category="Manuell", confidence=0.1)
-
-    text_lower = text.lower()
-
-    category, document_type = apply_rules(text_lower, rules)
-
-    contexts: Dict[str, str] = {}
-
-    year = extract_year(text)
-
-    if document_type == "Lohnsteuerbescheinigung":
-
-        employer = extract_employer(text)
-        if employer:
-            contexts["Firma"] = employer
-
-        zeitraum = extract_bescheinigungszeitraum(text)
-        if zeitraum:
-            contexts["Zeitraum"] = zeitraum
-
-    metadata = DocumentMetadata(
-        year=year,
-        category=category,
-        document_type=document_type,
-        contexts=contexts
-    )
-
-    document.set_metadata(metadata)
-
-    if category:
-        return Classification(category=category, confidence=0.9)
-
-    return Classification(category="Manuell", confidence=0.2)
-```
+python -m venv .venv
+.venv\Scripts\activate
 
 ---
 
-## 3️⃣ usecases/rename_document.py (aktuellste Version)
+## 3️⃣ Abhängigkeiten installieren
 
-```python
-import re
-
-
-def sanitize(value: str) -> str:
-    value = value.strip()
-    value = value.replace(" ", "_")
-    value = re.sub(r"[^A-Za-z0-9_äöüÄÖÜß\-\.]", "", value)
-    return value
-
-
-def rename_document(document):
-
-    metadata = document.metadata
-
-    # ------------------------------------------
-    # Lohnsteuerbescheinigung
-    # ------------------------------------------
-
-    if metadata.document_type == "Lohnsteuerbescheinigung":
-
-        parts = []
-
-        zeitraum = metadata.contexts.get("Zeitraum")
-        if zeitraum:
-            parts.append(zeitraum)
-
-        firma = metadata.contexts.get("Firma")
-        if firma:
-            parts.append(firma)
-
-        parts.append("Lohnsteuerbescheinigung")
-
-        return "_".join(parts) + ".pdf"
-
-    # ------------------------------------------
-    # Standard
-    # ------------------------------------------
-
-    parts = []
-
-    if metadata.year:
-        parts.append(str(metadata.year))
-
-    if metadata.document_type:
-        parts.append(metadata.document_type)
-
-    if not parts:
-        return "Unbenannt.pdf"
-
-    return "_".join(parts) + ".pdf"
-```
+pip install -r requirements.txt
 
 ---
 
-# 📂 Projektstruktur (relevant für Sorterino)
+## 4️⃣ Start
 
-```
-Sorterino/
-│
-├── src/
-│   ├── main.py
-│   │
-│   ├── domain/
-│   │   ├── document.py
-│   │   ├── classification.py
-│   │   └── document_metadata.py
-│   │
-│   ├── usecases/
-│   │   ├── classify_document.py
-│   │   ├── rename_document.py
-│   │   ├── document_pipeline.py
-│   │   └── path_resolver.py
-│   │
-│   ├── infrastructure/
-│   │   ├── ocr/
-│   │   │   └── tesseract_ocr.py
-│   │   │
-│   │   ├── storage/
-│   │   │   └── filesystem_storage.py
-│   │   │
-│   │   ├── logging/
-│   │   │   └── file_logger.py
-│   │   │
-│   │   └── config/
-│   │       ├── config_loader.py
-│   │       ├── rules_loader.py
-│   │       ├── structure_loader.py
-│   │       ├── formats_loader.py
-│   │       └── initialize_workspace.py
-│
-├── rules.json
-├── structure.json
-├── supported_formats.json
-│
-├── third_party/
-│   ├── Tesseract-OCR/
-│   └── poppler-25.x/
-│
-└── .venv/
-```
+python main.py
 
 ---
 
-# 🔚 Aktueller Funktionsstand
+# 📂 Verwendung
 
-✔ Score-basierte Klassifikation  
-✔ Wortgrenzen-Matching  
-✔ Portable Tesseract  
-✔ Robuste Zeitraum-Erkennung  
-✔ Arbeitgeber-Erkennung  
-✔ Kontextbasierte Dateibenennung  
-✔ JSON-Struktur-Routing  
+- Lege Dokumente in „Sorterino - Input“
+- Sorterino verarbeitet automatisch:
+  - OCR
+  - Klassifikation
+  - Umbenennung
+  - Strukturierte Ablage
+
+Unklare Dokumente landen in:
+„Sorterino - Manuelle Sortierung“
 
 ---
 
-Wenn du das in einen neuen Chat postest, weiß ich exakt:
+# 🧠 Architektur
 
-- Wo wir architektonisch stehen  
-- Welche Version der Dateien aktiv ist  
-- Welche Features stabil sind  
-- Wo wir als nächstes optimieren können  
+Layer-Struktur:
 
-🚀 Sorterino ist aktuell eine robuste Dokumenten-Engine.
+- Domain
+- Usecases
+- Infrastructure
+- Interfaces
+
+Regeldefinition erfolgt über:
+
+- rules.json
+- structure.json
+- supported_formats.json
+
+---
+
+# 🧪 Tests
+
+pytest
+
+---
+
+# 📦 Release v0.2.0
+
+- Interface-konformes Storage
+- Portable OCR
+- JSON Routing stabil
+- Modular erweiterbar
 
 
 ===== F:\DevBox\01_PROJECTS\Sorterino\requirements.txt =====
 
-# Core dependencies
-sortedcontainers==2.4.0
-click==8.1.7
-
-# Data processing
-pandas==2.1.0
-numpy==1.24.3
-
-# Testing
-pytest==7.4.0
-pytest-cov==4.1.0
-
-# Code quality
-black==23.9.1
-flake8==6.1.0
-mypy==1.5.0
-
-# Development
-python-dotenv==1.0.0
+pytesseract==0.3.13
+pdf2image==1.17.0
+Pillow==12.1.1
+pytest==9.0.2
 
 
 ===== F:\DevBox\01_PROJECTS\Sorterino\rules.json =====
@@ -2947,143 +3202,32 @@ python-dotenv==1.0.0
   "rules": [
 
     {
-      "category": "Arbeit",
-      "document_type": "Gehaltsabrechnung",
+      "category": "BUCHHALTUNG",
+      "document_type": "Ausgangsrechnung",
       "keywords": [
-        "gehaltsabrechnung",
-        "lohnabrechnung",
-        "netto gage",
-        "auszahlung",
-        "steuerbrutto",
-        "abrechnungsmonat"
+        "hades it gmbh",
+        "rechnungsnummer",
+        "rechnungsbetrag",
+        "verkauf",
+        "ust.-id",
+        "hrb"
       ]
     },
 
     {
-      "category": "Arbeit",
-      "document_type": "Arbeitsvertrag",
+      "category": "BUCHHALTUNG",
+      "document_type": "Eingangsrechnung",
       "keywords": [
-        "arbeitsvertrag",
-        "anstellungsvertrag",
-        "beginn des arbeitsverhältnisses",
-        "kündigungsfrist",
-        "vertragspartner"
+        "rechnung",
+        "rechnungsnummer",
+        "gesamtbetrag",
+        "zahlung bis",
+        "liefer-/leistungsdatum"
       ]
     },
 
     {
-      "category": "Arbeit",
-      "document_type": "Arbeitsbescheinigung",
-      "keywords": [
-        "arbeitsbescheinigung",
-        "beschäftigungsverhältnis",
-        "§ 312 sgb iii"
-      ]
-    },
-
-    {
-      "category": "Steuer",
-      "document_type": "Lohnsteuerbescheinigung",
-      "keywords": [
-        "elektronische lohnsteuerbescheinigung",
-        "ausdruck der elektronischen lohnsteuerbescheinigung",
-        "bescheinigungszeitraum",
-        "identifikationsnummer",
-        "finanzamt, an das die lohnsteuer abgeführt wurde"
-      ]
-    },
-
-    {
-      "category": "Steuer",
-      "document_type": "Steuerbescheid",
-      "keywords": [
-        "steuerbescheid",
-        "festsetzung der einkommensteuer",
-        "festsetzung der umsatzsteuer"
-      ]
-    },
-
-    {
-      "category": "Steuer",
-      "document_type": "Bewilligungsbescheid",
-      "keywords": [
-        "bewilligungsbescheid",
-        "weiterbildungsgeld",
-        "förderung der beruflichen weiterbildung",
-        "sgb iii"
-      ]
-    },
-
-    {
-      "category": "Steuer",
-      "document_type": "Umsatzsteuer",
-      "keywords": [
-        "umsatzsteuer-voranmeldung",
-        "umsatzsteuererklärung",
-        "ust-va"
-      ]
-    },
-
-    {
-      "category": "Steuer",
-      "document_type": "Einkommensteuer",
-      "keywords": [
-        "einkommensteuererklärung",
-        "elster",
-        "einkommensteuerbescheid"
-      ]
-    },
-
-    {
-      "category": "Steuer",
-      "document_type": "Fahrtkosten",
-      "keywords": [
-        "fahrkarte",
-        "deutsche bahn",
-        "verkehrs-betriebe",
-        "kvb",
-        "bvg",
-        "mvg",
-        "flug",
-        "lufthansa",
-        "taxi",
-        "uber"
-      ]
-    },
-
-    {
-      "category": "Steuer",
-      "document_type": "Übernachtungskosten",
-      "keywords": [
-        "hotel",
-        "übernachtung",
-        "airbnb",
-        "booking.com"
-      ]
-    },
-
-    {
-      "category": "Steuer",
-      "document_type": "Bewirtungskosten",
-      "keywords": [
-        "bewirtungskosten",
-        "restaurantrechnung",
-        "bewirtungsbeleg"
-      ]
-    },
-
-    {
-      "category": "Finanzen",
-      "document_type": "Kontoabschluss",
-      "keywords": [
-        "kontoabschluss",
-        "rechnungsabschluss",
-        "quartalsabschluss"
-      ]
-    },
-
-    {
-      "category": "Finanzen",
+      "category": "BUCHHALTUNG",
       "document_type": "Kontoauszug",
       "keywords": [
         "kontoauszug",
@@ -3095,18 +3239,7 @@ python-dotenv==1.0.0
     },
 
     {
-      "category": "Finanzen",
-      "document_type": "Kreditvertrag",
-      "keywords": [
-        "kreditvertrag",
-        "darlehensvertrag",
-        "zinsbindung",
-        "tilgungsplan"
-      ]
-    },
-
-    {
-      "category": "Finanzen",
+      "category": "BUCHHALTUNG",
       "document_type": "Mahnung",
       "keywords": [
         "zahlungserinnerung",
@@ -3116,7 +3249,7 @@ python-dotenv==1.0.0
     },
 
     {
-      "category": "Finanzen",
+      "category": "BUCHHALTUNG",
       "document_type": "Gutschrift",
       "keywords": [
         "gutschrift",
@@ -3126,39 +3259,8 @@ python-dotenv==1.0.0
     },
 
     {
-      "category": "Finanzen",
-      "document_type": "Rechnung",
-      "keywords": [
-        "rechnungsnummer",
-        "rechnung vom",
-        "gesamtbetrag",
-        "zahlung bis"
-      ]
-    },
-
-    {
-      "category": "Versicherungen",
-      "document_type": "Versicherungsschein",
-      "keywords": [
-        "versicherungsschein",
-        "versicherungspolice",
-        "policennummer"
-      ]
-    },
-
-    {
-      "category": "Versicherungen",
-      "document_type": "Beitragsrechnung",
-      "keywords": [
-        "versicherungsbeitrag",
-        "beitragsrechnung",
-        "jahresbeitrag"
-      ]
-    },
-
-    {
-      "category": "IT",
-      "document_type": "Cloud-Rechnung",
+      "category": "BUCHHALTUNG",
+      "document_type": "Cloud-Kosten",
       "keywords": [
         "amazon web services",
         "aws billing",
@@ -3168,26 +3270,16 @@ python-dotenv==1.0.0
     },
 
     {
-      "category": "IT",
-      "document_type": "Lizenz",
+      "category": "BUCHHALTUNG",
+      "document_type": "Hosting",
       "keywords": [
-        "software license agreement",
-        "product key",
-        "serial number",
-        "subscription agreement"
-      ]
-    },
-
-    {
-      "category": "IT",
-      "document_type": "Hosting & Domain",
-      "keywords": [
-        "webhosting vertrag",
+        "webhosting",
         "domainregistrierung",
-        "dns eintrag",
-        "hostingrechnung"
+        "hostingrechnung",
+        "dns eintrag"
       ]
     }
+
   ]
 }
 
@@ -3375,6 +3467,8 @@ class Config:
 
         with open(config_path, "r", encoding="utf-8") as f:
             data = json.load(f)
+            self.raw = data
+            self.company_profile = data.get("company_profile", {})      
 
         # ----------------------------------------
         # Basis
@@ -3839,22 +3933,37 @@ class TesseractOCR:
 from pathlib import Path
 import shutil
 
+from interfaces.storage_service import StorageService
 
-class FilesystemStorage:
+
+class FilesystemStorage(StorageService):
 
     def __init__(self, base_path: Path):
         # base_path muss config.user_path sein
-        self.base_path = base_path
+        self.base_path = Path(base_path)
 
-    def save(self, source_path: Path, relative_target_path: str):
+    def store(
+        self,
+        source_path: str,
+        target_directory: str,
+        new_name: str
+    ) -> str:
+        """
+        Speichert die Datei im Zielverzeichnis unter neuem Namen
+        und gibt den finalen Pfad zurück.
+        """
 
-        target_path = self.base_path / relative_target_path
+        source = Path(source_path)
 
-        target_path.parent.mkdir(parents=True, exist_ok=True)
+        # Zielverzeichnis relativ zum base_path
+        target_dir = self.base_path / target_directory
+        target_dir.mkdir(parents=True, exist_ok=True)
 
-        shutil.move(str(source_path), str(target_path))
+        target_path = target_dir / new_name
 
-        return target_path
+        shutil.move(str(source), str(target_path))
+
+        return str(target_path)
 
 
 ===== F:\DevBox\01_PROJECTS\Sorterino\src\interfaces\__init__.py =====
@@ -3932,7 +4041,9 @@ class StorageService(ABC):
 
 ===== F:\DevBox\01_PROJECTS\Sorterino\src\usecases\classify_document.py =====
 
+import os
 import re
+
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
@@ -4035,20 +4146,37 @@ def sanitize(value: str) -> str:
 # Hauptklassifikation
 # --------------------------------------------------
 
-def classify_document(document: Document, rules: List[Dict[str, Any]]):
+def classify_document(
+    document: Document,
+    rules: List[Dict[str, Any]],
+    company_profile: Dict[str, Any]
+):
 
     text = document.extracted_text or ""
 
     if not text.strip():
         return Classification(category="Manuell", confidence=0.1)
 
-    text_lower = text.lower()
+    original_filename = os.path.basename(document.source_path)
+
+    combined_text = f"{text}\n{original_filename}"
+    text_lower = combined_text.lower()
 
     category, document_type = apply_rules(text_lower, rules)
 
     contexts: Dict[str, str] = {}
 
     year = extract_year(text)
+
+
+    company_name = company_profile.get("name", "").lower()
+
+    if company_name and company_name in text_lower:
+        contexts["EigeneFirma"] = "True"
+    
+    if metadata.year:
+        metadata.contexts["month_number"] = str(metadata.month).zfill(2)
+        metadata.contexts["month_name"] = month_name_lookup(...)
 
     if document_type == "Lohnsteuerbescheinigung":
 
@@ -4072,6 +4200,7 @@ def classify_document(document: Document, rules: List[Dict[str, Any]]):
     if category:
         return Classification(category=category, confidence=0.9)
 
+
     return Classification(category="Manuell", confidence=0.2)
 
 
@@ -4093,6 +4222,7 @@ class DocumentPipeline:
         storage_service,
         logger,
         rules,
+        company_profile,
         supported_extensions,
         unsupported_target,
         structure,
@@ -4103,9 +4233,9 @@ class DocumentPipeline:
         self.storage_service = storage_service
         self.logger = logger
         self.rules = rules
+        self.company_profile = company_profile
         self.supported_extensions = supported_extensions
         self.unsupported_target = unsupported_target
-
         self.path_resolver = PathResolver(structure)
 
     # --------------------------------------------------
@@ -4194,7 +4324,11 @@ class DocumentPipeline:
         # ------------------------------------------
 
         print("   🟡 Klassifikation starte...")
-        classification = classify_document(document, self.rules)
+        classification = classify_document(
+            document,
+            self.rules,
+            self.company_profile
+        )
 
         if not classification or not classification.category:
             print("   ⚠️ Keine Kategorie erkannt → Manuelle Sortierung")
@@ -4366,149 +4500,31 @@ def rename_document(document):
 ===== F:\DevBox\01_PROJECTS\Sorterino\structure.json =====
 
 {
-  "Arbeit": {
-    "Arbeitgeber": {
-      "{Firma}": {
+  "BUCHHALTUNG": {
 
-        "00_Stammdaten": {
-          "Personalbogen": {},
-          "Steuerdaten": {},
-          "Sozialversicherungsdaten": {}
-        },
-
-        "01_Verträge": {
-          "Arbeitsvertrag": {},
-          "Zusatzvereinbarungen": {},
-          "Änderungsverträge": {},
-          "Kündigung": {},
-          "Aufhebungsvertrag": {}
-        },
-
-        "02_Lohn": {
-          "{Jahr}": {
-            "Gehaltsabrechnung": {},
-            "Bonus_und_Prämien": {},
-            "Einmalzahlungen": {}
-          }
-        },
-
-        "03_Steuer": {
-          "{Jahr}": {
-            "Lohnsteuerbescheinigung": {},
-            "ELStAM": {}
-          }
-        },
-
-        "04_Sozialversicherung": {
-          "{Jahr}": {
-            "SV_Meldungen": {},
-            "Krankenkasse": {},
-            "Rentenversicherung": {},
-            "Arbeitslosenversicherung": {}
-          }
-        },
-
-        "99_Sonstiges": {}
-      }
-    }
-  },
-
-  "Steuer": {
-    "{Jahr}": {
-
-      "01_Bescheide": {
-        "Steuerbescheid": {},
-        "Bewilligungsbescheid": {},
-        "Einkommensteuer": {},
-        "Umsatzsteuer": {},
-        "Gewerbesteuer": {},
-        "Kirchensteuer": {}
-      },
-
-      "03_Rechnungen": {
-        "Werbungskosten": {
-          "Fahrtkosten": {},
-          "Fortbildung": {},
-          "Arbeitsmittel": {},
-          "Homeoffice": {},
-          "Fachliteratur": {}
-        },
-        "Versicherungen": {},
-        "Spenden": {},
-        "Sonderausgaben": {},
-        "Aussergewoehnliche_Belastungen": {}
-      },
-
-      "04_Kontoauszuege": {},
-      "99_Sonstiges": {}
-    }
-  },
-
-  "Versicherungen": {
-    "{Gesellschaft}": {
-      "01_Vertraege": {},
-      "02_Rechnungen": { "{Jahr}": {} },
-      "03_Schaeden": {},
-      "04_Leistungsabrechnungen": {},
-      "99_Sonstiges": {}
-    }
-  },
-
-  "Finanzen": {
-
-    "Banken": {
-      "{Bank}": {
-        "Girokonto": {
-          "{Jahr}": {
-            "Kontoauszug": {},
-            "Kontoabschluss": {}
-          }
-        },
-        "Kreditkarte": { "{Jahr}": {} },
-        "Kredite": {},
-        "Darlehen": {},
-        "Schriftverkehr": {}
+    "Ausgangsrechnung": {
+      "{Jahr}": {
+        "{month_number} {month_name}": {}
       }
     },
 
-    "Sparprodukte": {
-      "ETF_und_Depot": {
-        "{Depotbank}": {
-          "Kaufabrechnungen": {},
-          "Verkaufsabrechnungen": {},
-          "Dividenden": {},
-          "Jahressteuerbescheinigung": {}
-        }
+    "Eingangsrechnung": {
+      "{Jahr}": {
+        "{month_number} {month_name}": {}
       }
     },
 
-    "99_Sonstiges": {}
-  },
+    "Kontoauszug": {
+      "{Jahr}": {
+        "{month_number} {month_name}": {}
+      }
+    },
 
-  "IT": {
-    "Lizenzen": {},
-    "Rechnungen": {},
-    "Hosting": {},
-    "Domains": {},
-    "Vertraege": {},
-    "Backup": {},
-    "Zertifikate": {},
-    "Zugangsdaten": {}
-  },
+    "Mahnung": {
+      "{Jahr}": {}
+    }
 
-  "Dokumente": {
-    "Identitaet": {},
-    "Urkunden": {},
-    "99_Sonstiges": {}
-  },
-
-  "Eigentum": {
-    "Fahrzeuge": {},
-    "Immobilie": {},
-    "99_Sonstiges": {}
-  },
-
-  "99_Sonstiges": {}
+  }
 }
 
 

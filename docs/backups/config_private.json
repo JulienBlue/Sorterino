@@ -1,0 +1,31 @@
+{
+  "user_path": "C:\\Users\\JulienBlueHirte\\OneDrive - Hades IT GmbH\\Desktop\\Dokumente",
+
+  "runtime_folder_name": ".sorterino_runtime",
+
+  "input_folder_name": "Sorterino - Input",
+  "manual_sort_folder_name": "Sorterino - Manuelle Sortierung",
+
+  "scan_interval_seconds": 10,
+
+  "poppler_path": "third_party/poppler-25.12.0/Library/bin",
+  "tesseract_path": "third_party/Tesseract-OCR/tesseract.exe",
+
+  "identities": [
+    {
+      "name": "Julien Blue Hirte",
+      "type": "private",
+      "keywords": ["Julien Blue Hirte"]
+    },
+    {
+      "name": "Sabine Hirte",
+      "type": "private",
+      "keywords": ["Sabine Hirte"]
+    },
+    {
+      "name": "Seraph IT",
+      "type": "company",
+      "keywords": ["Seraph IT", "Georgij Boguslawskij"]
+    }
+  ]
+}

@@ -1,93 +1,139 @@
-# 🧠 Sorterino v0.2.0
+🧠 Sorterino v0.2.5
 
-Automatisierte OCR-Dokumenten-Engine mit regelbasierter Klassifikation.
+Automatisierte OCR-Dokumenten-Engine mit strukturierter Ablage, intelligenter Rollen-Erkennung und modularer Architektur.
 
----
+🚀 Schnellstart
+Voraussetzungen
 
-# 🚀 Schnellstart
+Python 3.10+
 
-## Voraussetzungen
+pip
 
-- Python 3.10+
-- pip
+Windows (für automatische Junction-Erstellung)
 
-Tesseract und Poppler sind im Ordner `third_party/` enthalten.
+Tesseract und Poppler sind im Ordner third_party/ enthalten und werden automatisch eingebunden.
 
----
-
-## 1️⃣ Konfiguration
+1️⃣ Konfiguration
 
 Öffne:
 
 config.json
 
-Setze:
+Setze dein Arbeitsverzeichnis:
 
 "user_path": "C:\\Users\\DEINNAME\\Dokumente"
 
-Dieser Ordner ist dein Arbeitsverzeichnis.
+Sorterino erstellt dort automatisch eine interne Runtime-Struktur.
 
----
-
-## 2️⃣ Virtuelle Umgebung
-
+2️⃣ Virtuelle Umgebung
 python -m venv .venv
 .venv\Scripts\activate
-
----
-
-## 3️⃣ Abhängigkeiten installieren
-
+3️⃣ Abhängigkeiten installieren
 pip install -r requirements.txt
-
----
-
-## 4️⃣ Start
-
+4️⃣ Start
 python main.py
+📂 Arbeitsweise
 
----
+Beim ersten Start wird im Arbeitsverzeichnis erzeugt:
 
-# 📂 Verwendung
+.sorterino_runtime/
+    incoming/
+    processed/
+    manual_sort/
+    error/
+    logs/
+    temp/
 
-- Lege Dokumente in „Sorterino - Input“
-- Sorterino verarbeitet automatisch:
-  - OCR
-  - Klassifikation
-  - Umbenennung
-  - Strukturierte Ablage
+Zusätzlich werden sichtbare Verknüpfungen erstellt:
 
-Unklare Dokumente landen in:
-„Sorterino - Manuelle Sortierung“
+Sorterino - Input
 
----
+Sorterino - Manuelle Sortierung
 
-# 🧠 Architektur
+🔄 Verarbeitungsablauf
 
-Layer-Struktur:
+Sorterino führt folgende Schritte automatisch aus:
 
-- Domain
-- Usecases
-- Infrastructure
-- Interfaces
+OCR (PDF & Bildformate)
 
-Regeldefinition erfolgt über:
+Textanalyse & Rollen-Erkennung (Eingang / Ausgang)
 
-- rules.json
-- structure.json
-- supported_formats.json
+Metadaten-Extraktion
 
----
+Rechnungsnummer
 
-# 🧪 Tests
+Rechnungsdatum
 
-pytest
+Betrag
 
----
+Geschäftspartner
 
-# 📦 Release v0.2.0
+Regelbasierte Klassifikation
 
-- Interface-konformes Storage
-- Portable OCR
-- JSON Routing stabil
-- Modular erweiterbar
+Kontextbasierte Dateibenennung
+
+Strukturierte Archivierung
+
+Duplikatschutz bei Dateinamen
+
+Tagesbasiertes Logging
+
+Unklare Dokumente werden automatisch verschoben nach:
+
+Sorterino - Manuelle Sortierung
+
+🧠 Architektur
+
+Projektstruktur nach Clean-Architecture-Prinzip:
+
+Domain
+
+Usecases
+
+Infrastructure
+
+Interfaces
+
+Konfiguration erfolgt vollständig über JSON:
+
+config.json
+
+rules.json
+
+structure.json
+
+supported_formats.json
+
+📄 Logging
+
+Logs werden automatisch erzeugt unter:
+
+.sorterino_runtime/logs/
+
+Dateiname:
+
+sorterino_logs_YYYY-MM-DD.log
+
+📦 Release v0.2.5
+
+Stabilisierungs- und Architektur-Release:
+
+Runtime-Isolation (.sorterino_runtime)
+
+Interface-basierte Services
+
+Integriertes Logging-System
+
+Rollen-Erkennung (Eingangs- / Ausgangsrechnung)
+
+Kontextbasierte Dateibenennung
+
+Duplikatschutz im Storage
+
+Modular erweiterbare Pipeline
+
+Struktur-Resolver für dynamische Ordnerpfade
+
+🎯 Status
+
+Release v0.3.0 – Clean Baseline - markiert einen stabilen Architekturstand mit klarer Trennung von Domain, Usecases und Infrastructure.

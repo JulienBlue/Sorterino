@@ -1,50 +1,130 @@
+import os
 import re
 
 
-def sanitize(value: str) -> str:
+def sanitize_filename(value: str) -> str:
     value = value.strip()
-    value = value.replace(" ", "_")
-    value = re.sub(r"[^A-Za-z0-9_äöüÄÖÜß\-\.]", "", value)
-    return value
+    value = re.sub(r'[\\/:*?"<>|]', "", value)
+    value = value.lstrip(".\\/- ")
+    value = re.sub(r"\s+", " ", value)
+    return value.strip()
 
 
 def rename_document(document):
 
     metadata = document.metadata
+    contexts = metadata.contexts or {}
+    ext = os.path.splitext(document.source_path)[1]
+
+    MAX_LENGTH = 240  # Windows-Sicherheitsgrenze
+
+    def safe(value):
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return None
+        return str(value).strip()
+
+    def clean_party(value):
+        if not value:
+            return "UNBEKANNT"
+
+        value = str(value)
+
+        # OCR-Reste abschneiden
+        STOP_WORDS = [
+            "LIEFER", "LEISTUNG", "RECHNUNGSDATUM",
+            "KUNDENNUMMER", "IBAN", "BIC"
+        ]
+
+        upper_value = value.upper()
+
+        for word in STOP_WORDS:
+            if word in upper_value:
+                upper_value = upper_value.split(word)[0]
+
+        # Adresse nach Bindestrich entfernen
+        upper_value = upper_value.split(" - ")[0]
+
+        return sanitize_filename(upper_value.strip(" -")) or "UNBEKANNT"
+
+    document_type = safe(metadata.document_type)
 
     # --------------------------------------------------
-    # Lohnsteuerbescheinigung
+    # AUSGANGSRECHNUNG
     # --------------------------------------------------
 
-    if metadata.document_type == "Lohnsteuerbescheinigung":
+    if document_type == "Ausgangsrechnung":
+
+        invoice_number = safe(contexts.get("invoice_number"))
+        invoice_date = safe(contexts.get("invoice_date"))
+        customer = clean_party(contexts.get("party"))
+
+        if invoice_number and invoice_date:
+            filename = f"Rechnung_{invoice_number} vom {invoice_date} {customer}"
+        else:
+            filename = "Rechnung_UNBEKANNT vom UNBEKANNT UNBEKANNT"
+
+        filename = sanitize_filename(filename)
+
+        if len(filename) > MAX_LENGTH:
+            filename = filename[:MAX_LENGTH]
+
+        return filename + ext
+
+    # --------------------------------------------------
+    # EINGANGSRECHNUNG
+    # --------------------------------------------------
+
+    if document_type == "Eingangsrechnung":
+
+        supplier = clean_party(contexts.get("party"))
+        amount = safe(contexts.get("amount"))
+        date = safe(contexts.get("invoice_date"))
 
         parts = []
 
-        zeitraum = metadata.contexts.get("Zeitraum")
-        if zeitraum:
-            parts.append(zeitraum)
+        if date:
+            parts.append(date)
 
-        firma = metadata.contexts.get("Firma")
-        if firma:
-            parts.append(firma)
+        parts.append(supplier)
 
-        parts.append("Lohnsteuerbescheinigung")
+        if amount:
+            parts.append(amount)
 
-        return "_".join(parts) + ".pdf"
+        filename = " - ".join(parts)
+        filename = sanitize_filename(filename)
+
+        if len(filename) > MAX_LENGTH:
+            filename = filename[:MAX_LENGTH]
+
+        return filename + ext
 
     # --------------------------------------------------
-    # Standardfall
+    # SONSTIGES
     # --------------------------------------------------
 
     parts = []
 
-    if metadata.year:
-        parts.append(str(metadata.year))
+    year = safe(metadata.year)
+    if year:
+        parts.append(year)
 
-    if metadata.document_type:
-        parts.append(metadata.document_type)
+    if document_type:
+        parts.append(document_type)
+
+    party = clean_party(contexts.get("party"))
+    if party and party != "UNBEKANNT":
+        parts.append(party)
 
     if not parts:
-        return "Unbenannt.pdf"
+        original = os.path.splitext(os.path.basename(document.source_path))[0]
+        parts.append(original)
 
-    return "_".join(parts) + ".pdf"
+    filename = "_".join(parts)
+    filename = sanitize_filename(filename)
+
+    if len(filename) > MAX_LENGTH:
+        filename = filename[:MAX_LENGTH]
+
+    return filename + ext

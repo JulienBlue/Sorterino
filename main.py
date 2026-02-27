@@ -7,12 +7,9 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 SRC_PATH = BASE_DIR / "src"
 
-# src dem Python-Path hinzufügen
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
-# -------------------------------------------------
-# Jetzt dürfen wir src-Module importieren
 # -------------------------------------------------
 
 from infrastructure.config.config_loader import Config
@@ -28,27 +25,23 @@ from infrastructure.storage.filesystem_storage import FilesystemStorage
 
 from usecases.document_pipeline import DocumentPipeline
 
+logger = FileLogger(Path("logs"))
 
 
 def main() -> None:
 
-    # 1. Konfiguration
     config_path = BASE_DIR / "config.json"
     config = Config(config_path)
+    company_profile = config.raw.get("company_profile", {})
 
     if not config.user_path:
         raise ValueError("user_path ist nicht konfiguriert.")
 
-    # 2. Workspace
     initialize_workspace(config)
 
-    # 3. Rules
     rules = RulesLoader(BASE_DIR / "rules.json").load_rules()
-
-    # 4. Struktur
     structure = StructureLoader(BASE_DIR / "structure.json").load_structure()
 
-    # 5. Formate
     formats_config = FormatsLoader(
         BASE_DIR / "supported_formats.json"
     ).load()
@@ -56,45 +49,40 @@ def main() -> None:
     supported_extensions = set(formats_config["supported_extensions"])
     unsupported_target = formats_config["unsupported_target"]
 
-    # 6. Infrastruktur
-
-    # EINZIGE Quelle: incoming
     source = FolderDocumentSource(config.incoming_root)
+
+    logger = FileLogger(config.logs_root)
 
     ocr_service = TesseractOCR(
         poppler_path=str(config.poppler_path),
-        tesseract_path=str(config.tesseract_path)
+        tesseract_path=str(config.tesseract_path),
+        logger=logger
     )
 
-    logger = FileLogger()
+    # STORAGE-KONTEXTE
+    runtime_storage = FilesystemStorage(config.runtime_root)
+    archive_storage = FilesystemStorage(config.user_path)
 
-    storage_service = FilesystemStorage(config.user_path)
-
-    # 7. Pipeline
     pipeline = DocumentPipeline(
         sources=[source],
         ocr_service=ocr_service,
-        storage_service=storage_service,
+        runtime_storage=runtime_storage,
+        archive_storage=archive_storage,
         logger=logger,
         rules=rules,
+        company_profile=company_profile,
         supported_extensions=supported_extensions,
         unsupported_target=unsupported_target,
         structure=structure,
-        manual_sort_target=config.manual_sort_root
+        manual_sort_target="manual_sort",
+        error_target="error"
     )
 
-    # 8. Start
     pipeline.run()
-
-# Debug
-    # print("User Path:", config.user_path)
-    # print("Runtime Root:", config.runtime_root)
-    # print("Incoming Root:", config.incoming_root)
-    # print("Manual Sort Root:", config.manual_sort_root)
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n⏹️  Ausführung manuell beendet.")
+        logger.log("🔵 Ausführung manuell beendet.")

@@ -3,56 +3,30 @@ import os
 
 class PathResolver:
 
-    def __init__(self, structure: dict):
-        self.tree = structure
+    def __init__(self, structure):
+        self.structure = structure
 
-    def resolve(self, metadata) -> str:
-
+    def resolve(self, metadata):
         category = metadata.category
+        doc_type = metadata.document_type
+        year = metadata.year
+        contexts = metadata.contexts or {}
 
-        if not category or category not in self.tree:
-            return "99_Sonstiges"
-
-        path_parts = [category]
-        node = self.tree[category]
-
-        resolved = self._walk(node, metadata)
-
-        if resolved:
-            path_parts.extend(resolved)
-
-        return os.path.join(*path_parts)
-
-    def _walk(self, node: dict, metadata):
-
-        if not isinstance(node, dict):
+        if not category:
             return None
 
-        dynamic_values = {
-            f"{{{key}}}": value
-            for key, value in metadata.contexts.items()
-            if value
-        }
+        path_parts = [category]
 
-        if metadata.year:
-            dynamic_values["{Jahr}"] = str(metadata.year)
+        if doc_type:
+            path_parts.append(doc_type + "en" if not doc_type.endswith("en") else doc_type)
 
-        for key, value in node.items():
+        if year:
+            path_parts.append(str(year))
 
-            # Dynamischer Platzhalter
-            if key in dynamic_values:
-                sub_path = self._walk(value, metadata)
-                return [dynamic_values[key]] + (sub_path or [])
+        month_number = contexts.get("month_number")
+        month_name = contexts.get("month_name")
 
-            # Dokumenttyp
-            if key == metadata.document_type:
-                sub_path = self._walk(value, metadata)
-                return [key] + (sub_path or [])
+        if month_number and month_name:
+            path_parts.append(f"{month_number} {month_name}")
 
-            # Rekursiv weiter
-            if isinstance(value, dict):
-                sub_path = self._walk(value, metadata)
-                if sub_path:
-                    return [key] + sub_path
-
-        return None
+        return "\\".join(path_parts)

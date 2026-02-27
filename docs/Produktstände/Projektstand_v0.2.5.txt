@@ -1,0 +1,2238 @@
+===== F:\DevBox\01_PROJECTS\Sorterino\config.json =====
+
+{
+  "user_path": "C:\\Users\\JulienBlueHirte\\OneDrive - Hades IT GmbH\\Tanja\\Hades IT GmbH - Autotest",
+
+  "runtime_folder_name": ".sorterino_runtime",
+
+  "input_folder_name": "Sorterino - Input",
+  "manual_sort_folder_name": "Sorterino - Manuelle Sortierung",
+
+  "scan_interval_seconds": 10,
+
+  "poppler_path": "third_party/poppler-25.12.0/Library/bin",
+  "tesseract_path": "third_party/Tesseract-OCR/tesseract.exe",
+
+  "company_profile": {
+    "name": "Hades IT GmbH",
+    "iban": "DE77202208000026631589",
+    "address_keywords": [
+      "Am Frankenturm 5",
+      "50667 Köln"
+    ]
+  }
+}
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\main.py =====
+
+import sys
+from pathlib import Path
+
+# -------------------------------------------------
+# Projekt-Root bestimmen
+# -------------------------------------------------
+BASE_DIR = Path(__file__).resolve().parent
+SRC_PATH = BASE_DIR / "src"
+
+if str(SRC_PATH) not in sys.path:
+    sys.path.insert(0, str(SRC_PATH))
+
+# -------------------------------------------------
+
+from infrastructure.config.config_loader import Config
+from infrastructure.config.rules_loader import RulesLoader
+from infrastructure.config.structure_loader import StructureLoader
+from infrastructure.config.formats_loader import FormatsLoader
+from infrastructure.config.initialize_workspace import initialize_workspace
+
+from infrastructure.io.folder_document_source import FolderDocumentSource
+from infrastructure.ocr.tesseract_ocr import TesseractOCR
+from infrastructure.logging.file_logger import FileLogger
+from infrastructure.storage.filesystem_storage import FilesystemStorage
+
+from usecases.document_pipeline import DocumentPipeline
+
+logger = FileLogger(Path("logs"))
+
+
+def main() -> None:
+
+    config_path = BASE_DIR / "config.json"
+    config = Config(config_path)
+    company_profile = config.raw.get("company_profile", {})
+
+    if not config.user_path:
+        raise ValueError("user_path ist nicht konfiguriert.")
+
+    initialize_workspace(config)
+
+    rules = RulesLoader(BASE_DIR / "rules.json").load_rules()
+    structure = StructureLoader(BASE_DIR / "structure.json").load_structure()
+
+    formats_config = FormatsLoader(
+        BASE_DIR / "supported_formats.json"
+    ).load()
+
+    supported_extensions = set(formats_config["supported_extensions"])
+    unsupported_target = formats_config["unsupported_target"]
+
+    source = FolderDocumentSource(config.incoming_root)
+
+    logger = FileLogger(config.logs_root)
+
+    ocr_service = TesseractOCR(
+        poppler_path=str(config.poppler_path),
+        tesseract_path=str(config.tesseract_path),
+        logger=logger
+    )
+
+    # STORAGE-KONTEXTE
+    runtime_storage = FilesystemStorage(config.runtime_root)
+    archive_storage = FilesystemStorage(config.user_path)
+
+    pipeline = DocumentPipeline(
+        sources=[source],
+        ocr_service=ocr_service,
+        runtime_storage=runtime_storage,
+        archive_storage=archive_storage,
+        logger=logger,
+        rules=rules,
+        company_profile=company_profile,
+        supported_extensions=supported_extensions,
+        unsupported_target=unsupported_target,
+        structure=structure,
+        manual_sort_target="manual_sort",
+        error_target="error"
+    )
+
+    pipeline.run()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        logger.log("🔵 Ausführung manuell beendet.")
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\README.txt =====
+
+🧠 Sorterino v0.2.5
+
+Automatisierte OCR-Dokumenten-Engine mit strukturierter Ablage, intelligenter Rollen-Erkennung und modularer Architektur.
+
+🚀 Schnellstart
+Voraussetzungen
+
+Python 3.10+
+
+pip
+
+Windows (für automatische Junction-Erstellung)
+
+Tesseract und Poppler sind im Ordner third_party/ enthalten und werden automatisch eingebunden.
+
+1️⃣ Konfiguration
+
+Öffne:
+
+config.json
+
+Setze dein Arbeitsverzeichnis:
+
+"user_path": "C:\\Users\\DEINNAME\\Dokumente"
+
+Sorterino erstellt dort automatisch eine interne Runtime-Struktur.
+
+2️⃣ Virtuelle Umgebung
+python -m venv .venv
+.venv\Scripts\activate
+3️⃣ Abhängigkeiten installieren
+pip install -r requirements.txt
+4️⃣ Start
+python main.py
+📂 Arbeitsweise
+
+Beim ersten Start wird im Arbeitsverzeichnis erzeugt:
+
+.sorterino_runtime/
+    incoming/
+    processed/
+    manual_sort/
+    error/
+    logs/
+    temp/
+
+Zusätzlich werden sichtbare Verknüpfungen erstellt:
+
+Sorterino - Input
+
+Sorterino - Manuelle Sortierung
+
+🔄 Verarbeitungsablauf
+
+Sorterino führt folgende Schritte automatisch aus:
+
+OCR (PDF & Bildformate)
+
+Textanalyse & Rollen-Erkennung (Eingang / Ausgang)
+
+Metadaten-Extraktion
+
+Rechnungsnummer
+
+Rechnungsdatum
+
+Betrag
+
+Geschäftspartner
+
+Regelbasierte Klassifikation
+
+Kontextbasierte Dateibenennung
+
+Strukturierte Archivierung
+
+Duplikatschutz bei Dateinamen
+
+Tagesbasiertes Logging
+
+Unklare Dokumente werden automatisch verschoben nach:
+
+Sorterino - Manuelle Sortierung
+
+🧠 Architektur
+
+Projektstruktur nach Clean-Architecture-Prinzip:
+
+Domain
+
+Usecases
+
+Infrastructure
+
+Interfaces
+
+Konfiguration erfolgt vollständig über JSON:
+
+config.json
+
+rules.json
+
+structure.json
+
+supported_formats.json
+
+📄 Logging
+
+Logs werden automatisch erzeugt unter:
+
+.sorterino_runtime/logs/
+
+Dateiname:
+
+sorterino_logs_YYYY-MM-DD.log
+🧪 Tests
+pytest
+📦 Release v0.2.5
+
+Stabilisierungs- und Architektur-Release:
+
+Runtime-Isolation (.sorterino_runtime)
+
+Interface-basierte Services
+
+Integriertes Logging-System
+
+Rollen-Erkennung (Eingangs- / Ausgangsrechnung)
+
+Kontextbasierte Dateibenennung
+
+Duplikatschutz im Storage
+
+Modular erweiterbare Pipeline
+
+Struktur-Resolver für dynamische Ordnerpfade
+
+🎯 Status
+
+Version 0.2.5 markiert einen stabilen Architekturstand mit klarer Trennung von Domain, Usecases und Infrastructure.
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\requirements.txt =====
+
+pytesseract==0.3.13
+pdf2image==1.17.0
+Pillow==12.1.1
+pytest==9.0.2
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\rules.json =====
+
+{
+  "rules": [
+    {
+      "category": "BUCHHALTUNG",
+      "document_type": "Ausgangsrechnung",
+      "keywords": [
+        "rechnungsnummer",
+        "ust.-id",
+        "verkauf"
+      ],
+      "conditions": {
+        "must_contain_company_name": true
+      }
+    },
+    {
+      "category": "BUCHHALTUNG",
+      "document_type": "Eingangsrechnung",
+      "keywords": [
+        "rechnung",
+        "rechnungsnummer",
+        "gesamtbetrag",
+        "zahlung bis"
+      ],
+      "conditions": {
+        "must_not_contain_company_name": true
+      }
+    },
+    {
+      "category": "BUCHHALTUNG",
+      "document_type": "Kontoauszug",
+      "keywords": [
+        "kontoauszug",
+        "wertstellung",
+        "iban"
+      ]
+    },
+    {
+      "category": "BUCHHALTUNG",
+      "document_type": "Mahnung",
+      "keywords": [
+        "mahnung",
+        "zahlungserinnerung",
+        "fristsetzung"
+      ]
+    }
+  ]
+}
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\domain\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\domain\classification.py =====
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Classification:
+    category: str
+    confidence: float
+
+    def __post_init__(self):
+        if not 0.0 <= self.confidence <= 1.0:
+            raise ValueError("Confidence must be between 0.0 and 1.0.")
+
+        if not self.category:
+            raise ValueError("Category cannot be empty.")
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\domain\document_metadata.py =====
+
+from dataclasses import dataclass, field
+from typing import Optional, Dict
+
+
+@dataclass
+class DocumentMetadata:
+    year: Optional[int] = None
+    month: Optional[int] = None
+    day: Optional[int] = None
+
+    category: Optional[str] = None
+    document_type: Optional[str] = None
+
+    invoice_number: Optional[str] = None
+
+    # Kontextdaten wie Firma, Bank, Zeitraum etc.
+    contexts: Dict[str, str] = field(default_factory=dict)
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\domain\document.py =====
+
+from dataclasses import dataclass, field
+from typing import Optional
+from uuid import uuid4
+
+from .enums import DocumentStatus
+from .classification import Classification
+from .document_metadata import DocumentMetadata
+
+
+@dataclass
+class Document:
+    source_path: str
+    id: str = field(default_factory=lambda: str(uuid4()))
+    extracted_text: Optional[str] = None
+    classification: Optional[Classification] = None
+    metadata: Optional[DocumentMetadata] = None
+    target_path: Optional[str] = None
+    status: DocumentStatus = DocumentStatus.NEW
+
+    def mark_analyzed(self, text: str) -> None:
+        if self.status != DocumentStatus.NEW:
+            raise ValueError("Document can only be analyzed from NEW state.")
+
+        if not text:
+            raise ValueError("Extracted text cannot be empty.")
+
+        self.extracted_text = text
+        self.status = DocumentStatus.ANALYZED
+
+    def mark_classified(self, classification: Classification) -> None:
+        if self.status != DocumentStatus.ANALYZED:
+            raise ValueError("Document must be analyzed before classification.")
+
+        self.classification = classification
+        self.status = DocumentStatus.CLASSIFIED
+
+    def set_metadata(self, metadata: DocumentMetadata) -> None:
+        self.metadata = metadata
+
+    def mark_stored(self, target_path: str) -> None:
+        if self.status != DocumentStatus.CLASSIFIED:
+            raise ValueError("Document must be classified before storing.")
+
+        if not target_path:
+            raise ValueError("Target path cannot be empty.")
+
+        self.target_path = target_path
+        self.status = DocumentStatus.STORED
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\domain\enums.py =====
+
+from enum import Enum
+
+class DocumentStatus(Enum):
+    NEW = "NEW"
+    ANALYZED = "ANALYZED"
+    CLASSIFIED = "CLASSIFIED"
+    RENAMED = "RENAMED"
+    STORED = "STORED"
+    ERROR = "ERROR"
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\gui\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\gui\app.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\backup\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\backup\backup_document.py =====
+
+import os
+import shutil
+
+
+def backup_document(source_path: str, backup_folder: str) -> str:
+    """
+    Creates a backup copy of the file in the backup folder.
+    Returns the backup path.
+    """
+
+    os.makedirs(backup_folder, exist_ok=True)
+
+    original_filename = os.path.basename(source_path)
+    name, ext = os.path.splitext(original_filename)
+
+    backup_path = os.path.join(backup_folder, original_filename)
+
+    # Falls Datei existiert → nummerieren
+    if os.path.exists(backup_path):
+        counter = 1
+        while True:
+            new_filename = f"{name}_{counter}{ext}"
+            new_backup_path = os.path.join(backup_folder, new_filename)
+
+            if not os.path.exists(new_backup_path):
+                backup_path = new_backup_path
+                break
+
+            counter += 1
+
+    shutil.copy2(source_path, backup_path)
+
+    return backup_path
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\config\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\config\config_loader.py =====
+
+from pathlib import Path
+import json
+
+
+class Config:
+
+    def __init__(self, config_path: Path):
+
+        self.project_root = Path(__file__).resolve().parents[3]
+
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            self.raw = data
+            self.company_profile = data.get("company_profile", {})      
+
+        # ----------------------------------------
+        # Basis
+        # ----------------------------------------
+        self.user_path = Path(data["user_path"]).resolve()
+        self.runtime_folder_name = data.get(
+            "runtime_folder_name",
+            ".sorterino_runtime"
+        )
+
+        # Sichtbare Junction-Namen
+        self.visible_input_name = data["input_folder_name"]
+        self.visible_manual_sort_name = data["manual_sort_folder_name"]
+
+        # ----------------------------------------
+        # Runtime Root
+        # ----------------------------------------
+        self.runtime_root = self.user_path / self.runtime_folder_name
+
+        # ----------------------------------------
+        # Runtime interne Struktur
+        # ----------------------------------------
+        self.incoming_folder_name = "incoming"
+        self.manual_sort_folder_name = "manual_sort"
+        self.processed_folder_name = "processed"
+        self.error_folder_name = "error"
+        self.logs_folder_name = "logs"
+        self.temp_folder_name = "temp"
+
+        # ----------------------------------------
+        # Third-Party
+        # ----------------------------------------
+        self.poppler_path = self._resolve_project_path(
+            data["poppler_path"]
+        )
+        self.tesseract_path = self._resolve_project_path(
+            data["tesseract_path"]
+        )
+
+        # ----------------------------------------
+        # Sonstiges
+        # ----------------------------------------
+        self.scan_interval_seconds = data["scan_interval_seconds"]
+        self.identities = data.get("identities", [])
+
+    def _resolve_project_path(self, path_str: str) -> Path:
+        path = Path(path_str)
+        if path.is_absolute():
+            return path.resolve()
+        return (self.project_root / path).resolve()
+
+    # ---------------- Runtime-Pfade ----------------
+
+    @property
+    def incoming_root(self) -> Path:
+        return self.runtime_root / self.incoming_folder_name
+
+    @property
+    def manual_sort_root(self) -> Path:
+        return self.runtime_root / self.manual_sort_folder_name
+
+    @property
+    def processed_root(self) -> Path:
+        return self.runtime_root / self.processed_folder_name
+
+    @property
+    def error_root(self) -> Path:
+        return self.runtime_root / self.error_folder_name
+
+    @property
+    def logs_root(self) -> Path:
+        return self.runtime_root / self.logs_folder_name
+
+    @property
+    def temp_root(self) -> Path:
+        return self.runtime_root / self.temp_folder_name
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\config\formats_loader.py =====
+
+import json
+import os
+
+
+class FormatsLoader:
+
+    def __init__(self, path: str):
+        self.path = path
+
+    def load(self):
+        if not os.path.exists(self.path):
+            raise FileNotFoundError(
+                f"Supported formats file not found: {self.path}"
+            )
+
+        with open(self.path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        return data
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\config\initialize_workspace.py =====
+
+from pathlib import Path
+import subprocess
+
+
+def initialize_workspace(config):
+
+    # ----------------------------------------
+    # Runtime Root erstellen
+    # ----------------------------------------
+    config.runtime_root.mkdir(parents=True, exist_ok=True)
+
+    # Runtime verstecken (Windows)
+    try:
+        subprocess.run(
+            ["attrib", "+h", str(config.runtime_root)],
+            shell=True
+        )
+    except Exception:
+        pass
+
+    # ----------------------------------------
+    # Runtime-Unterordner erstellen
+    # ----------------------------------------
+    runtime_folders = [
+        config.incoming_root,
+        config.manual_sort_root,
+        config.processed_root,
+        config.error_root,
+        config.logs_root,
+        config.temp_root
+    ]
+
+    for folder in runtime_folders:
+        folder.mkdir(parents=True, exist_ok=True)
+
+    # ----------------------------------------
+    # Sichtbare Junctions im user_path
+    # ----------------------------------------
+    create_junction(
+        config.user_path / config.visible_input_name,
+        config.incoming_root
+    )
+
+    create_junction(
+        config.user_path / config.visible_manual_sort_name,
+        config.manual_sort_root
+    )
+
+
+def create_junction(link_path: Path, target_path: Path):
+
+    if link_path.exists():
+        return
+
+    subprocess.run(
+        [
+            "cmd", "/c", "mklink", "/J",
+            str(link_path),
+            str(target_path)
+        ],
+        check=True
+    )
+
+    logger.log(f"Verbindung erstellt: {link_path} <=> {target_path}")
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\config\rules_loader.py =====
+
+import json
+import os
+
+
+class RulesLoader:
+
+    def __init__(self, rules_path: str):
+        self.rules_path = rules_path
+
+    def load_rules(self):
+        if not os.path.exists(self.rules_path):
+            raise FileNotFoundError(
+                f"Rules file not found: {self.rules_path}"
+            )
+
+        with open(self.rules_path, "r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        return data.get("rules", [])
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\config\structure_loader.py =====
+
+import json
+import os
+
+
+class StructureLoader:
+
+    def __init__(self, structure_path: str):
+        self.structure_path = structure_path
+
+    def load_structure(self) -> dict:
+        if not os.path.exists(self.structure_path):
+            raise FileNotFoundError(
+                f"Structure file not found: {self.structure_path}"
+            )
+
+        with open(self.structure_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\io\folder_document_source.py =====
+
+import os
+from typing import List
+from pathlib import Path
+
+from domain.document import Document
+from interfaces.document_source import DocumentSource
+
+
+class FolderDocumentSource(DocumentSource):
+
+    def __init__(self, root_path: Path):
+        # Erwartet z.B. config.incoming_root
+        self.root_path = Path(root_path)
+
+        # Falls Ordner noch nicht existiert (Safety)
+        self.root_path.mkdir(parents=True, exist_ok=True)
+
+    def fetch_documents(self) -> List[Document]:
+
+        documents: List[Document] = []
+
+        for root, _, files in os.walk(self.root_path):
+
+            # Hidden folders ignorieren (.sorterino_runtime intern etc.)
+            if os.path.basename(root).startswith("."):
+                continue
+
+            for file_name in files:
+
+                # Hidden files ignorieren (.DS_Store etc.)
+                if file_name.startswith("."):
+                    continue
+
+                full_path = os.path.join(root, file_name)
+
+                # Nur echte Dateien
+                if not os.path.isfile(full_path):
+                    continue
+
+                # Nur Dateien mit Extension
+                _, ext = os.path.splitext(file_name)
+                if not ext:
+                    continue
+
+                documents.append(
+                    Document(source_path=full_path)
+                )
+
+        return documents
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\logging\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\logging\file_logger.py =====
+
+from email.mime import message
+import logging
+from pathlib import Path
+from datetime import datetime
+
+from interfaces.logger_service import LoggerService
+
+
+class FileLogger(LoggerService):
+
+    def __init__(self, log_directory: Path):
+
+        log_directory = Path(log_directory)
+        log_directory.mkdir(parents=True, exist_ok=True)
+
+        # 🔥 Heutiges Datum
+        today_str = datetime.now().strftime("%Y-%m-%d")
+
+        log_filename = f"sorterino_logs_{today_str}.log"
+        log_path = log_directory / log_filename
+
+        self.logger = logging.getLogger("Sorterino")
+        self.logger.setLevel(logging.INFO)
+
+        # Verhindert doppelte Handler bei mehrfacher Initialisierung
+        if not self.logger.handlers:
+
+            formatter = logging.Formatter(
+                "%(asctime)s - %(levelname)s - %(message)s"
+            )
+
+            # Datei-Handler
+            file_handler = logging.FileHandler(
+                filename=str(log_path),
+                encoding="utf-8"
+            )
+            file_handler.setFormatter(formatter)
+
+            # CLI-Handler
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+
+            self.logger.addHandler(file_handler)
+            self.logger.addHandler(console_handler)
+
+    def log(self, message: str) -> None:
+        self.logger.info(message)
+
+    def error(self, message: str) -> None:
+        self.logger.error(message)
+
+    def warning(self, message: str) -> None:
+        self.logger.warning(message)
+
+    def debug(self, message: str) -> None:
+        self.logger.debug(message)
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\ocr\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\ocr\tesseract_ocr.py =====
+
+import os
+from typing import List
+
+import pytesseract
+from pdf2image import convert_from_path
+from PIL import Image, ImageFile
+
+
+# Große Bilder erlauben
+Image.MAX_IMAGE_PIXELS = None
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+
+class TesseractOCR:
+
+    def __init__(
+            self, 
+            poppler_path: str, 
+            tesseract_path: str,
+            logger: LoggerService
+        ):
+
+        self.logger = logger
+
+        # ----------------------------------------
+        # Tesseract setzen (aus Config)
+        # ----------------------------------------
+        if not os.path.exists(tesseract_path):
+            raise FileNotFoundError(
+                f"Tesseract nicht gefunden unter: {tesseract_path}"
+            )
+
+        pytesseract.pytesseract.tesseract_cmd = tesseract_path
+
+        # Tessdata-Verzeichnis automatisch ableiten
+        tessdata_path = os.path.join(
+            os.path.dirname(tesseract_path),
+            "tessdata"
+        )
+
+        if not os.path.exists(tessdata_path):
+            raise FileNotFoundError(
+                f"Tessdata nicht gefunden unter: {tessdata_path}"
+            )
+
+        os.environ["TESSDATA_PREFIX"] = tessdata_path
+
+        # ----------------------------------------
+        # Poppler
+        # ----------------------------------------
+        self.poppler_path = poppler_path
+        self.language = "deu"
+
+    # =====================================================
+    # Öffentlich
+    # =====================================================
+
+    def extract_text(self, file_path: str) -> str:
+
+        if not os.path.exists(file_path):
+            self.logger.error(f"OCR Fehler: Datei existiert nicht: {file_path}")
+            return ""
+
+        try:
+            if file_path.lower().endswith(".pdf"):
+                text = self._extract_from_pdf(file_path)
+            else:
+                text = self._extract_from_image(file_path)
+
+            if not text or not text.strip():
+                self.logger.warning("⚠️ Kein OCR-Text gefunden")
+                return ""
+
+            return text
+
+        except Exception as e:
+            self.logger.error(f"OCR Fehler bei {file_path}: {e}")
+            return ""
+
+    # =====================================================
+    # PDF OCR
+    # =====================================================
+
+    def _extract_from_pdf(self, file_path: str) -> str:
+
+        text_output: List[str] = []
+
+        try:
+            images = convert_from_path(
+                file_path,
+                poppler_path=self.poppler_path,
+                dpi=300
+            )
+        except Exception as e:
+            self.logger.error(f"PDF-Konvertierungsfehler bei {file_path}: {e}")
+            return ""
+
+        for index, img in enumerate(images):
+            try:
+                img.thumbnail((3500, 3500))
+
+                text = pytesseract.image_to_string(
+                    img,
+                    lang=self.language
+                )
+
+                if text and text.strip():
+                    text_output.append(text)
+
+            except Exception as e:
+                self.logger.warning(
+                    f"OCR Seitenfehler bei {file_path} "
+                    f"(Seite {index + 1}): {e}"
+                )
+                continue
+
+        return "\n".join(text_output)
+
+    # =====================================================
+    # Image OCR
+    # =====================================================
+
+    def _extract_from_image(self, file_path: str) -> str:
+
+        try:
+            with Image.open(file_path) as img:
+
+                img.thumbnail((3500, 3500))
+
+                text = pytesseract.image_to_string(
+                    img,
+                    lang=self.language
+                )
+
+                return text or ""
+
+        except Exception as e:
+            self.logger.error(f"OCR Bildfehler bei {file_path}: {e}")
+            return ""
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\storage\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\infrastructure\storage\filesystem_storage.py =====
+
+import shutil
+from pathlib import Path
+
+
+class FilesystemStorage:
+
+    def __init__(self, base_path: str):
+        self.base_path = Path(base_path)
+
+    # --------------------------------------------------
+    # MOVE (mit Duplikatschutz)
+    # --------------------------------------------------
+
+    def store(self, source_path: str, target_directory: str, new_name: str) -> str:
+        source = Path(source_path)
+
+        target_dir = self.base_path / target_directory
+        target_dir.mkdir(parents=True, exist_ok=True)
+
+        target_path = target_dir / new_name
+
+        # 🔥 Duplikatschutz
+        target_path = self._get_unique_path(target_path)
+
+        shutil.move(str(source), str(target_path))
+
+        return str(target_path)
+
+    # --------------------------------------------------
+    # COPY (mit Duplikatschutz)
+    # --------------------------------------------------
+
+    def copy(self, source_path: str, target_directory: str, new_name: str) -> str:
+        source = Path(source_path)
+
+        target_dir = self.base_path / target_directory
+        target_dir.mkdir(parents=True, exist_ok=True)
+
+        target_path = target_dir / new_name
+
+        target_path = self._get_unique_path(target_path)
+
+        shutil.copy2(str(source), str(target_path))
+
+        return str(target_path)
+
+    # --------------------------------------------------
+    # UNIQUE NAME GENERATOR
+    # --------------------------------------------------
+
+    def _get_unique_path(self, target_path: Path) -> Path:
+
+        if not target_path.exists():
+            return target_path
+
+        stem = target_path.stem
+        suffix = target_path.suffix
+        parent = target_path.parent
+
+        counter = 1
+
+        while True:
+            new_name = f"{stem} ({counter}){suffix}"
+            new_path = parent / new_name
+
+            if not new_path.exists():
+                return new_path
+
+            counter += 1
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\interfaces\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\interfaces\document_source.py =====
+
+from abc import ABC, abstractmethod
+from typing import List
+from domain.document import Document
+
+
+class DocumentSource(ABC):
+
+    @abstractmethod
+    def fetch_documents(self) -> List[Document]:
+        """Returns a list of documents to process."""
+        pass
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\interfaces\logger_service.py =====
+
+from abc import ABC, abstractmethod
+
+
+class LoggerService(ABC):
+
+    @abstractmethod
+    def log(self, message: str) -> None:
+        """
+        Logs a message.
+        """
+        pass
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\interfaces\ocr_service.py =====
+
+from abc import ABC, abstractmethod
+
+
+class OCRService(ABC):
+
+    @abstractmethod
+    def extract_text(self, file_path: str) -> str:
+        """
+        Extracts text from a file and returns it as string.
+        """
+        pass
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\interfaces\storage_service.py =====
+
+from abc import ABC, abstractmethod
+
+
+class StorageService(ABC):
+
+    @abstractmethod
+    def store(
+        self,
+        source_path: str,
+        target_directory: str,
+        new_name: str
+    ) -> str:
+        """
+        Stores the document and returns the final target path.
+        """
+        pass
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\usecases\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\usecases\classify_document.py =====
+
+import re
+from typing import Optional, List, Dict, Any
+
+from domain.classification import Classification
+from domain.document import Document
+from domain.document_metadata import DocumentMetadata
+
+from interfaces.logger_service import LoggerService
+
+
+# --------------------------------------------------
+# MONATSNAMEN
+# --------------------------------------------------
+
+MONTH_NAMES = {
+    1: "Januar",
+    2: "Februar",
+    3: "März",
+    4: "April",
+    5: "Mai",
+    6: "Juni",
+    7: "Juli",
+    8: "August",
+    9: "September",
+    10: "Oktober",
+    11: "November",
+    12: "Dezember",
+}
+
+
+# --------------------------------------------------
+# DATUM (inkl. Textformate)
+# --------------------------------------------------
+
+def extract_invoice_date(text: str) -> Optional[str]:
+
+    MONTH_MAP = {
+        "januar": "01",
+        "februar": "02",
+        "märz": "03",
+        "maerz": "03",
+        "april": "04",
+        "mai": "05",
+        "juni": "06",
+        "juli": "07",
+        "august": "08",
+        "september": "09",
+        "oktober": "10",
+        "november": "11",
+        "dezember": "12",
+    }
+
+    EN_MONTH_MAP = {
+        "january": "01",
+        "february": "02",
+        "march": "03",
+        "april": "04",
+        "may": "05",
+        "june": "06",
+        "july": "07",
+        "august": "08",
+        "september": "09",
+        "october": "10",
+        "november": "11",
+        "december": "12",
+    }
+
+    # 1️⃣ Rechnungsdatum explizit
+    match = re.search(
+        r"Rechnungsdatum\s*[:\-]?\s*(\d{2}\.\d{2}\.\d{4})",
+        text,
+        re.IGNORECASE
+    )
+    if match:
+        return match.group(1)
+
+    # 2️⃣ Klassisches Format
+    match = re.search(r"\b(\d{2}\.\d{2}\.\d{4})\b", text)
+    if match:
+        return match.group(1)
+
+    # 3️⃣ Deutsches Textformat
+    match = re.search(
+        r"(\d{1,2})\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\s*(20\d{2})",
+        text,
+        re.IGNORECASE
+    )
+    if match:
+        day = match.group(1).zfill(2)
+        month = MONTH_MAP[match.group(2).lower()]
+        year = match.group(3)
+        return f"{day}.{month}.{year}"
+
+    # 4️⃣ Englisches Format
+    match = re.search(
+        r"(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2}),\s*(20\d{2})",
+        text,
+        re.IGNORECASE
+    )
+    if match:
+        month = EN_MONTH_MAP[match.group(1).lower()]
+        day = match.group(2).zfill(2)
+        year = match.group(3)
+        return f"{day}.{month}.{year}"
+
+    return None
+
+
+# --------------------------------------------------
+# RECHNUNGSNUMMER
+# --------------------------------------------------
+
+def extract_invoice_number(text: str) -> Optional[str]:
+
+    patterns = [
+        r"Rechnungsnummer\s*[:\-]?\s*([A-Z0-9\-]+)",
+        r"Rechnungs[- ]?ID\s*[:\-]?\s*([A-Z0-9\-]+)",
+        r"Invoice\s*number\s*[:\-]?\s*([A-Z0-9\-]+)",
+        r"Invoice\s*ID\s*[:\-]?\s*([A-Z0-9\-]+)",
+        r"Auftragsnr\.?\s*[:\-]?\s*([A-Z0-9\-]+)",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return match.group(1)
+
+    return None
+
+
+# --------------------------------------------------
+# JAHR
+# --------------------------------------------------
+
+def extract_year(text: str) -> Optional[int]:
+    match = re.search(r"\b(20\d{2})\b", text)
+    if match:
+        return int(match.group(1))
+    return None
+
+
+# --------------------------------------------------
+# BETRAG
+# --------------------------------------------------
+
+def extract_amount(text: str) -> Optional[str]:
+
+    # 1️⃣ Bevorzugte Muster (kontextbasiert)
+    priority_patterns = [
+        r"Gesamtsumme\s*[:\-]?\s*€?\s*([0-9]+,[0-9]{2})",
+        r"Rechnungsbetrag\s*[:\-]?\s*€?\s*([0-9]+,[0-9]{2})",
+        r"Gesamtbetrag\s*[:\-]?\s*€?\s*([0-9]+,[0-9]{2})",
+        r"Restbetrag\s*[:\-]?\s*€?\s*([0-9]+,[0-9]{2})",
+        r"Total\s*€?\s*([0-9]+,[0-9]{2})",
+    ]
+
+    for pattern in priority_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return match.group(1).replace(".", "")
+
+    # 2️⃣ Fallback: größten Betrag im Dokument nehmen
+    all_amounts = re.findall(
+        r"([0-9]{1,3}(?:\.[0-9]{3})*,[0-9]{2})",
+        text
+    )
+
+    if all_amounts:
+
+        def normalize(a: str) -> float:
+            return float(a.replace(".", "").replace(",", "."))
+
+        largest = max(all_amounts, key=normalize)
+        return largest.replace(".", "")
+
+    return None
+
+
+# --------------------------------------------------
+# ROLLENERKENNUNG (ROBUST)
+# --------------------------------------------------
+
+def detect_invoice_role(text: str, company_profile: Dict[str, Any]) -> str:
+
+    own_company = company_profile.get("name", "")
+    if not own_company:
+        return "unknown"
+
+    normalized_text = re.sub(r"\W+", "", text.lower())
+    normalized_own = re.sub(r"\W+", "", own_company.lower())
+
+    invoice_number = extract_invoice_number(text)
+
+    if normalized_own in normalized_text and invoice_number:
+        return "outgoing"
+
+    return "incoming"
+
+
+# --------------------------------------------------
+# SUPPLIER
+# --------------------------------------------------
+
+def extract_supplier(text: str, company_profile: Dict[str, Any]) -> Optional[str]:
+
+    own_company = re.sub(r"\W+", "", company_profile.get("name", "").lower())
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+
+    for line in lines[:25]:
+
+        normalized_line = re.sub(r"\W+", "", line.lower())
+        if own_company and own_company in normalized_line:
+            continue
+
+        if re.search(r"\b(GmbH|AG|KG|GbR|mbH)\b", line):
+            return line.strip()
+
+    return None
+
+
+# --------------------------------------------------
+# CUSTOMER
+# --------------------------------------------------
+
+import re
+from typing import Dict, Any, Optional
+
+
+def extract_customer(text: str, company_profile: Dict[str, Any]) -> Optional[str]:
+
+    own_company = re.sub(r"\W+", "", company_profile.get("name", "").lower())
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+
+    STOP_WORDS = [
+        "LIEFER", "LEISTUNG", "RECHNUNGSDATUM",
+        "KUNDENNUMMER", "RECHNUNG", "SEHR GEEHRTE",
+        "IBAN", "BIC", "UST", "HRB"
+    ]
+
+    for i, line in enumerate(lines[:40]):
+
+        normalized = re.sub(r"\W+", "", line.lower())
+
+        # Eigene Firma erkannt → danach kommt Kunde
+        if own_company in normalized:
+
+            for l in lines[i + 1:i + 10]:
+
+                candidate = l.strip()
+
+                # Keine Adresszeilen
+                if any(char.isdigit() for char in candidate):
+                    continue
+
+                upper_candidate = candidate.upper()
+
+                # Stop bei typischen Folgebegriffen
+                for word in STOP_WORDS:
+                    if word in upper_candidate:
+                        upper_candidate = upper_candidate.split(word)[0]
+
+                upper_candidate = upper_candidate.split(" - ")[0]
+                upper_candidate = upper_candidate.strip(" -")
+
+                # Firmen mit Rechtsform bevorzugen
+                if re.search(r"\b(GmbH|AG|KG|GbR|mbH|UG)\b", upper_candidate):
+                    return upper_candidate
+
+                # Personenname-Fallback (2-3 Wörter, Großbuchstaben)
+                words = upper_candidate.split()
+                if 2 <= len(words) <= 3 and all(
+                        w[0].isupper() for w in words if w and w[0].isalpha()):
+                    return upper_candidate
+
+    return None
+
+
+# --------------------------------------------------
+# HAUPTFUNKTION
+# --------------------------------------------------
+
+def classify_document(
+    document: Document,
+    rules: List[Dict[str, Any]],
+    company_profile: Dict[str, Any],
+    logger: LoggerService
+):
+
+    text = document.extracted_text or ""
+
+    if not text.strip():
+        metadata = DocumentMetadata(
+            year=None,
+            category=None,
+            document_type=None,
+            contexts={}
+        )
+        document.set_metadata(metadata)
+        return Classification(None, 0.0)
+
+    invoice_number = extract_invoice_number(text)
+    invoice_date = extract_invoice_date(text)
+    year = extract_year(text)
+    role = detect_invoice_role(text, company_profile)
+
+    contexts: Dict[str, Any] = {}
+
+    if invoice_number:
+        contexts["invoice_number"] = invoice_number
+
+    if invoice_date:
+        contexts["invoice_date"] = invoice_date
+        year = int(invoice_date.split(".")[2])
+
+        month_number = int(invoice_date.split(".")[1])
+        contexts["month_number"] = str(month_number).zfill(2)
+        contexts["month_name"] = MONTH_NAMES.get(month_number)
+
+    # Gebührenbescheid
+    if "gebührenbescheid" in text.lower():
+        metadata = DocumentMetadata(
+            year=year,
+            category="BUCHHALTUNG",
+            document_type="Gebührenbescheid",
+            contexts=contexts
+        )
+        document.set_metadata(metadata)
+        return Classification("BUCHHALTUNG", 0.9)
+
+    # AUSGANG
+    if role == "outgoing" and invoice_number and invoice_date:
+        customer = extract_customer(text, company_profile)
+        logger.debug(f"Customer erkannt: {customer}")
+        if customer:
+            contexts["party"] = customer
+        metadata = DocumentMetadata(
+            year=year,
+            category="BUCHHALTUNG",
+            document_type="Ausgangsrechnung",
+            contexts=contexts
+        )
+        document.set_metadata(metadata)
+        return Classification("BUCHHALTUNG", 1.0)
+
+    # EINGANG
+    if role == "incoming" and (invoice_number or invoice_date):
+        supplier = extract_supplier(text, company_profile)
+        amount = extract_amount(text)
+        if supplier:
+            contexts["party"] = supplier
+        if amount:
+            contexts["amount"] = amount
+
+        metadata = DocumentMetadata(
+            year=year,
+            category="BUCHHALTUNG",
+            document_type="Eingangsrechnung",
+            contexts=contexts
+        )
+        document.set_metadata(metadata)
+        return Classification("BUCHHALTUNG", 0.95)
+
+    # UNKLAR
+    if invoice_number or invoice_date:
+        metadata = DocumentMetadata(
+            year=year,
+            category="MANUELL",
+            document_type="Unklare Rechnung",
+            contexts=contexts
+        )
+        document.set_metadata(metadata)
+        return Classification("MANUELL", 0.6)
+
+    # MANUELL
+    metadata = DocumentMetadata(
+        year=year,
+        category="MANUELL",
+        document_type=None,
+        contexts=contexts
+   )
+    document.set_metadata(metadata)
+    return Classification("Manuell", 0.0)
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\usecases\document_pipeline.py =====
+
+import os
+
+from usecases.classify_document import classify_document
+from usecases.rename_document import rename_document
+from usecases.path_resolver import PathResolver
+
+
+class DocumentPipeline:
+
+    def __init__(
+        self,
+        sources,
+        ocr_service,
+        runtime_storage,
+        archive_storage,
+        logger,
+        rules,
+        company_profile,
+        supported_extensions,
+        unsupported_target,
+        structure,
+        manual_sort_target,
+        error_target
+    ):
+        self.sources = sources
+        self.ocr_service = ocr_service
+        self.runtime_storage = runtime_storage
+        self.archive_storage = archive_storage
+        self.logger = logger
+        self.rules = rules
+        self.company_profile = company_profile
+        self.supported_extensions = supported_extensions
+        self.unsupported_target = unsupported_target
+        self.path_resolver = PathResolver(structure)
+        self.manual_sort_target = manual_sort_target
+        self.error_target = error_target
+
+    # --------------------------------------------------
+
+    def _cli_and_log(self, cli_msg, log_msg=None):
+        self.logger.log(log_msg or cli_msg)
+
+    # --------------------------------------------------
+
+    def run(self):
+
+        self._cli_and_log("\n🔵 SORTERINO PIPELINE START",
+                          "Pipeline started")
+
+        for source in self.sources:
+            documents = source.fetch_documents()
+
+            if not documents:
+                self._cli_and_log("⚠️ Keine Dokumente gefunden.",
+                                  "No documents found")
+                continue
+
+            for document in documents:
+                try:
+                    self._process_document(document)
+                except Exception as e:
+                    self._cli_and_log(f"❌ Fehler: {e}",
+                                      f"Error processing document {document.id}: {e}")
+                    self.logger.error(str(e))
+
+        self._cli_and_log("\n🟢 PIPELINE BEENDET",
+                          "Pipeline finished")
+
+    # --------------------------------------------------
+
+    def _move_to_manual_sort(self, document, reason="Unbekannt"):
+
+        original_name = os.path.basename(document.source_path)
+
+        try:
+            final_path = self.runtime_storage.store(
+                document.source_path,
+                self.manual_sort_target,
+                original_name
+            )
+
+        except Exception as e:
+            self.logger.error(f"Manual sort failed: {e}")
+
+            final_path = self.runtime_storage.store(
+                document.source_path,
+                self.error_target,
+                original_name
+            )
+
+            self._cli_and_log(
+                f"🚨 → In ERROR verschoben: {final_path}",
+                f"Moved to ERROR: {final_path}"
+            )
+
+        self._cli_and_log(
+            f"📂 → MANUELLE SORTIERUNG ({reason})",
+            f"Manual sort triggered: {reason}"
+        )
+
+    # --------------------------------------------------
+
+    def _process_document(self, document):
+
+        self._cli_and_log(
+            f"\n📄 Datei: {document.source_path}",
+            f"Processing document: {document.source_path}"
+        )
+
+        ext = os.path.splitext(document.source_path)[1].lower()
+
+        self._cli_and_log(
+            f"🔎 Dateityp: {ext}",
+            f"File extension: {ext}"
+        )
+
+        # Backup
+        original_name = os.path.basename(document.source_path)
+
+        processed_path = self.runtime_storage.copy(
+            document.source_path,
+            "processed",
+            original_name
+        )
+
+        self.logger.log(f"Original backed up to: {processed_path}")
+
+        # Unsupported
+        if ext not in self.supported_extensions:
+
+            self._cli_and_log(
+                "⚠️ Nicht unterstütztes Format",
+                "Unsupported file format"
+            )
+
+            self.runtime_storage.store(
+                document.source_path,
+                self.unsupported_target,
+                original_name
+            )
+
+            return
+
+        # OCR
+        self._cli_and_log("🟡 OCR starte...",
+                          "OCR started")
+
+        text = self.ocr_service.extract_text(document.source_path)
+
+        if not text.strip():
+            self._cli_and_log("❌ Kein OCR-Text erkannt",
+                              "OCR failed: No text extracted")
+            self._move_to_manual_sort(document, "Kein OCR-Text")
+            return
+
+        self._cli_and_log("✅ OCR erfolgreich",
+                          f"OCR success | Length: {len(text)}")
+
+        document.mark_analyzed(text)
+
+        # Klassifikation
+        self._cli_and_log("🟡 Klassifikation starte...",
+                          "Classification started")
+
+        classification = classify_document(
+            document,
+            self.rules,
+            self.company_profile,
+            logger=self.logger
+        )
+
+        if not classification or not classification.category:
+            self._cli_and_log("❌ Keine Kategorie erkannt",
+                              "Classification failed")
+            self._move_to_manual_sort(document, "Keine Kategorie")
+            return
+
+        self._cli_and_log(
+            f"✅ Kategorie erkannt: {classification.category}",
+            f"Category: {classification.category} | Confidence: {classification.confidence}"
+        )
+
+        document.mark_classified(classification)
+        
+
+        # --------------------------------------------------
+        # MANUELLE KATEGORIE → Runtime manual_sort
+        # --------------------------------------------------
+
+        if classification.category.lower() in ["manuell", "unknown"]:
+            self._move_to_manual_sort(
+                document,
+                f"Kategorie Manuell | Confidence: {classification.confidence}"
+            )
+            return
+        
+        # Rename
+        self._cli_and_log("🟡 Neuer Dateiname generieren...",
+                          "Generating new filename")
+
+        new_name = rename_document(document)
+
+        self.logger.log(f"New filename: {new_name}")
+
+        # Zielpfad
+        target_directory = self.path_resolver.resolve(
+            document.metadata
+        )
+
+        if not target_directory:
+            self._cli_and_log("❌ Kein Zielordner bestimmbar",
+                              "Target directory not resolvable")
+            self._move_to_manual_sort(document, "Kein Zielpfad")
+            return
+
+        self.logger.log(f"Target directory: {target_directory}")
+
+        # Archivieren
+        try:
+            final_path = self.archive_storage.store(
+                document.source_path,
+                target_directory,
+                new_name
+            )
+
+        except Exception as e:
+            self._cli_and_log(f"❌ Archivierungsfehler: {e}",
+                              f"Archive failed: {e}")
+
+            self.runtime_storage.store(
+                document.source_path,
+                self.error_target,
+                original_name
+            )
+
+            self.logger.error(f"Archive failed: {e}")
+            return
+
+        self._cli_and_log(
+            f"✅ Gespeichert unter: {final_path}",
+            f"Archived successfully to: {final_path}"
+        )
+        self.logger.log("-" * 70)
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\usecases\path_resolver.py =====
+
+import os
+
+
+class PathResolver:
+
+    def __init__(self, structure):
+        self.structure = structure
+
+    def resolve(self, metadata):
+        category = metadata.category
+        doc_type = metadata.document_type
+        year = metadata.year
+        contexts = metadata.contexts or {}
+
+        if not category:
+            return None
+
+        path_parts = [category]
+
+        if doc_type:
+            path_parts.append(doc_type + "en" if not doc_type.endswith("en") else doc_type)
+
+        if year:
+            path_parts.append(str(year))
+
+        month_number = contexts.get("month_number")
+        month_name = contexts.get("month_name")
+
+        if month_number and month_name:
+            path_parts.append(f"{month_number} {month_name}")
+
+        return "\\".join(path_parts)
+
+    def _walk(self, node: dict, metadata):
+
+        if not isinstance(node, dict):
+            return None
+
+        dynamic_values = {
+            f"{{{key}}}": value
+            for key, value in metadata.contexts.items()
+            if value
+        }
+
+        if metadata.year:
+            dynamic_values["{Jahr}"] = str(metadata.year)
+
+        for key, value in node.items():
+
+            # Dynamischer Platzhalter
+            if key in dynamic_values:
+                sub_path = self._walk(value, metadata)
+                return [dynamic_values[key]] + (sub_path or [])
+
+            # Dokumenttyp
+            if key == metadata.document_type:
+                sub_path = self._walk(value, metadata)
+                return [key] + (sub_path or [])
+
+            # Rekursiv weiter
+            if isinstance(value, dict):
+                sub_path = self._walk(value, metadata)
+                if sub_path:
+                    return [key] + sub_path
+
+        return None
+    
+    def get_manual_sort_path(self) -> str:
+        return os.path.join(self.runtime_path, "manual_sort")
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\src\usecases\rename_document.py =====
+
+import os
+import re
+
+
+def sanitize_filename(value: str) -> str:
+    value = value.strip()
+    value = re.sub(r'[\\/:*?"<>|]', "", value)
+    value = value.lstrip(".\\/- ")
+    value = re.sub(r"\s+", " ", value)
+    return value.strip()
+
+
+def rename_document(document):
+
+    metadata = document.metadata
+    contexts = metadata.contexts or {}
+    ext = os.path.splitext(document.source_path)[1]
+
+    MAX_LENGTH = 240  # Windows-Sicherheitsgrenze
+
+    def safe(value):
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return None
+        return str(value).strip()
+
+    def clean_party(value):
+        if not value:
+            return "UNBEKANNT"
+
+        value = str(value)
+
+        # OCR-Reste abschneiden
+        STOP_WORDS = [
+            "LIEFER", "LEISTUNG", "RECHNUNGSDATUM",
+            "KUNDENNUMMER", "IBAN", "BIC"
+        ]
+
+        upper_value = value.upper()
+
+        for word in STOP_WORDS:
+            if word in upper_value:
+                upper_value = upper_value.split(word)[0]
+
+        # Adresse nach Bindestrich entfernen
+        upper_value = upper_value.split(" - ")[0]
+
+        return sanitize_filename(upper_value.strip(" -")) or "UNBEKANNT"
+
+    document_type = safe(metadata.document_type)
+
+    # --------------------------------------------------
+    # AUSGANGSRECHNUNG
+    # --------------------------------------------------
+
+    if document_type == "Ausgangsrechnung":
+
+        invoice_number = safe(contexts.get("invoice_number"))
+        invoice_date = safe(contexts.get("invoice_date"))
+        customer = clean_party(contexts.get("party"))
+
+        if invoice_number and invoice_date:
+            filename = f"Rechnung_{invoice_number} vom {invoice_date} {customer}"
+        else:
+            filename = "Rechnung_UNBEKANNT vom UNBEKANNT UNBEKANNT"
+
+        filename = sanitize_filename(filename)
+
+        if len(filename) > MAX_LENGTH:
+            filename = filename[:MAX_LENGTH]
+
+        return filename + ext
+
+    # --------------------------------------------------
+    # EINGANGSRECHNUNG
+    # --------------------------------------------------
+
+    if document_type == "Eingangsrechnung":
+
+        supplier = clean_party(contexts.get("party"))
+        amount = safe(contexts.get("amount"))
+        date = safe(contexts.get("invoice_date"))
+
+        parts = []
+
+        if date:
+            parts.append(date)
+
+        parts.append(supplier)
+
+        if amount:
+            parts.append(amount)
+
+        filename = " - ".join(parts)
+        filename = sanitize_filename(filename)
+
+        if len(filename) > MAX_LENGTH:
+            filename = filename[:MAX_LENGTH]
+
+        return filename + ext
+
+    # --------------------------------------------------
+    # SONSTIGES
+    # --------------------------------------------------
+
+    parts = []
+
+    year = safe(metadata.year)
+    if year:
+        parts.append(year)
+
+    if document_type:
+        parts.append(document_type)
+
+    party = clean_party(contexts.get("party"))
+    if party and party != "UNBEKANNT":
+        parts.append(party)
+
+    if not parts:
+        original = os.path.splitext(os.path.basename(document.source_path))[0]
+        parts.append(original)
+
+    filename = "_".join(parts)
+    filename = sanitize_filename(filename)
+
+    if len(filename) > MAX_LENGTH:
+        filename = filename[:MAX_LENGTH]
+
+    return filename + ext
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\structure.json =====
+
+{
+  "BUCHHALTUNG": {
+
+    "Ausgangsrechnungen": {
+      "{Jahr}": {
+        "{month_number} {month_name} {year}": {}
+      }
+    },
+
+    "Eingangsrechnungen": {
+      "{Jahr}": {
+        "{month_number} {month_name} {year}": {}
+      }
+    },
+
+    "Kontoauszug": {
+      "{Jahr}": {
+        "{month_number} {month_name} {year}": {}
+      }
+    },
+
+    "Mahnung": {
+      "{Jahr}": {}
+    }
+
+  }
+}
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\supported_formats.json =====
+
+{
+  "supported_extensions": [
+    ".pdf",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".tiff",
+    ".bmp"
+  ],
+
+  "unsupported_target": "Manuelle Sortierung/Nicht unterstützt"
+}
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\tests\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\tests\conftest.py =====
+
+import sys
+import os
+
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+SRC_PATH = os.path.join(ROOT_DIR, "src")
+
+if SRC_PATH not in sys.path:
+    sys.path.insert(0, SRC_PATH)
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\tests\fixtures\__init__.py =====
+
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\tests\fixtures\sample_rules.json =====
+
+[
+  {
+    "category": "Steuer",
+    "document_type": "Lohnsteuerbescheinigung",
+    "keywords": [
+      "lohnsteuerbescheinigung",
+      "einkommensteuer",
+      "steueridentifikationsnummer"
+    ]
+  },
+  {
+    "category": "Finanzen",
+    "document_type": "Kontoauszug",
+    "keywords": [
+      "kontoauszug",
+      "kontonummer",
+      "iban",
+      "saldo"
+    ]
+  },
+  {
+    "category": "Finanzen",
+    "document_type": "Rechnung",
+    "keywords": [
+      "rechnung",
+      "rechnungsnummer",
+      "betrag",
+      "zahlbar bis"
+    ]
+  },
+  {
+    "category": "Versicherungen",
+    "document_type": "Versicherungsnachweis",
+    "keywords": [
+      "versicherung",
+      "versicherungsschein",
+      "policennummer",
+      "beitrag"
+    ]
+  }
+]
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\tests\test_classification.py =====
+
+import pytest
+
+from usecases.classify_document import apply_rules
+
+
+def test_lohnsteuer_rule_match():
+    text = "Dies ist eine Lohnsteuerbescheinigung für 2018"
+    rules = [
+        {
+            "category": "Steuer",
+            "document_type": "Lohnsteuerbescheinigung",
+            "keywords": ["lohnsteuerbescheinigung"]
+        }
+    ]
+
+    category, doc_type = apply_rules(text.lower(), rules)
+
+    assert category == "Steuer"
+    assert doc_type == "Lohnsteuerbescheinigung"
+
+
+def test_no_match_returns_none():
+    text = "Komplett irrelevanter Text"
+    rules = [
+        {
+            "category": "Steuer",
+            "document_type": "Lohnsteuerbescheinigung",
+            "keywords": ["lohnsteuerbescheinigung"]
+        }
+    ]
+
+    category, doc_type = apply_rules(text.lower(), rules)
+
+    assert category is None
+    assert doc_type is None
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\tests\test_date_extraction.py =====
+
+from usecases.classify_document import extract_bescheinigungszeitraum
+
+
+def test_extract_standard_period():
+    text = "Zeitraum: 01.03.-31.03."
+    result = extract_bescheinigungszeitraum(text)
+
+    assert result == "01.03.-31.03."
+
+
+def test_extract_period_with_noise():
+    text = "Zeitraum 09.08  -   12.11."
+    result = extract_bescheinigungszeitraum(text)
+
+    assert result == "09.08.-12.11."
+
+
+def test_no_period_returns_none():
+    text = "Kein Zeitraum enthalten"
+    result = extract_bescheinigungszeitraum(text)
+
+    assert result is None
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\tests\test_path_resolver.py =====
+
+from usecases.path_resolver import PathResolver
+from domain.document_metadata import DocumentMetadata
+
+
+def test_bank_routing():
+    structure = {
+        "Finanzen": {
+            "Banken": {
+                "{Bank}": {
+                    "Girokonto": {
+                        "{Jahr}": {}
+                    }
+                }
+            }
+        }
+    }
+
+    resolver = PathResolver(structure)
+
+    metadata = DocumentMetadata(
+        year=2014,
+        category="Finanzen",
+        document_type="Kontoauszug",
+        contexts={"Bank": "Deutsche_Bank"}
+    )
+
+    path = resolver.resolve(metadata)
+
+    assert "Deutsche_Bank" in path
+    assert "2014" in path
+
+
+===== F:\DevBox\01_PROJECTS\Sorterino\tests\test_rename.py =====
+
+from domain.document_metadata import DocumentMetadata
+from usecases.rename_document import rename_document
+
+
+class DummyDocument:
+    def __init__(self, metadata):
+        self.metadata = metadata
+
+
+def test_lohnsteuer_rename():
+    metadata = DocumentMetadata(
+        year=2021,
+        category="Steuer",
+        document_type="Lohnsteuerbescheinigung",
+        contexts={
+            "Zeitraum": "09.08.-12.11.",
+            "Firma": "Theater_Hagen_gGmbH"
+        }
+    )
+
+    document = DummyDocument(metadata)
+
+    filename = rename_document(document)
+
+    assert filename == "09.08.-12.11._Theater_Hagen_gGmbH_Lohnsteuerbescheinigung.pdf"
+
+
+
+===== Ignorierte Root-Ordner =====
+
+.pytest_cache
+  - v
+
+.venv
+  - Include
+  - Lib
+  - Scripts
+
+.vscode
+  (leer oder keine Unterordner)
+
+docs
+  - backups
+  - Produktstände
+
+logs
+  (leer oder keine Unterordner)
+
+third_party
+  - poppler-25.12.0
+  - Tesseract-OCR
+
