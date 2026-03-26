@@ -50,6 +50,11 @@ Thumbs.db
 .pytest_cache/
 
 # -------------------------
+# Third-Party / External
+# -------------------------
+third_party/
+
+# -------------------------
 # Optional / Dev Artefacts
 # -------------------------
 docs/Produktstände/
