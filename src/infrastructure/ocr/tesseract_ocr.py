@@ -1,6 +1,8 @@
 import os
 from typing import List
 
+from src.utils.path_helper import get_base_path
+
 import pytesseract
 from pdf2image import convert_from_path
 from PIL import Image, ImageFile
@@ -10,44 +12,63 @@ from PIL import Image, ImageFile
 Image.MAX_IMAGE_PIXELS = None
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+base_path = get_base_path()
+
+from src.utils.path_helper import get_base_path
+import os
+import pytesseract
+
 
 class TesseractOCR:
 
     def __init__(
-            self, 
-            poppler_path: str, 
-            tesseract_path: str,
-            logger: LoggerService
-        ):
+        self,
+        poppler_path: str,
+        tesseract_path: str,
+        logger
+    ):
 
         self.logger = logger
 
+        base_path = get_base_path()
+
         # ----------------------------------------
-        # Tesseract setzen (aus Config)
+        # 🔥 Tesseract EXE (IMMER aus third_party laden)
         # ----------------------------------------
-        if not os.path.exists(tesseract_path):
+
+        tesseract_exe = base_path / "third_party" / "Tesseract-OCR" / "tesseract.exe"
+
+        if not tesseract_exe.exists():
             raise FileNotFoundError(
-                f"Tesseract nicht gefunden unter: {tesseract_path}"
+                f"Tesseract nicht gefunden unter: {tesseract_exe}"
             )
 
-        pytesseract.pytesseract.tesseract_cmd = tesseract_path
+        pytesseract.pytesseract.tesseract_cmd = str(tesseract_exe)
 
-        # Tessdata-Verzeichnis automatisch ableiten
-        tessdata_path = os.path.join(
-            os.path.dirname(tesseract_path),
-            "tessdata"
-        )
+        # ----------------------------------------
+        # 🔥 Tessdata FIX
+        # ----------------------------------------
 
-        if not os.path.exists(tessdata_path):
+        tessdata_path = base_path / "tessdata"
+
+        if not tessdata_path.exists():
+            # Fallback: innerhalb third_party
+            tessdata_path = base_path / "third_party" / "Tesseract-OCR" / "tessdata"
+
+        if not tessdata_path.exists():
             raise FileNotFoundError(
                 f"Tessdata nicht gefunden unter: {tessdata_path}"
             )
 
-        os.environ["TESSDATA_PREFIX"] = tessdata_path
+        os.environ["TESSDATA_PREFIX"] = str(tessdata_path)
+
+        self.logger.log(f"Tesseract Path: {tesseract_exe}")
+        self.logger.log(f"Tessdata Path: {tessdata_path}")
 
         # ----------------------------------------
         # Poppler
         # ----------------------------------------
+
         self.poppler_path = poppler_path
         self.language = "deu"
 

@@ -1,8 +1,8 @@
 import os
 
-from usecases.classify_document import classify_document
-from usecases.rename_document import rename_document
-from usecases.path_resolver import PathResolver
+from src.usecases.classify_document import classify_document
+from src.usecases.rename_document import rename_document
+from src.usecases.path_resolver import PathResolver
 
 
 class DocumentPipeline:
@@ -160,7 +160,7 @@ class DocumentPipeline:
 
         # Klassifikation
         self._cli_and_log("🟡 Klassifikation starte...",
-                          "Classification started")
+                        f"Text Preview: {text[:200]}")
 
         classification = classify_document(
             document,

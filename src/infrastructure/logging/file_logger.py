@@ -1,7 +1,7 @@
 from pathlib import Path
 from datetime import datetime
 
-from interfaces.logger_service import LoggerService
+from src.interfaces.logger_service import LoggerService
 
 import logging
 

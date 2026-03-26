@@ -2,8 +2,8 @@ import os
 from typing import List
 from pathlib import Path
 
-from domain.document import Document
-from interfaces.document_source import DocumentSource
+from src.domain.document import Document
+from src.interfaces.document_source import DocumentSource
 
 
 class FolderDocumentSource(DocumentSource):

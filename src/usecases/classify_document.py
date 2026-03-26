@@ -1,12 +1,10 @@
 import re
 from typing import Optional, List, Dict, Any
 
-from domain.classification import Classification
-from domain.document import Document
-from domain.document_metadata import DocumentMetadata
-
-from interfaces.logger_service import LoggerService
-
+from src.domain.classification import Classification
+from src.domain.document import Document
+from src.domain.document_metadata import DocumentMetadata
+from src.interfaces.logger_service import LoggerService
 
 # --------------------------------------------------
 # MONATSNAMEN
@@ -222,10 +220,6 @@ def extract_supplier(text: str, company_profile: Dict[str, Any]) -> Optional[str
 # CUSTOMER
 # --------------------------------------------------
 
-import re
-from typing import Dict, Any, Optional
-
-
 def extract_customer(text: str, company_profile: Dict[str, Any]) -> Optional[str]:
 
     own_company = re.sub(r"\W+", "", company_profile.get("name", "").lower())
@@ -287,6 +281,7 @@ def classify_document(
 ):
 
     text = document.extracted_text or ""
+    text_lower = text.lower()
 
     if not text.strip():
         metadata = DocumentMetadata(
@@ -296,7 +291,7 @@ def classify_document(
             contexts={}
         )
         document.set_metadata(metadata)
-        return Classification(None, 0.0)
+        return Classification("MANUELL", 0.0)
 
     invoice_number = extract_invoice_number(text)
     invoice_date = extract_invoice_date(text)
@@ -316,8 +311,36 @@ def classify_document(
         contexts["month_number"] = str(month_number).zfill(2)
         contexts["month_name"] = MONTH_NAMES.get(month_number)
 
-    # Gebührenbescheid
-    if "gebührenbescheid" in text.lower():
+    # --------------------------------------------------
+    # 🔥 RULE-BASED (NEU – VOR HEURISTIK!)
+    # --------------------------------------------------
+
+    for rule in rules:
+
+        keywords = rule.get("keywords", [])
+
+        if not keywords:
+            continue
+
+        if any(k.lower() in text_lower for k in keywords):
+
+            metadata = DocumentMetadata(
+                year=year,
+                category=rule["category"],
+                document_type=rule["document_type"],
+                contexts=contexts
+            )
+
+            document.set_metadata(metadata)
+
+            logger.debug(f"Rule matched: {rule['document_type']}")
+            return Classification(rule["category"], 0.85)
+
+    # --------------------------------------------------
+    # Gebührenbescheid (bleibt)
+    # --------------------------------------------------
+
+    if "gebührenbescheid" in text_lower:
         metadata = DocumentMetadata(
             year=year,
             category="BUCHHALTUNG",
@@ -327,27 +350,40 @@ def classify_document(
         document.set_metadata(metadata)
         return Classification("BUCHHALTUNG", 0.9)
 
-    # AUSGANG
-    if role == "outgoing" and invoice_number and invoice_date:
+    # --------------------------------------------------
+    # 🔥 AUSGANG (LOCKERER!)
+    # --------------------------------------------------
+
+    if role == "outgoing" and (invoice_number or invoice_date):
+
         customer = extract_customer(text, company_profile)
         logger.debug(f"Customer erkannt: {customer}")
+
         if customer:
             contexts["party"] = customer
+
         metadata = DocumentMetadata(
             year=year,
             category="BUCHHALTUNG",
             document_type="Ausgangsrechnung",
             contexts=contexts
         )
-        document.set_metadata(metadata)
-        return Classification("BUCHHALTUNG", 1.0)
 
-    # EINGANG
+        document.set_metadata(metadata)
+        return Classification("BUCHHALTUNG", 0.95)
+
+    # --------------------------------------------------
+    # 🔥 EINGANG (LOCKERER!)
+    # --------------------------------------------------
+
     if role == "incoming" and (invoice_number or invoice_date):
+
         supplier = extract_supplier(text, company_profile)
         amount = extract_amount(text)
+
         if supplier:
             contexts["party"] = supplier
+
         if amount:
             contexts["amount"] = amount
 
@@ -357,26 +393,36 @@ def classify_document(
             document_type="Eingangsrechnung",
             contexts=contexts
         )
-        document.set_metadata(metadata)
-        return Classification("BUCHHALTUNG", 0.95)
 
-    # UNKLAR
-    if invoice_number or invoice_date:
+        document.set_metadata(metadata)
+        return Classification("BUCHHALTUNG", 0.9)
+
+    # --------------------------------------------------
+    # 🔥 SOFT FALLBACK (NEU!)
+    # --------------------------------------------------
+
+    if "rechnung" in text_lower or "invoice" in text_lower:
+
         metadata = DocumentMetadata(
             year=year,
-            category="MANUELL",
+            category="BUCHHALTUNG",
             document_type="Unklare Rechnung",
             contexts=contexts
         )
-        document.set_metadata(metadata)
-        return Classification("MANUELL", 0.6)
 
-    # MANUELL
+        document.set_metadata(metadata)
+        return Classification("BUCHHALTUNG", 0.6)
+
+    # --------------------------------------------------
+    # FINAL
+    # --------------------------------------------------
+
     metadata = DocumentMetadata(
         year=year,
         category="MANUELL",
         document_type=None,
         contexts=contexts
-   )
+    )
+
     document.set_metadata(metadata)
-    return Classification("Manuell", 0.0)
+    return Classification("MANUELL", 0.0)

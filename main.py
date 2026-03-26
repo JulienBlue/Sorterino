@@ -1,16 +1,15 @@
 import sys
+import json
 from pathlib import Path
 
 # -------------------------------------------------
 # Projekt-Root bestimmen
 # -------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
-SRC_PATH = BASE_DIR / "src"
-
-if str(SRC_PATH) not in sys.path:
-    sys.path.insert(0, str(SRC_PATH))
 
 # -------------------------------------------------
+
+from src.utils.path_helper import get_user_base_dir
 
 from infrastructure.config.config_loader import Config
 from infrastructure.config.rules_loader import RulesLoader
@@ -25,13 +24,45 @@ from infrastructure.storage.filesystem_storage import FilesystemStorage
 
 from usecases.document_pipeline import DocumentPipeline
 
-logger = FileLogger(Path("logs"))
 
+# -------------------------------------------------
+# CONFIG BOOTSTRAP (PORTABLE!)
+# -------------------------------------------------
+
+def load_or_create_config():
+    base = get_user_base_dir()
+    runtime = base / ".sorterino_runtime"
+
+    runtime.mkdir(parents=True, exist_ok=True)
+
+    config_path = runtime / "config.json"
+
+    if not config_path.exists():
+        default_config = {
+            "user_path": str(base),
+            "runtime_folder_name": ".sorterino_runtime",
+            "input_folder_name": "Sorterino - Input",
+            "manual_sort_folder_name": "Sorterino - Manuelle Sortierung",
+            "poppler_path": "third_party/poppler-25.12.0/Library/bin",
+            "tesseract_path": "third_party/Tesseract-OCR/tesseract.exe"
+        }
+
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(default_config, f, indent=2)
+
+    return config_path
+
+
+# -------------------------------------------------
+# MAIN
+# -------------------------------------------------
 
 def main() -> None:
 
-    config_path = BASE_DIR / "config.json"
+    # 🔥 WICHTIG: portable config laden
+    config_path = load_or_create_config()
     config = Config(config_path)
+
     company_profile = config.raw.get("company_profile", {})
 
     if not config.user_path:
@@ -39,6 +70,7 @@ def main() -> None:
 
     initialize_workspace(config)
 
+    # 🔥 WICHTIG: BASE_DIR behalten für interne Dateien
     rules = RulesLoader(BASE_DIR / "rules.json").load_rules()
     structure = StructureLoader(BASE_DIR / "structure.json").load_structure()
 
@@ -81,8 +113,10 @@ def main() -> None:
     pipeline.run()
 
 
+# -------------------------------------------------
+
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        logger.log("🔵 Ausführung manuell beendet.")
+        print("🔵 Ausführung manuell beendet.")

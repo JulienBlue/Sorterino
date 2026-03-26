@@ -1,88 +1,60 @@
-from pathlib import Path
 import json
+from pathlib import Path
 
 
 class Config:
 
     def __init__(self, config_path: Path):
 
-        self.project_root = Path(__file__).resolve().parents[3]
+        self.config_path = config_path
 
-        with open(config_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            self.raw = data
-            self.company_profile = data.get("company_profile", {})      
+        if not self.config_path.exists():
+            self._create_default_config()
 
-        # ----------------------------------------
-        # Basis
-        # ----------------------------------------
-        self.user_path = Path(data["user_path"]).resolve()
-        self.runtime_folder_name = data.get(
-            "runtime_folder_name",
-            ".sorterino_runtime"
-        )
+        with open(self.config_path, "r", encoding="utf-8") as f:
+            self.raw = json.load(f)
 
-        # Sichtbare Junction-Namen
-        self.visible_input_name = data["input_folder_name"]
-        self.visible_manual_sort_name = data["manual_sort_folder_name"]
+        # 🔥 FIX: user_path robust laden
+        user_path_value = self.raw.get("user_path")
 
-        # ----------------------------------------
-        # Runtime Root
-        # ----------------------------------------
+        if not user_path_value:
+            user_path_value = str(Path.home())
+
+        self.user_path = Path(user_path_value)
+
+        self.runtime_folder_name = ".sorterino_runtime"
+
         self.runtime_root = self.user_path / self.runtime_folder_name
+        self.logs_root = self.runtime_root / "logs"
+        self.incoming_root = self.runtime_root / "incoming"
 
-        # ----------------------------------------
-        # Runtime interne Struktur
-        # ----------------------------------------
-        self.incoming_folder_name = "incoming"
-        self.manual_sort_folder_name = "manual_sort"
-        self.processed_folder_name = "processed"
-        self.error_folder_name = "error"
-        self.logs_folder_name = "logs"
-        self.temp_folder_name = "temp"
+        self.poppler_path = Path(self.raw.get("poppler_path", ""))
+        self.tesseract_path = Path(self.raw.get("tesseract_path", ""))
 
-        # ----------------------------------------
-        # Third-Party
-        # ----------------------------------------
-        self.poppler_path = self._resolve_project_path(
-            data["poppler_path"]
-        )
-        self.tesseract_path = self._resolve_project_path(
-            data["tesseract_path"]
-        )
+        self.company_profile = self.raw.get("company_profile") or {
+            "name": "",
+            "keywords": []
+        }
 
-        # ----------------------------------------
-        # Sonstiges
-        # ----------------------------------------
+        self.rules_path = self.runtime_root / "rules.json"
+        self.structure_path = self.runtime_root / "structure.json"
+        self.formats_path = self.runtime_root / "supported_formats.json"
 
-    def _resolve_project_path(self, path_str: str) -> Path:
-        path = Path(path_str)
-        if path.is_absolute():
-            return path.resolve()
-        return (self.project_root / path).resolve()
+    def _create_default_config(self):
 
-    # ---------------- Runtime-Pfade ----------------
+        default = {
+            "user_path": str(Path.home()),
+            "auto_mode": False,
+            "autostart": False,
+            "company_profile": {
+                "name": "",
+                "keywords": []
+            },
+            "poppler_path": "",
+            "tesseract_path": ""
+        }
 
-    @property
-    def incoming_root(self) -> Path:
-        return self.runtime_root / self.incoming_folder_name
+        self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
-    @property
-    def manual_sort_root(self) -> Path:
-        return self.runtime_root / self.manual_sort_folder_name
-
-    @property
-    def processed_root(self) -> Path:
-        return self.runtime_root / self.processed_folder_name
-
-    @property
-    def error_root(self) -> Path:
-        return self.runtime_root / self.error_folder_name
-
-    @property
-    def logs_root(self) -> Path:
-        return self.runtime_root / self.logs_folder_name
-
-    @property
-    def temp_root(self) -> Path:
-        return self.runtime_root / self.temp_folder_name
+        with open(self.config_path, "w", encoding="utf-8") as f:
+            json.dump(default, f, indent=2)

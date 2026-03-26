@@ -4,9 +4,9 @@
       "category": "BUCHHALTUNG",
       "document_type": "Ausgangsrechnung",
       "keywords": [
+        "rechnung",
         "rechnungsnummer",
-        "ust.-id",
-        "verkauf"
+        "ust"
       ],
       "conditions": {
         "must_contain_company_name": true
@@ -17,9 +17,8 @@
       "document_type": "Eingangsrechnung",
       "keywords": [
         "rechnung",
-        "rechnungsnummer",
-        "gesamtbetrag",
-        "zahlung bis"
+        "betrag",
+        "zahlung"
       ],
       "conditions": {
         "must_not_contain_company_name": true
@@ -30,8 +29,8 @@
       "document_type": "Kontoauszug",
       "keywords": [
         "kontoauszug",
-        "wertstellung",
-        "iban"
+        "iban",
+        "wertstellung"
       ]
     },
     {
@@ -40,7 +39,7 @@
       "keywords": [
         "mahnung",
         "zahlungserinnerung",
-        "fristsetzung"
+        "frist"
       ]
     }
   ]

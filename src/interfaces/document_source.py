@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+
 from typing import List
-from domain.document import Document
+
+from src.domain.document import Document
 
 
 class DocumentSource(ABC):

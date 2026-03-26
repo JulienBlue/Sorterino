@@ -1,31 +1,55 @@
-# Virtual Environments
-.venv/
-venv/
-.env/
-
+# -------------------------
 # Python
+# -------------------------
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Build
+# -------------------------
+# Virtual Env
+# -------------------------
+.venv/
+venv/
+.env/
+
+# -------------------------
+# Build / Dist
+# -------------------------
 dist/
 build/
+installer_output/
+installer/
 
+# -------------------------
+# Runtime (User Data)
+# -------------------------
+.sorterino_runtime/
+
+# -------------------------
 # Logs
+# -------------------------
 *.log
+logs/
 
+# -------------------------
 # IDE
-.idea/
+# -------------------------
 .vscode/
+.idea/
 
+# -------------------------
 # OS
+# -------------------------
 .DS_Store
 Thumbs.db
 
-# Node
-node_modules/
+# -------------------------
+# Testing
+# -------------------------
+.pytest_cache/
 
-#Third Party
-third_party/
+# -------------------------
+# Optional / Dev Artefacts
+# -------------------------
+docs/Produktstände/

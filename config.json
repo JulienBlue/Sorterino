@@ -1,20 +1,11 @@
 {
-  "user_path": "C:\\Users\\JulienBlueHirte\\OneDrive - Hades IT GmbH\\Tanja\\Hades IT GmbH - Autotest",
-
-  "runtime_folder_name": ".sorterino_runtime",
-
-  "input_folder_name": "Sorterino - Input",
-  "manual_sort_folder_name": "Sorterino - Manuelle Sortierung",
-
-  "poppler_path": "third_party/poppler-25.12.0/Library/bin",
-  "tesseract_path": "third_party/Tesseract-OCR/tesseract.exe",
-
+  "user_path": "C:/Users/DEIN_USER/Documents",
+  "auto_mode": false,
+  "autostart": false,
   "company_profile": {
-    "name": "Hades IT GmbH",
-    "iban": "DE77202208000026631589",
-    "address_keywords": [
-      "Am Frankenturm 5",
-      "50667 Köln"
-    ]
-  }
+    "name": "",
+    "keywords": []
+  },
+  "poppler_path": "",
+  "tesseract_path": ""
 }
