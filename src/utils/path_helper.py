@@ -15,4 +15,4 @@ def get_user_base_dir() -> Path:
     """
     Liefert den persistenten User-Ordner
     """
-    return Path.home() / ".sorterino_runtime"
+    return Path.home()

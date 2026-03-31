@@ -1,65 +1,27 @@
 import sys
-import json
-from pathlib import Path
 
-# -------------------------------------------------
-# Projekt-Root bestimmen
-# -------------------------------------------------
-BASE_DIR = Path(__file__).resolve().parent
+from src.infrastructure.config.config_loader import Config
+from src.infrastructure.config.config_service import ConfigService
+from src.infrastructure.config.rules_loader import RulesLoader
+from src.infrastructure.config.structure_loader import StructureLoader
+from src.infrastructure.config.formats_loader import FormatsLoader
+from src.infrastructure.config.initialize_workspace import initialize_workspace
 
-# -------------------------------------------------
+from src.infrastructure.io.folder_document_source import FolderDocumentSource
+from src.infrastructure.ocr.tesseract_ocr import TesseractOCR
+from src.infrastructure.logging.file_logger import FileLogger
+from src.infrastructure.storage.filesystem_storage import FilesystemStorage
 
-from src.utils.path_helper import get_user_base_dir
+from src.usecases.document_pipeline import DocumentPipeline
 
-from infrastructure.config.config_loader import Config
-from infrastructure.config.rules_loader import RulesLoader
-from infrastructure.config.structure_loader import StructureLoader
-from infrastructure.config.formats_loader import FormatsLoader
-from infrastructure.config.initialize_workspace import initialize_workspace
-
-from infrastructure.io.folder_document_source import FolderDocumentSource
-from infrastructure.ocr.tesseract_ocr import TesseractOCR
-from infrastructure.logging.file_logger import FileLogger
-from infrastructure.storage.filesystem_storage import FilesystemStorage
-
-from usecases.document_pipeline import DocumentPipeline
-
-
-# -------------------------------------------------
-# CONFIG BOOTSTRAP (PORTABLE!)
-# -------------------------------------------------
 
 def load_or_create_config():
-    base = get_user_base_dir()
-    runtime = base / ".sorterino_runtime"
+    service = ConfigService()
+    return service.config_path
 
-    runtime.mkdir(parents=True, exist_ok=True)
-
-    config_path = runtime / "config.json"
-
-    if not config_path.exists():
-        default_config = {
-            "user_path": str(base),
-            "runtime_folder_name": ".sorterino_runtime",
-            "input_folder_name": "Sorterino - Input",
-            "manual_sort_folder_name": "Sorterino - Manuelle Sortierung",
-            "poppler_path": "third_party/poppler-25.12.0/Library/bin",
-            "tesseract_path": "third_party/Tesseract-OCR/tesseract.exe"
-        }
-
-        with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(default_config, f, indent=2)
-
-    return config_path
-
-
-# -------------------------------------------------
-# MAIN
-# -------------------------------------------------
 
 def main() -> None:
 
-    # 🔥 WICHTIG: portable config laden
     config_path = load_or_create_config()
     config = Config(config_path)
 
@@ -70,19 +32,15 @@ def main() -> None:
 
     initialize_workspace(config)
 
-    # 🔥 WICHTIG: BASE_DIR behalten für interne Dateien
-    rules = RulesLoader(BASE_DIR / "rules.json").load_rules()
-    structure = StructureLoader(BASE_DIR / "structure.json").load_structure()
+    rules = RulesLoader(config.rules_path).load_rules()
+    structure = StructureLoader(config.structure_path).load_structure()
 
-    formats_config = FormatsLoader(
-        BASE_DIR / "supported_formats.json"
-    ).load()
+    formats_config = FormatsLoader(config.formats_path).load()
 
     supported_extensions = set(formats_config["supported_extensions"])
     unsupported_target = formats_config["unsupported_target"]
 
     source = FolderDocumentSource(config.incoming_root)
-
     logger = FileLogger(config.logs_root)
 
     ocr_service = TesseractOCR(
@@ -91,7 +49,6 @@ def main() -> None:
         logger=logger
     )
 
-    # STORAGE-KONTEXTE
     runtime_storage = FilesystemStorage(config.runtime_root)
     archive_storage = FilesystemStorage(config.user_path)
 
@@ -112,8 +69,6 @@ def main() -> None:
 
     pipeline.run()
 
-
-# -------------------------------------------------
 
 if __name__ == "__main__":
     try:

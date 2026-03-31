@@ -1,16 +1,58 @@
 # -*- mode: python ; coding: utf-8 -*-
+
+import os
+from pathlib import Path
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('third_party', 'third_party'), ('rules.json', '.'), ('structure.json', '.'), ('supported_formats.json', '.')]
+BASE_DIR = Path(os.getcwd()).resolve()
+
+# -----------------------------
+# DATA FILES (SAUBER STRUKTURIERT)
+# -----------------------------
+datas = [
+    (str(BASE_DIR / "assets"), "assets"),
+    (str(BASE_DIR / "third_party"), "third_party"),
+    (str(BASE_DIR / "rules.json"), "."),
+    (str(BASE_DIR / "structure.json"), "."),
+    (str(BASE_DIR / "supported_formats.json"), "."),
+]
+
 binaries = []
-hiddenimports = []
-tmp_ret = collect_all('customtkinter')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
+hiddenimports = [
+    "infrastructure",
+    "infrastructure.config",
+    "infrastructure.config.config_loader",
+    "infrastructure.config.rules_loader",
+    "infrastructure.config.structure_loader",
+    "infrastructure.config.formats_loader",
+    "infrastructure.config.initialize_workspace",
 
+    "infrastructure.io.folder_document_source",
+    "infrastructure.ocr.tesseract_ocr",
+    "infrastructure.logging.file_logger",
+    "infrastructure.storage.filesystem_storage",
+
+    "usecases.document_pipeline",
+
+    "src.utils.path_helper",
+]
+
+# -----------------------------
+# CUSTOMTKINTER EINBINDEN
+# -----------------------------
+ctk_datas, ctk_bins, ctk_hidden = collect_all("customtkinter")
+
+datas += ctk_datas
+binaries += ctk_bins
+hiddenimports += ctk_hidden
+
+# -----------------------------
+# ANALYSIS
+# -----------------------------
 a = Analysis(
-    ['src\\gui\\app.py'],
-    pathex=[],
+    [str(BASE_DIR / "src" / "gui" / "app.py")],
+    pathex=[str(BASE_DIR)],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
@@ -19,10 +61,16 @@ a = Analysis(
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
-    optimize=0,
 )
+
+# -----------------------------
+# PYZ
+# -----------------------------
 pyz = PYZ(a.pure)
 
+# -----------------------------
+# EXE
+# -----------------------------
 exe = EXE(
     pyz,
     a.scripts,
@@ -34,19 +82,19 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-    icon=['assets\\icons\\sorterino_sky.ico'],
+    icon=str(BASE_DIR / "assets" / "icons" / "default_icon_128.ico"),
 )
+
+# -----------------------------
+# COLLECT (ONEDIR BUILD)
+# -----------------------------
 coll = COLLECT(
     exe,
     a.binaries,
+    a.zipfiles,
     a.datas,
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Sorterino',
+    name='Sorterino'
 )
