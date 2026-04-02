@@ -36,35 +36,32 @@ class DocumentPipeline:
         self.error_target = error_target
 
     # --------------------------------------------------
+    # LOGGING HELPER
+    # --------------------------------------------------
 
-    def _cli_and_log(self, cli_msg, log_msg=None):
-        self.logger.log(log_msg or cli_msg)
+    def _log_step(self, step, message):
+        self.logger.log(f"[{step}] {message}")
 
     # --------------------------------------------------
 
     def run(self):
 
-        self._cli_and_log("\n🔵 SORTERINO PIPELINE START",
-                          "Pipeline started")
+        self._log_step("PIPELINE", "START")
 
         for source in self.sources:
             documents = source.fetch_documents()
 
             if not documents:
-                self._cli_and_log("⚠️ Keine Dokumente gefunden.",
-                                  "No documents found")
+                self._log_step("SOURCE", "No documents found")
                 continue
 
             for document in documents:
                 try:
                     self._process_document(document)
                 except Exception as e:
-                    self._cli_and_log(f"❌ Fehler: {e}",
-                                      f"Error processing document {document.id}: {e}")
-                    self.logger.error(str(e))
+                    self.logger.error(f"[FATAL] {document.id}: {e}")
 
-        self._cli_and_log("\n🟢 PIPELINE BEENDET",
-                          "Pipeline finished")
+        self._log_step("PIPELINE", "END")
 
     # --------------------------------------------------
 
@@ -80,7 +77,7 @@ class DocumentPipeline:
             )
 
         except Exception as e:
-            self.logger.error(f"Manual sort failed: {e}")
+            self.logger.error(f"[MANUAL_SORT_FAIL] {e}")
 
             final_path = self.runtime_storage.store(
                 document.source_path,
@@ -88,34 +85,27 @@ class DocumentPipeline:
                 original_name
             )
 
-            self._cli_and_log(
-                f"🚨 → In ERROR verschoben: {final_path}",
-                f"Moved to ERROR: {final_path}"
-            )
+            self._log_step("ERROR", f"Moved to ERROR: {final_path}")
+            return
 
-        self._cli_and_log(
-            f"📂 → MANUELLE SORTIERUNG ({reason})",
-            f"Manual sort triggered: {reason}"
-        )
+        self._log_step("MANUAL_SORT", f"{reason} → {final_path}")
 
     # --------------------------------------------------
 
     def _process_document(self, document):
 
-        self._cli_and_log(
-            f"\n📄 Datei: {document.source_path}",
-            f"Processing document: {document.source_path}"
-        )
+        doc_id = os.path.basename(document.source_path)
+
+        self._log_step("START", doc_id)
 
         ext = os.path.splitext(document.source_path)[1].lower()
+        self._log_step("FILETYPE", ext)
 
-        self._cli_and_log(
-            f"🔎 Dateityp: {ext}",
-            f"File extension: {ext}"
-        )
-
-        # Backup
         original_name = os.path.basename(document.source_path)
+
+        # --------------------------------------------------
+        # BACKUP
+        # --------------------------------------------------
 
         processed_path = self.runtime_storage.copy(
             document.source_path,
@@ -123,44 +113,45 @@ class DocumentPipeline:
             original_name
         )
 
-        self.logger.log(f"Original backed up to: {processed_path}")
+        self._log_step("BACKUP", processed_path)
 
-        # Unsupported
+        # --------------------------------------------------
+        # FORMAT CHECK
+        # --------------------------------------------------
+
         if ext not in self.supported_extensions:
 
-            self._cli_and_log(
-                "⚠️ Nicht unterstütztes Format",
-                "Unsupported file format"
-            )
+            self._log_step("UNSUPPORTED", ext)
 
             self.runtime_storage.store(
                 document.source_path,
                 self.unsupported_target,
                 original_name
             )
-
             return
 
+        # --------------------------------------------------
         # OCR
-        self._cli_and_log("🟡 OCR starte...",
-                          "OCR started")
+        # --------------------------------------------------
+
+        self._log_step("OCR", "start")
 
         text = self.ocr_service.extract_text(document.source_path)
 
         if not text.strip():
-            self._cli_and_log("❌ Kein OCR-Text erkannt",
-                              "OCR failed: No text extracted")
+            self._log_step("OCR_FAIL", "empty text")
             self._move_to_manual_sort(document, "Kein OCR-Text")
             return
 
-        self._cli_and_log("✅ OCR erfolgreich",
-                          f"OCR success | Length: {len(text)}")
+        self._log_step("OCR_OK", f"len={len(text)}")
 
         document.mark_analyzed(text)
 
-        # Klassifikation
-        self._cli_and_log("🟡 Klassifikation starte...",
-                        f"Text Preview: {text[:200]}")
+        # --------------------------------------------------
+        # CLASSIFICATION
+        # --------------------------------------------------
+
+        self._log_step("CLASSIFY", "start")
 
         classification = classify_document(
             document,
@@ -170,52 +161,57 @@ class DocumentPipeline:
         )
 
         if not classification or not classification.category:
-            self._cli_and_log("❌ Keine Kategorie erkannt",
-                              "Classification failed")
+            self._log_step("CLASSIFY_FAIL", "no category")
             self._move_to_manual_sort(document, "Keine Kategorie")
             return
 
-        self._cli_and_log(
-            f"✅ Kategorie erkannt: {classification.category}",
-            f"Category: {classification.category} | Confidence: {classification.confidence}"
+        self._log_step(
+            "CLASSIFY_OK",
+            f"{classification.category} ({classification.confidence})"
         )
 
         document.mark_classified(classification)
-        
 
         # --------------------------------------------------
-        # MANUELLE KATEGORIE → Runtime manual_sort
+        # MANUAL CATEGORY
         # --------------------------------------------------
 
         if classification.category.lower() in ["manuell", "unknown"]:
             self._move_to_manual_sort(
                 document,
-                f"Kategorie Manuell | Confidence: {classification.confidence}"
+                f"Manuell ({classification.confidence})"
             )
             return
-        
-        # Rename
-        self._cli_and_log("🟡 Neuer Dateiname generieren...",
-                          "Generating new filename")
+
+        # --------------------------------------------------
+        # RENAME
+        # --------------------------------------------------
+
+        self._log_step("RENAME", "start")
 
         new_name = rename_document(document)
 
-        self.logger.log(f"New filename: {new_name}")
+        self._log_step("RENAME_OK", new_name)
 
-        # Zielpfad
+        # --------------------------------------------------
+        # PATH RESOLVE
+        # --------------------------------------------------
+
         target_directory = self.path_resolver.resolve(
             document.metadata
         )
 
         if not target_directory:
-            self._cli_and_log("❌ Kein Zielordner bestimmbar",
-                              "Target directory not resolvable")
+            self._log_step("PATH_FAIL", "None")
             self._move_to_manual_sort(document, "Kein Zielpfad")
             return
 
-        self.logger.log(f"Target directory: {target_directory}")
+        self._log_step("PATH_OK", target_directory)
 
-        # Archivieren
+        # --------------------------------------------------
+        # STORE
+        # --------------------------------------------------
+
         try:
             final_path = self.archive_storage.store(
                 document.source_path,
@@ -224,8 +220,7 @@ class DocumentPipeline:
             )
 
         except Exception as e:
-            self._cli_and_log(f"❌ Archivierungsfehler: {e}",
-                              f"Archive failed: {e}")
+            self._log_step("STORE_FAIL", str(e))
 
             self.runtime_storage.store(
                 document.source_path,
@@ -233,11 +228,9 @@ class DocumentPipeline:
                 original_name
             )
 
-            self.logger.error(f"Archive failed: {e}")
             return
 
-        self._cli_and_log(
-            f"✅ Gespeichert unter: {final_path}",
-            f"Archived successfully to: {final_path}"
-        )
+        self._log_step("STORE_OK", final_path)
+
+        self._log_step("DONE", doc_id)
         self.logger.log("-" * 70)

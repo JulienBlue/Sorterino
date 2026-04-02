@@ -13,14 +13,27 @@ from src.infrastructure.logging.file_logger import FileLogger
 from src.infrastructure.storage.filesystem_storage import FilesystemStorage
 
 from src.usecases.document_pipeline import DocumentPipeline
+from src.usecases.validate_config import validate_config
 
+
+# --------------------------------------------------
+# CONFIG LOADING
+# --------------------------------------------------
 
 def load_or_create_config():
     service = ConfigService()
     return service.config_path
 
 
+# --------------------------------------------------
+# MAIN
+# --------------------------------------------------
+
 def main() -> None:
+
+    # --------------------------------------------------
+    # CONFIG LOAD
+    # --------------------------------------------------
 
     config_path = load_or_create_config()
     config = Config(config_path)
@@ -32,16 +45,59 @@ def main() -> None:
 
     initialize_workspace(config)
 
+    # --------------------------------------------------
+    # LOAD CONFIG FILES
+    # --------------------------------------------------
+
     rules = RulesLoader(config.rules_path).load_rules()
     structure = StructureLoader(config.structure_path).load_structure()
-
     formats_config = FormatsLoader(config.formats_path).load()
+
+    # --------------------------------------------------
+    # 🔥 CONFIG VALIDATION (CRITICAL)
+    # --------------------------------------------------
+
+    errors = validate_config(
+        rules=rules,
+        structure=structure,
+        company_profile=company_profile
+    )
+
+    if errors:
+        print("\n❌ CONFIG ERROR:")
+        for e in errors:
+            print(f" - {e}")
+        sys.exit(1)
+
+    # --------------------------------------------------
+    # FORMATS
+    # --------------------------------------------------
+
+    if "supported_extensions" not in formats_config:
+        raise ValueError("formats.json: supported_extensions fehlt")
+
+    if "unsupported_target" not in formats_config:
+        raise ValueError("formats.json: unsupported_target fehlt")
 
     supported_extensions = set(formats_config["supported_extensions"])
     unsupported_target = formats_config["unsupported_target"]
 
-    source = FolderDocumentSource(config.incoming_root)
+    # --------------------------------------------------
+    # LOGGER
+    # --------------------------------------------------
+
     logger = FileLogger(config.logs_root)
+    logger.log("🔵 Sorterino gestartet")
+
+    # --------------------------------------------------
+    # OCR SETUP CHECK
+    # --------------------------------------------------
+
+    if not config.tesseract_path:
+        raise ValueError("Tesseract Pfad fehlt")
+
+    if not config.poppler_path:
+        logger.log("⚠️ Poppler nicht gesetzt (PDF könnte Probleme machen)")
 
     ocr_service = TesseractOCR(
         poppler_path=str(config.poppler_path),
@@ -49,8 +105,22 @@ def main() -> None:
         logger=logger
     )
 
+    # --------------------------------------------------
+    # STORAGE
+    # --------------------------------------------------
+
     runtime_storage = FilesystemStorage(config.runtime_root)
     archive_storage = FilesystemStorage(config.user_path)
+
+    # --------------------------------------------------
+    # SOURCE
+    # --------------------------------------------------
+
+    source = FolderDocumentSource(config.incoming_root)
+
+    # --------------------------------------------------
+    # PIPELINE
+    # --------------------------------------------------
 
     pipeline = DocumentPipeline(
         sources=[source],
@@ -67,11 +137,22 @@ def main() -> None:
         error_target="error"
     )
 
+    # --------------------------------------------------
+    # RUN
+    # --------------------------------------------------
+
     pipeline.run()
 
+
+# --------------------------------------------------
+# ENTRYPOINT
+# --------------------------------------------------
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
         print("🔵 Ausführung manuell beendet.")
+    except Exception as e:
+        print(f"\n❌ FATAL ERROR: {e}")
+        sys.exit(1)

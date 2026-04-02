@@ -25,9 +25,27 @@ MONTH_NAMES = {
     12: "Dezember",
 }
 
+# --------------------------------------------------
+# CONDITIONS (NEU)
+# --------------------------------------------------
+
+def _check_conditions(rule, text_lower, company_profile):
+    conditions = rule.get("conditions", {})
+    company_name = (company_profile.get("name") or "").lower()
+
+    if conditions.get("must_contain_company_name"):
+        if not company_name or company_name not in text_lower:
+            return False
+
+    if conditions.get("must_not_contain_company_name"):
+        if company_name and company_name in text_lower:
+            return False
+
+    return True
+
 
 # --------------------------------------------------
-# DATUM (inkl. Textformate)
+# DATUM
 # --------------------------------------------------
 
 def extract_invoice_date(text: str) -> Optional[str]:
@@ -63,7 +81,6 @@ def extract_invoice_date(text: str) -> Optional[str]:
         "december": "12",
     }
 
-    # 1️⃣ Rechnungsdatum explizit
     match = re.search(
         r"Rechnungsdatum\s*[:\-]?\s*(\d{2}\.\d{2}\.\d{4})",
         text,
@@ -72,12 +89,10 @@ def extract_invoice_date(text: str) -> Optional[str]:
     if match:
         return match.group(1)
 
-    # 2️⃣ Klassisches Format
     match = re.search(r"\b(\d{2}\.\d{2}\.\d{4})\b", text)
     if match:
         return match.group(1)
 
-    # 3️⃣ Deutsches Textformat
     match = re.search(
         r"(\d{1,2})\.\s*(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\s*(20\d{2})",
         text,
@@ -89,7 +104,6 @@ def extract_invoice_date(text: str) -> Optional[str]:
         year = match.group(3)
         return f"{day}.{month}.{year}"
 
-    # 4️⃣ Englisches Format
     match = re.search(
         r"(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2}),\s*(20\d{2})",
         text,
@@ -132,9 +146,7 @@ def extract_invoice_number(text: str) -> Optional[str]:
 
 def extract_year(text: str) -> Optional[int]:
     match = re.search(r"\b(20\d{2})\b", text)
-    if match:
-        return int(match.group(1))
-    return None
+    return int(match.group(1)) if match else None
 
 
 # --------------------------------------------------
@@ -143,7 +155,6 @@ def extract_year(text: str) -> Optional[int]:
 
 def extract_amount(text: str) -> Optional[str]:
 
-    # 1️⃣ Bevorzugte Muster (kontextbasiert)
     priority_patterns = [
         r"Gesamtsumme\s*[:\-]?\s*€?\s*([0-9]+,[0-9]{2})",
         r"Rechnungsbetrag\s*[:\-]?\s*€?\s*([0-9]+,[0-9]{2})",
@@ -157,25 +168,18 @@ def extract_amount(text: str) -> Optional[str]:
         if match:
             return match.group(1).replace(".", "")
 
-    # 2️⃣ Fallback: größten Betrag im Dokument nehmen
-    all_amounts = re.findall(
-        r"([0-9]{1,3}(?:\.[0-9]{3})*,[0-9]{2})",
-        text
-    )
+    all_amounts = re.findall(r"([0-9]{1,3}(?:\.[0-9]{3})*,[0-9]{2})", text)
 
     if all_amounts:
-
         def normalize(a: str) -> float:
             return float(a.replace(".", "").replace(",", "."))
-
-        largest = max(all_amounts, key=normalize)
-        return largest.replace(".", "")
+        return max(all_amounts, key=normalize).replace(".", "")
 
     return None
 
 
 # --------------------------------------------------
-# ROLLENERKENNUNG (ROBUST)
+# ROLLENERKENNUNG
 # --------------------------------------------------
 
 def detect_invoice_role(text: str, company_profile: Dict[str, Any]) -> str:
@@ -205,7 +209,6 @@ def extract_supplier(text: str, company_profile: Dict[str, Any]) -> Optional[str
     lines = [l.strip() for l in text.splitlines() if l.strip()]
 
     for line in lines[:25]:
-
         normalized_line = re.sub(r"\W+", "", line.lower())
         if own_company and own_company in normalized_line:
             continue
@@ -235,61 +238,44 @@ def extract_customer(text: str, company_profile: Dict[str, Any]) -> Optional[str
 
         normalized = re.sub(r"\W+", "", line.lower())
 
-        # Eigene Firma erkannt → danach kommt Kunde
         if own_company in normalized:
-
             for l in lines[i + 1:i + 10]:
 
                 candidate = l.strip()
 
-                # Keine Adresszeilen
                 if any(char.isdigit() for char in candidate):
                     continue
 
-                upper_candidate = candidate.upper()
+                upper = candidate.upper()
 
-                # Stop bei typischen Folgebegriffen
                 for word in STOP_WORDS:
-                    if word in upper_candidate:
-                        upper_candidate = upper_candidate.split(word)[0]
+                    if word in upper:
+                        upper = upper.split(word)[0]
 
-                upper_candidate = upper_candidate.split(" - ")[0]
-                upper_candidate = upper_candidate.strip(" -")
+                upper = upper.split(" - ")[0].strip(" -")
 
-                # Firmen mit Rechtsform bevorzugen
-                if re.search(r"\b(GmbH|AG|KG|GbR|mbH|UG)\b", upper_candidate):
-                    return upper_candidate
+                if re.search(r"\b(GmbH|AG|KG|GbR|mbH|UG)\b", upper):
+                    return upper
 
-                # Personenname-Fallback (2-3 Wörter, Großbuchstaben)
-                words = upper_candidate.split()
+                words = upper.split()
                 if 2 <= len(words) <= 3 and all(
                         w[0].isupper() for w in words if w and w[0].isalpha()):
-                    return upper_candidate
+                    return upper
 
     return None
 
 
 # --------------------------------------------------
-# HAUPTFUNKTION
+# HAUPTFUNKTION (FIXED)
 # --------------------------------------------------
 
-def classify_document(
-    document: Document,
-    rules: List[Dict[str, Any]],
-    company_profile: Dict[str, Any],
-    logger: LoggerService
-):
+def classify_document(document, rules, company_profile, logger):
 
     text = document.extracted_text or ""
     text_lower = text.lower()
 
     if not text.strip():
-        metadata = DocumentMetadata(
-            year=None,
-            category=None,
-            document_type=None,
-            contexts={}
-        )
+        metadata = DocumentMetadata(None, None, None, {})
         document.set_metadata(metadata)
         return Classification("MANUELL", 0.0)
 
@@ -298,7 +284,7 @@ def classify_document(
     year = extract_year(text)
     role = detect_invoice_role(text, company_profile)
 
-    contexts: Dict[str, Any] = {}
+    contexts = {}
 
     if invoice_number:
         contexts["invoice_number"] = invoice_number
@@ -306,123 +292,90 @@ def classify_document(
     if invoice_date:
         contexts["invoice_date"] = invoice_date
         year = int(invoice_date.split(".")[2])
-
         month_number = int(invoice_date.split(".")[1])
         contexts["month_number"] = str(month_number).zfill(2)
         contexts["month_name"] = MONTH_NAMES.get(month_number)
 
     # --------------------------------------------------
-    # 🔥 RULE-BASED (NEU – VOR HEURISTIK!)
+    # 🔥 RULE ENGINE (FIXED)
     # --------------------------------------------------
+
+    best_match = None
+    best_score = 0
 
     for rule in rules:
 
         keywords = rule.get("keywords", [])
-
         if not keywords:
             continue
 
-        if any(k.lower() in text_lower for k in keywords):
+        matches = sum(1 for k in keywords if k.lower() in text_lower)
 
-            metadata = DocumentMetadata(
-                year=year,
-                category=rule["category"],
-                document_type=rule["document_type"],
-                contexts=contexts
-            )
+        if matches == 0:
+            continue
 
-            document.set_metadata(metadata)
+        if not _check_conditions(rule, text_lower, company_profile):
+            continue
 
-            logger.debug(f"Rule matched: {rule['document_type']}")
-            return Classification(rule["category"], 0.85)
+        score = matches / len(keywords)
+
+        logger.debug(f"Rule check: {rule['document_type']} | matches={matches} | score={score}")
+
+        if score > best_score:
+            best_score = score
+            best_match = rule
+
+    if best_match:
+        metadata = DocumentMetadata(
+            year=year,
+            category=best_match["category"],
+            document_type=best_match["document_type"],
+            contexts=contexts
+        )
+
+        document.set_metadata(metadata)
+
+        logger.debug(f"BEST RULE: {best_match['document_type']} ({best_score})")
+
+        return Classification(best_match["category"], best_score)
 
     # --------------------------------------------------
-    # Gebührenbescheid (bleibt)
+    # FALLBACK (UNVERÄNDERT)
     # --------------------------------------------------
 
     if "gebührenbescheid" in text_lower:
-        metadata = DocumentMetadata(
-            year=year,
-            category="BUCHHALTUNG",
-            document_type="Gebührenbescheid",
-            contexts=contexts
-        )
+        metadata = DocumentMetadata(year, "BUCHHALTUNG", "Gebührenbescheid", contexts)
         document.set_metadata(metadata)
         return Classification("BUCHHALTUNG", 0.9)
 
-    # --------------------------------------------------
-    # 🔥 AUSGANG (LOCKERER!)
-    # --------------------------------------------------
-
     if role == "outgoing" and (invoice_number or invoice_date):
-
         customer = extract_customer(text, company_profile)
-        logger.debug(f"Customer erkannt: {customer}")
-
         if customer:
             contexts["party"] = customer
 
-        metadata = DocumentMetadata(
-            year=year,
-            category="BUCHHALTUNG",
-            document_type="Ausgangsrechnung",
-            contexts=contexts
-        )
-
+        metadata = DocumentMetadata(year, "BUCHHALTUNG", "Ausgangsrechnung", contexts)
         document.set_metadata(metadata)
         return Classification("BUCHHALTUNG", 0.95)
 
-    # --------------------------------------------------
-    # 🔥 EINGANG (LOCKERER!)
-    # --------------------------------------------------
-
     if role == "incoming" and (invoice_number or invoice_date):
-
         supplier = extract_supplier(text, company_profile)
         amount = extract_amount(text)
 
         if supplier:
             contexts["party"] = supplier
-
         if amount:
             contexts["amount"] = amount
 
-        metadata = DocumentMetadata(
-            year=year,
-            category="BUCHHALTUNG",
-            document_type="Eingangsrechnung",
-            contexts=contexts
-        )
-
+        metadata = DocumentMetadata(year, "BUCHHALTUNG", "Eingangsrechnung", contexts)
         document.set_metadata(metadata)
         return Classification("BUCHHALTUNG", 0.9)
 
-    # --------------------------------------------------
-    # 🔥 SOFT FALLBACK (NEU!)
-    # --------------------------------------------------
-
     if "rechnung" in text_lower or "invoice" in text_lower:
-
-        metadata = DocumentMetadata(
-            year=year,
-            category="BUCHHALTUNG",
-            document_type="Unklare Rechnung",
-            contexts=contexts
-        )
-
+        metadata = DocumentMetadata(year, "BUCHHALTUNG", "Unklare Rechnung", contexts)
         document.set_metadata(metadata)
         return Classification("BUCHHALTUNG", 0.6)
 
-    # --------------------------------------------------
-    # FINAL
-    # --------------------------------------------------
-
-    metadata = DocumentMetadata(
-        year=year,
-        category="MANUELL",
-        document_type=None,
-        contexts=contexts
-    )
-
+    metadata = DocumentMetadata(year, "MANUELL", None, contexts)
     document.set_metadata(metadata)
+
     return Classification("MANUELL", 0.0)
