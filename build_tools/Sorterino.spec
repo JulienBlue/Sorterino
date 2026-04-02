@@ -11,7 +11,8 @@ BASE_DIR = Path(os.getcwd()).resolve()
 # -----------------------------
 datas = [
     (str(BASE_DIR / "assets"), "assets"),
-    (str(BASE_DIR / "third_party"), "third_party"),
+    (str(BASE_DIR / "third_party" / "tesseract"), "third_party/tesseract"),
+    (str(BASE_DIR / "third_party" / "poppler"), "third_party/poppler"),
     (str(BASE_DIR / "rules.json"), "."),
     (str(BASE_DIR / "structure.json"), "."),
     (str(BASE_DIR / "supported_formats.json"), "."),
@@ -20,22 +21,24 @@ datas = [
 binaries = []
 
 hiddenimports = [
-    "infrastructure",
-    "infrastructure.config",
-    "infrastructure.config.config_loader",
-    "infrastructure.config.rules_loader",
-    "infrastructure.config.structure_loader",
-    "infrastructure.config.formats_loader",
-    "infrastructure.config.initialize_workspace",
+    "src.infrastructure.config.config_loader",
+    "src.infrastructure.config.rules_loader",
+    "src.infrastructure.config.structure_loader",
+    "src.infrastructure.config.formats_loader",
+    "src.infrastructure.config.initialize_workspace",
 
-    "infrastructure.io.folder_document_source",
-    "infrastructure.ocr.tesseract_ocr",
-    "infrastructure.logging.file_logger",
-    "infrastructure.storage.filesystem_storage",
+    "src.infrastructure.io.folder_document_source",
+    "src.infrastructure.ocr.tesseract_ocr",
+    "src.infrastructure.logging.file_logger",
+    "src.infrastructure.storage.filesystem_storage",
 
-    "usecases.document_pipeline",
+    "src.usecases.document_pipeline",
 
     "src.utils.path_helper",
+
+    "pytesseract",
+    "pdf2image",
+    "PIL",
 ]
 
 # -----------------------------

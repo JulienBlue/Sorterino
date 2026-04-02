@@ -25,6 +25,6 @@
 
 },
 
-"poppler_path": "",
-"tesseract_path": ""
+"poppler_path": "third_party/poppler/Library/bin",
+"tesseract_path": "third_party/tesseract/tesseract.exe"
 }

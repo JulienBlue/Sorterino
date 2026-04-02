@@ -1,4 +1,6 @@
 import sys
+import tempfile
+import os
 
 from src.infrastructure.config.config_loader import Config
 from src.infrastructure.config.config_service import ConfigService
@@ -16,6 +18,9 @@ from src.usecases.document_pipeline import DocumentPipeline
 from src.usecases.validate_config import validate_config
 
 
+LOCK_FILE = os.path.join(tempfile.gettempdir(), "sorterino.lock")
+
+
 # --------------------------------------------------
 # CONFIG LOADING
 # --------------------------------------------------
@@ -26,36 +31,26 @@ def load_or_create_config():
 
 
 # --------------------------------------------------
-# MAIN
+# PIPELINE (REUSABLE)
 # --------------------------------------------------
 
-def main() -> None:
-
-    # --------------------------------------------------
-    # CONFIG LOAD
-    # --------------------------------------------------
+def run_pipeline() -> None:
 
     config_path = load_or_create_config()
+    print("CONFIG PATH:", config_path)
+
     config = Config(config_path)
+
+    print("USER PATH:", config.user_path)
+    print("INCOMING:", config.incoming_root)
 
     company_profile = config.raw.get("company_profile", {})
 
-    if not config.user_path:
-        raise ValueError("user_path ist nicht konfiguriert.")
-
     initialize_workspace(config)
-
-    # --------------------------------------------------
-    # LOAD CONFIG FILES
-    # --------------------------------------------------
 
     rules = RulesLoader(config.rules_path).load_rules()
     structure = StructureLoader(config.structure_path).load_structure()
     formats_config = FormatsLoader(config.formats_path).load()
-
-    # --------------------------------------------------
-    # 🔥 CONFIG VALIDATION (CRITICAL)
-    # --------------------------------------------------
 
     errors = validate_config(
         rules=rules,
@@ -64,40 +59,13 @@ def main() -> None:
     )
 
     if errors:
-        print("\n❌ CONFIG ERROR:")
-        for e in errors:
-            print(f" - {e}")
-        sys.exit(1)
-
-    # --------------------------------------------------
-    # FORMATS
-    # --------------------------------------------------
-
-    if "supported_extensions" not in formats_config:
-        raise ValueError("formats.json: supported_extensions fehlt")
-
-    if "unsupported_target" not in formats_config:
-        raise ValueError("formats.json: unsupported_target fehlt")
+        raise ValueError(f"CONFIG ERROR: {errors}")
 
     supported_extensions = set(formats_config["supported_extensions"])
     unsupported_target = formats_config["unsupported_target"]
 
-    # --------------------------------------------------
-    # LOGGER
-    # --------------------------------------------------
-
     logger = FileLogger(config.logs_root)
-    logger.log("🔵 Sorterino gestartet")
-
-    # --------------------------------------------------
-    # OCR SETUP CHECK
-    # --------------------------------------------------
-
-    if not config.tesseract_path:
-        raise ValueError("Tesseract Pfad fehlt")
-
-    if not config.poppler_path:
-        logger.log("⚠️ Poppler nicht gesetzt (PDF könnte Probleme machen)")
+    logger.log("🔵 Pipeline gestartet")
 
     ocr_service = TesseractOCR(
         poppler_path=str(config.poppler_path),
@@ -105,22 +73,13 @@ def main() -> None:
         logger=logger
     )
 
-    # --------------------------------------------------
-    # STORAGE
-    # --------------------------------------------------
-
     runtime_storage = FilesystemStorage(config.runtime_root)
     archive_storage = FilesystemStorage(config.user_path)
 
-    # --------------------------------------------------
-    # SOURCE
-    # --------------------------------------------------
-
     source = FolderDocumentSource(config.incoming_root)
 
-    # --------------------------------------------------
-    # PIPELINE
-    # --------------------------------------------------
+    documents = source.fetch_documents()
+    print(f"DEBUG: {len(documents)} Dokumente gefunden")
 
     pipeline = DocumentPipeline(
         sources=[source],
@@ -137,11 +96,26 @@ def main() -> None:
         error_target="error"
     )
 
-    # --------------------------------------------------
-    # RUN
-    # --------------------------------------------------
-
     pipeline.run()
+
+
+# --------------------------------------------------
+# CLI ENTRY (LOCK NUR HIER!)
+# --------------------------------------------------
+
+def main():
+    if os.path.exists(LOCK_FILE):
+        print("⚠️ Sorterino läuft bereits")
+        return
+
+    with open(LOCK_FILE, "w") as f:
+        f.write("running")
+
+    try:
+        run_pipeline()
+    finally:
+        if os.path.exists(LOCK_FILE):
+            os.remove(LOCK_FILE)
 
 
 # --------------------------------------------------

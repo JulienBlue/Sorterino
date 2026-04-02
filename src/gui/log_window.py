@@ -5,8 +5,13 @@ from src.infrastructure.config.config_service import ConfigService
 
 class LogWindow(ctk.CTkToplevel):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, master):
+        super().__init__(master)
+
+        self.lift()
+        self.focus_force()
+        self.attributes("-topmost", True)
+        self.after(200, lambda: self.attributes("-topmost", False))
 
         self.title("Logs")
         self.geometry("600x400")

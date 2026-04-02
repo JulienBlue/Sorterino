@@ -12,6 +12,11 @@ class StorageWindow(ctk.CTkToplevel):
     def __init__(self, master):
         super().__init__(master)
 
+        self.lift()
+        self.focus_force()
+        self.attributes("-topmost", True)
+        self.after(200, lambda: self.attributes("-topmost", False))
+
         self.config_service = ConfigService()
 
         self.title("Speicherort")

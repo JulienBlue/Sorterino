@@ -1,5 +1,28 @@
 import sys
 from src.gui.tray import TrayApp
+import ctypes
+import sys
+from tkinter import messagebox
+
+MUTEX_NAME = "SorterinoSingletonMutex"
+
+mutex = ctypes.windll.kernel32.CreateMutexW(None, False, MUTEX_NAME)
+
+import ctypes
+from tkinter import messagebox
+
+if ctypes.windll.kernel32.GetLastError() == 183:
+
+    hwnd = ctypes.windll.user32.FindWindowW(None, "Sorterino")
+
+    if hwnd:
+        ctypes.windll.user32.ShowWindow(hwnd, 5)
+        ctypes.windll.user32.SetForegroundWindow(hwnd)
+
+    # 🔥 IMMER anzeigen
+    messagebox.showinfo("Sorterino", "Sorterino läuft bereits!")
+
+    sys.exit(0)
 
 def bring_to_front(app):
     import ctypes

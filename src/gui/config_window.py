@@ -6,8 +6,15 @@ from src.infrastructure.system.autostart_service import AutostartService
 
 class ConfigWindow(ctk.CTkToplevel):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, master=None, on_change=None):
+        super().__init__(master)
+
+        self.on_change = on_change
+
+        self.lift()
+        self.focus_force()
+        self.attributes("-topmost", True)
+        self.after(200, lambda: self.attributes("-topmost", False))
 
         self.config_service = ConfigService()
         self.autostart_service = AutostartService()
@@ -17,6 +24,8 @@ class ConfigWindow(ctk.CTkToplevel):
 
         self.create_ui()
         self.load_values()
+
+        self._pipeline_running = False
 
     def create_ui(self):
 
@@ -174,7 +183,43 @@ class ConfigWindow(ctk.CTkToplevel):
         print("✅ Firmenprofil gespeichert:", data)
 
     def toggle_auto_mode(self):
-        self.config_service.set("auto_mode", self.auto_mode_checkbox.get() == 1)
+        value = self.auto_mode_checkbox.get() == 1
+        self.config_service.set("auto_mode", value)
+
+        if value:
+            print("🟢 Auto Mode aktiviert")
+
+            import threading
+            from main import run_pipeline
+
+            def _auto_loop():
+                import time
+
+                while self.config_service.get("auto_mode"):
+
+                    if self._pipeline_running:
+                        time.sleep(1)
+                        continue
+
+                    self._pipeline_running = True
+
+                    try:
+                        print("🔄 Pipeline läuft (auto)...")
+                        run_pipeline()
+                    except Exception as e:
+                        print("❌ Pipeline Fehler:", e)
+                    finally:
+                        self._pipeline_running = False
+
+                    time.sleep(5)
+
+            threading.Thread(target=_auto_loop, daemon=True).start()
+
+        else:
+            print("⚪ Auto Mode deaktiviert")
+
+        if self.on_change:
+            self.on_change()
 
     def toggle_autostart(self):
         value = self.autostart_checkbox.get() == 1

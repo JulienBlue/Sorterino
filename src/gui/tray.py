@@ -1,110 +1,123 @@
 import pystray
-from pystray import MenuItem as item
 from PIL import Image, ImageDraw
-import threading
 from pathlib import Path
 import customtkinter as ctk
 
-import subprocess
-import sys
-
 from src.infrastructure.config.config_service import ConfigService
+from src.gui.main_window import MainWindow
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 ICON_PATH = BASE_DIR / "assets" / "icons" / "default_icon_128.ico"
 
 root = ctk.CTk()
-root.withdraw()  # versteckt Hauptfenster
+root.withdraw()
+
 
 class TrayApp:
 
     def __init__(self):
         self.config_service = ConfigService()
-        self.is_running = False
+        self.window = None
 
         self.icon = pystray.Icon(
             "Sorterino",
             self.create_icon(),
-            "Sorterino (Inaktiv)",
-            menu=self.build_menu()
+            "Sorterino",
+            menu=pystray.Menu(
+                pystray.MenuItem("Öffnen", self.open_main_window, default=True),
+                pystray.MenuItem("Beenden", self.exit_app)
+            )
         )
+
+    # --------------------------------------------------
+
+    def open_main_window(self, icon=None, item=None):
+
+        def _open():
+            try:
+                if self.window and self.window.winfo_exists():
+                    self._bring_to_front(self.window)
+                    self.window.protocol("WM_DELETE_WINDOW", self._on_window_close)
+                    return
+
+                self.window = MainWindow(
+                    master=root,
+                    pipeline=None,
+                    logger=None,
+                    config=self.config_service
+                )
+
+                self._bring_to_front(self.window)
+
+            except Exception as e:
+                print("❌ GUI ERROR:", e)
+
+        root.after(0, _open)
+
+    # --------------------------------------------------
 
     def create_icon(self):
         try:
             if ICON_PATH.exists():
                 return Image.open(ICON_PATH)
-        except Exception as e:
-            print(f"⚠️ Icon Fehler: {e}")
+        except Exception:
+            pass
 
         img = Image.new("RGB", (64, 64), color="gray")
         draw = ImageDraw.Draw(img)
         draw.text((10, 20), "S", fill="white")
         return img
 
-    def update_icon(self):
-        base = self.create_icon().resize((64, 64)).convert("RGBA")
+    # --------------------------------------------------
 
-        overlay = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(overlay)
+    def _bring_to_front(self, app):
+        import ctypes
 
-        color = "green" if self.is_running else "gray"
-        draw.ellipse((45, 45, 60, 60), fill=color)
+        app.update_idletasks()
+        app.deiconify()
 
-        self.icon.icon = Image.alpha_composite(base, overlay)
-        self.icon.title = f"Sorterino ({'Aktiv' if self.is_running else 'Inaktiv'})"
+        hwnd = app.winfo_id()
 
-    def build_menu(self):
-        return pystray.Menu(
-            item(self.get_start_label, self.toggle_pipeline),
-            item("Logs anzeigen", self.open_logs_window),
-            item("Einstellungen", self.open_settings),
-            item("Beenden", self.exit_app)
-        )
+        ctypes.windll.user32.ShowWindow(hwnd, 5)
+        ctypes.windll.user32.SetForegroundWindow(hwnd)
 
-    def get_start_label(self, item):
-        return "Stoppen" if self.is_running else "Starten"
+        app.lift()
+        app.focus_force()
 
-    def toggle_pipeline(self, icon, item):
-        self.is_running = not self.is_running
+        app.attributes("-topmost", True)
+        app.after(200, lambda: app.attributes("-topmost", False))
 
-        if self.is_running:
-            threading.Thread(target=self.run_pipeline, daemon=True).start()
 
-        self.update_icon()
-        self.icon.menu = self.build_menu()
+    def _on_window_close(self):
+        if self.window:
+            self.window.destroy()
+            self.window = None
 
-    def run_pipeline(self):
-        import time
 
-        while self.is_running:
-            try:
-                from main import main
-                print("🔄 Pipeline läuft...")
-                main()
-            except Exception as e:
-                print("❌ Pipeline Fehler:", e)
-
-            time.sleep(5)  # Intervall (5 Sekunden)
-
-    def open_logs_window(self, icon, item):
-        import subprocess
-        import sys
-
-        subprocess.Popen([sys.executable, "-m", "src.gui.app", "--logs"])
-
-    def open_settings(self, icon, item):
-        import subprocess
-        import sys
-
-        subprocess.Popen([sys.executable, "-m", "src.gui.app", "--settings"])
-
-    def exit_app(self, icon, item):
-        self.icon.stop()
 
     def run(self):
-        if self.config_service.get("auto_mode"):
-            self.is_running = True
-            threading.Thread(target=self.run_pipeline, daemon=True).start()
 
-        self.update_icon()
-        self.icon.run()
+        # 🔥 Tray in separatem Thread
+        import threading
+        threading.Thread(target=self.icon.run, daemon=True).start()
+
+        # 🔥 GUI starten
+        root.after(0, self.open_main_window)
+
+        root.mainloop()
+
+    # --------------------------------------------------
+
+    def exit_app(self, icon=None, item=None):
+        try:
+            icon.stop()
+        except Exception:
+            pass
+
+        try:
+            root.destroy()
+        except Exception:
+            pass
+
+        import sys
+        sys.exit(0)

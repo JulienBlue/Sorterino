@@ -1,22 +1,14 @@
 import os
 from typing import List
-
-from src.utils.path_helper import get_base_path
+from pathlib import Path
 
 import pytesseract
 from pdf2image import convert_from_path
 from PIL import Image, ImageFile
 
-
 # Große Bilder erlauben
 Image.MAX_IMAGE_PIXELS = None
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-base_path = get_base_path()
-
-from src.utils.path_helper import get_base_path
-import os
-import pytesseract
 
 
 class TesseractOCR:
@@ -27,16 +19,10 @@ class TesseractOCR:
         tesseract_path: str,
         logger
     ):
-
         self.logger = logger
 
-        base_path = get_base_path()
 
-        # ----------------------------------------
-        # 🔥 Tesseract EXE (IMMER aus third_party laden)
-        # ----------------------------------------
-
-        tesseract_exe = base_path / "third_party" / "Tesseract-OCR" / "tesseract.exe"
+        tesseract_exe = Path(tesseract_path).resolve()
 
         if not tesseract_exe.exists():
             raise FileNotFoundError(
@@ -45,15 +31,8 @@ class TesseractOCR:
 
         pytesseract.pytesseract.tesseract_cmd = str(tesseract_exe)
 
-        # ----------------------------------------
-        # 🔥 Tessdata FIX
-        # ----------------------------------------
 
-        tessdata_path = base_path / "tessdata"
-
-        if not tessdata_path.exists():
-            # Fallback: innerhalb third_party
-            tessdata_path = base_path / "third_party" / "Tesseract-OCR" / "tessdata"
+        tessdata_path = tesseract_exe.parent / "tessdata"
 
         if not tessdata_path.exists():
             raise FileNotFoundError(
@@ -61,6 +40,9 @@ class TesseractOCR:
             )
 
         os.environ["TESSDATA_PREFIX"] = str(tessdata_path)
+        os.environ["TESSDATA"] = str(tessdata_path)
+
+        self.tessdata_config = f'--tessdata-dir {str(tessdata_path)}'
 
         self.logger.log(f"Tesseract Path: {tesseract_exe}")
         self.logger.log(f"Tessdata Path: {tessdata_path}")
@@ -69,8 +51,8 @@ class TesseractOCR:
         # Poppler
         # ----------------------------------------
 
-        self.poppler_path = poppler_path
-        self.language = "deu"
+        self.poppler_path = str(Path(poppler_path).resolve())
+        self.language = "deu+eng+fra"
 
     # =====================================================
     # Öffentlich
@@ -122,7 +104,8 @@ class TesseractOCR:
 
                 text = pytesseract.image_to_string(
                     img,
-                    lang=self.language
+                    lang=self.language,
+                    config=self.tessdata_config
                 )
 
                 if text and text.strip():
@@ -150,7 +133,8 @@ class TesseractOCR:
 
                 text = pytesseract.image_to_string(
                     img,
-                    lang=self.language
+                    lang=self.language,
+                    config=self.tessdata_config
                 )
 
                 return text or ""
