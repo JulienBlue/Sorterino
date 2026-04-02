@@ -37,6 +37,13 @@ git push
 git tag -a vX.X.X -m "Sorterino Version"
 git push origin vX.X.X
 
+git status
+git add .
+git commit -m "release: v0.5.1"
+git tag -a v0.5.1 -m "Sorterino v0.5.1"
+git push origin main
+git push origin v0.5.1
+
 # 🧹 Cleanup
 
 rmdir /s /q dist
