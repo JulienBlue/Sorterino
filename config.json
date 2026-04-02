@@ -1,11 +1,30 @@
 {
-  "user_path": "C:/Users/DEIN_USER/Documents",
-  "auto_mode": false,
-  "autostart": false,
-  "company_profile": {
-    "name": "",
-    "keywords": []
-  },
-  "poppler_path": "",
-  "tesseract_path": ""
+"user_path": "",
+"auto_mode": false,
+"autostart": false,
+
+"company_profile": {
+"name": "",
+"keywords": [],
+
+"address": {
+  "street": "",
+  "zip": "",
+  "city": ""
+},
+
+"contact": {
+  "email": "",
+  "phone": ""
+},
+
+"financial": {
+  "iban": "",
+  "tax_id": ""
+}
+
+},
+
+"poppler_path": "",
+"tesseract_path": ""
 }

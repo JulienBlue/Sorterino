@@ -1,170 +1,224 @@
-# 📦 Sorterino v0.5.0
+# 📦 Sorterino v0.5.1
 
-Desktop-Anwendung zur automatisierten Dokumentenanalyse und strukturierten Ablage.
+## 🧠 Überblick
 
-Sorterino verarbeitet lokale Dokumente, extrahiert Inhalte mittels OCR und legt diese regelbasiert in einer definierten Ordnerstruktur ab.
+Sorterino ist eine lokale Desktop-Anwendung zur automatisierten Verarbeitung von Dokumenten.
 
----
+Ziel ist es, eingehende Dateien strukturiert zu analysieren, zu klassifizieren und automatisch in eine definierte Ordnerstruktur abzulegen.
 
-# 🚀 Schnellstart
-
-## Voraussetzungen
-
-• Windows 10 oder 11  
-• Keine zusätzliche Installation notwendig (EXE enthält alle Abhängigkeiten)  
-• Optional: Microsoft Outlook (für MailDrop)
+Die Anwendung arbeitet vollständig lokal und folgt einem deterministischen, regelbasierten Ansatz.
 
 ---
 
-# 🖥 Anwendung starten
+## 🎯 Features
 
-Nach Installation:
-
-Sorterino starten → Speicherort wählen → Workspace wird automatisch eingerichtet
-
----
-
-# ⚙️ Funktionsweise
-
-Beim ersten Start wird eine lokale Runtime-Umgebung erzeugt:
-
-<USER_HOME>/.sorterino_runtime/
-
-Diese enthält:
-
-• incoming → Eingangsdokumente  
-• processed → Sicherungskopien  
-• manual_sort → manuelle Nachbearbeitung  
-• error → fehlerhafte Dokumente  
-• logs → Protokolle  
-• config.json → zentrale Konfiguration  
-
-Alle benutzerspezifischen Konfigurationsdaten werden im Runtime-Verzeichnis gespeichert und von der Anwendung aktiv verwendet.
+* 📥 Überwachung eines Input-Ordners
+* 🔎 OCR-gestützte Textextraktion
+* 🧠 Regelbasierte Klassifikation
+* 🏷️ Automatische Umbenennung
+* 📂 Strukturierte Ablage
+* 📜 Logging & Fehlerhandling
+* 🔁 Automatikmodus (Polling)
+* 🧩 Konfigurierbares Firmenprofil (inkl. Keywords, Adresse etc.)
 
 ---
 
-# 🔄 Verarbeitungsablauf
+## 🏗️ Architektur
 
-Die Verarbeitung erfolgt vollständig automatisiert:
+Sorterino folgt einer klaren Clean-Architecture-Struktur:
 
-1. Einlesen von Dokumenten (Ordner oder MailDrop)
-2. Erstellung einer Sicherungskopie
-3. OCR-Verarbeitung (PDF und Bilder)
-4. Textanalyse
-5. Klassifikation (regelbasiert)
-6. Extraktion relevanter Metadaten
-7. Generierung eines neuen Dateinamens
-8. Bestimmung des Zielpfades
-9. Verschieben in die Zielstruktur
-10. Protokollierung
+```
+src/
+├── domain/           → Modelle & Status
+├── usecases/         → Geschäftslogik (Pipeline)
+├── infrastructure/   → OCR, Filesystem, Config
+├── gui/              → UI (Tray + Fenster)
+└── utils/            → Hilfsfunktionen
+```
 
----
+Prinzipien:
 
-# 🖥 Benutzeroberfläche
-
-Die Anwendung läuft als Hintergrundprozess im System-Tray.
-
-Funktionen:
-
-• Start und Stop der Pipeline  
-• Anzeige des aktuellen Status  
-• Live-Loganzeige  
-• Konfiguration (Speicherort, Automatikmodus, Autostart)
-
-Die GUI enthält keine Geschäftslogik und greift ausschließlich auf die Pipeline zu.
+* klare Trennung der Verantwortlichkeiten
+* keine Abhängigkeiten zwischen falschen Layern
+* austauschbare Infrastruktur
 
 ---
 
-# ⚙️ Konfiguration
+## 🔁 Verarbeitungspipeline
 
-Die Konfiguration erfolgt zentral über:
+```
+Input →
+Validierung →
+Backup →
+Textextraktion →
+Klassifikation →
+Metadaten →
+Umbenennung →
+Pfadauflösung →
+Ablage →
+Logging
+```
 
-.sorterino_runtime/config.json
-
-Diese wird von GUI und Verarbeitung gemeinsam genutzt.
-
----
-
-# 📧 MailDrop (optional)
-
-Optional können E-Mail-Anhänge automatisch übernommen werden:
-
-• Speicherung der Anhänge in den Eingangsordner  
-• Verarbeitung durch die Pipeline  
-
-Umsetzung erfolgt über Outlook VBA.
+Fehler werden pro Dokument behandelt, ohne die Pipeline zu stoppen.
 
 ---
 
-# 🔐 Sicherheitskonzept
+## 📁 Runtime-Konzept
 
-• vollständiger Offline-Betrieb  
-• keine Cloud-Anbindung  
-• keine API-Nutzung  
-• keine externe Datenübertragung  
+Beim Initialisieren wird ein versteckter Runtime-Ordner erstellt:
 
----
+```
+<USER_PATH>/.sorterino_runtime/
+├── incoming/
+├── logs/
+├── backup/
+├── error/
+├── manual_sort/
+├── config.json
+├── rules.json
+├── structure.json
+├── supported_formats.json
+```
 
-# 🧠 Architektur
+Zusätzlich werden sichtbare Verknüpfungen erstellt:
 
-Die Anwendung basiert auf einer mehrschichtigen Architektur:
-
-• Domain → Datenmodelle  
-• Usecases → Geschäftslogik  
-• Infrastructure → OCR, Dateisystem, Konfiguration  
-• GUI → Benutzeroberfläche  
-
-Die Schichten sind klar voneinander getrennt.
-
----
-
-# 🛠 Build und Deployment
-
-Die Anwendung wird als Verzeichnisstruktur bereitgestellt:
-
-dist/Sorterino/
-
-Enthält:
-
-• Sorterino.exe  
-• assets/  
-• config/  
-• third_party/ (OCR-Komponenten)
-
-Ein Installer wird mit Inno Setup erstellt.
+* `Sorterino - Input`
+* `Sorterino - Manuelle Sortierung`
 
 ---
 
-# 📄 Logging
+## ⚙️ Konfiguration
 
-Logs befinden sich unter:
+Die Anwendung ist vollständig konfigurationsgetrieben.
 
-.sorterino_runtime/logs/
+### config.json
 
-Format:
+Wird automatisch im Runtime-Ordner erstellt:
 
-sorterino_logs_YYYY-MM-DD.log
+```json
+{
+  "user_path": "",
+  "auto_mode": false,
+  "autostart": false,
+  "company_profile": {
+    "name": "",
+    "keywords": [],
+    "address": {
+      "street": "",
+      "zip": "",
+      "city": ""
+    },
+    "contact": {
+      "email": "",
+      "phone": ""
+    },
+    "financial": {
+      "iban": "",
+      "tax_id": ""
+    }
+  }
+}
+```
+
+### rules.json
+
+Definiert Klassifikationsregeln (keyword-basiert).
+
+### structure.json
+
+Definiert Zielordnerstruktur.
 
 ---
 
-# 📊 Status
+## 🖥️ GUI
 
-Version v0.4.5
+Die Anwendung wird über ein Tray-Icon gesteuert:
 
-• GUI vollständig integriert  
-• Runtime-Konzept stabil  
-• OCR zuverlässig  
-• Klassifikation regelbasiert umgesetzt  
-• Installer vorhanden  
+* Start / Stop der Pipeline
+* Logs anzeigen
+* Einstellungen öffnen
 
----
+Fenster:
 
-# 🎯 Ziel
-
-Ziel der Anwendung ist die automatisierte und nachvollziehbare Ablage von Dokumenten in einer strukturierten Umgebung.
+* Konfiguration (inkl. Firmenprofil)
+* Speicherort-Verwaltung
+* Log-Anzeige
 
 ---
 
-# 💡 Hinweis
+## 🚀 Installation (Dev)
 
-Sorterino ist als erweiterbare Basislösung konzipiert.
+```bash
+pip install -r requirements-dev.txt
+```
+
+Start:
+
+```bash
+python -m src.gui.app
+```
+
+---
+
+## 📦 Build
+
+```bash
+taskkill /f /im Sorterino.exe 2>nul
+rmdir /s /q build
+rmdir /s /q dist
+
+pyinstaller build_tools/sorterino.spec --noconfirm
+```
+
+Installer (Inno Setup):
+
+```bash
+iscc build_tools/installer.iss
+```
+
+---
+
+## ⚠️ Bekannte Einschränkungen
+
+* OCR-Qualität abhängig von Dokumentqualität
+* Klassifikation vollständig regelbasiert
+* Konfigurationsfehler können zu falscher Ablage führen
+* Keine Cloud / keine Datenbank
+
+---
+
+## 🧠 Designentscheidungen
+
+* bewusst kein ML → nachvollziehbar & deterministisch
+* keine externe Infrastruktur → lokal & datenschutzfreundlich
+* JSON statt DB → einfache Anpassbarkeit
+* klare Architektur → wartbar im IHK-Rahmen
+
+---
+
+## 🧪 Status
+
+Version: **v0.5.1**
+
+* Runtime-System stabil
+* GUI funktionsfähig
+* Automatikmodus aktiv
+* Firmenprofil integriert
+
+---
+
+## 📌 Ziel
+
+Fokus liegt auf:
+
+* Stabilität
+* Nachvollziehbarkeit
+* einfacher Erweiterbarkeit
+
+---
+
+## 👨‍💻 Hinweis
+
+Dieses Projekt ist Teil eines IHK-Abschlussprojekts und bewusst auf einen klaren, strukturierten Funktionsumfang begrenzt.
+
+---

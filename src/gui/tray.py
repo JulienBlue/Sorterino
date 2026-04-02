@@ -3,6 +3,8 @@ from pystray import MenuItem as item
 from PIL import Image, ImageDraw
 import threading
 from pathlib import Path
+import customtkinter as ctk
+
 import subprocess
 import sys
 
@@ -11,6 +13,8 @@ from src.infrastructure.config.config_service import ConfigService
 BASE_DIR = Path(__file__).resolve().parents[2]
 ICON_PATH = BASE_DIR / "assets" / "icons" / "default_icon_128.ico"
 
+root = ctk.CTk()
+root.withdraw()  # versteckt Hauptfenster
 
 class TrayApp:
 
@@ -80,21 +84,19 @@ class TrayApp:
             except Exception as e:
                 print("❌ Pipeline Fehler:", e)
 
-            time.sleep(5)  # 🔥 Intervall (5 Sekunden)
+            time.sleep(5)  # Intervall (5 Sekunden)
 
     def open_logs_window(self, icon, item):
-        if getattr(sys, 'frozen', False):
-            base_dir = Path(sys.executable).parent
-            subprocess.Popen([str(base_dir / "Sorterino.exe"), "--logs"])
-        else:
-            subprocess.Popen([sys.executable, "-m", "src.gui.app", "--logs"])
+        import subprocess
+        import sys
+
+        subprocess.Popen([sys.executable, "-m", "src.gui.app", "--logs"])
 
     def open_settings(self, icon, item):
-        if getattr(sys, 'frozen', False):
-            base_dir = Path(sys.executable).parent
-            subprocess.Popen([str(base_dir / "Sorterino.exe"), "--settings"])
-        else:
-            subprocess.Popen([sys.executable, "-m", "src.gui.app", "--settings"])
+        import subprocess
+        import sys
+
+        subprocess.Popen([sys.executable, "-m", "src.gui.app", "--settings"])
 
     def exit_app(self, icon, item):
         self.icon.stop()

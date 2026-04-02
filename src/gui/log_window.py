@@ -3,7 +3,7 @@ from src.infrastructure.config.config_loader import Config
 from src.infrastructure.config.config_service import ConfigService
 
 
-class LogWindow(ctk.CTk):
+class LogWindow(ctk.CTkToplevel):
 
     def __init__(self):
         super().__init__()
