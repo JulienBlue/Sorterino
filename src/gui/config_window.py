@@ -2,6 +2,9 @@ import customtkinter as ctk
 from src.gui.storage_window import StorageWindow
 from src.infrastructure.config.config_service import ConfigService
 from src.infrastructure.system.autostart_service import AutostartService
+import json
+import tkinter as tk
+from tkinter import Toplevel, Text, Button, END, messagebox
 
 
 class ConfigWindow(ctk.CTkToplevel):
@@ -20,7 +23,7 @@ class ConfigWindow(ctk.CTkToplevel):
         self.autostart_service = AutostartService()
 
         self.title("Konfiguration")
-        self.geometry("400x600")
+        self.geometry("400x650")
 
         self.create_ui()
         self.load_values()
@@ -88,6 +91,25 @@ class ConfigWindow(ctk.CTkToplevel):
 
         self.tax_entry = ctk.CTkEntry(self, placeholder_text="Steuer-ID")
         self.tax_entry.pack(padx=20, fill="x")
+
+
+        # ---------------- Regeln / Struktur ----------------
+        self.rules_btn = ctk.CTkButton(
+            self,
+            text="📜 Regeln bearbeiten",
+            command=self.edit_rules
+        )
+        self.rules_btn.pack(pady=5)
+
+        self.structure_btn = ctk.CTkButton(
+            self,
+            text="🗂 Struktur bearbeiten",
+            command=self.edit_structure
+        )
+        self.structure_btn.pack(pady=5)
+
+
+
 
         # Speichern
         self.save_btn = ctk.CTkButton(
@@ -232,3 +254,57 @@ class ConfigWindow(ctk.CTkToplevel):
 
     def open_storage(self):
         StorageWindow(self)
+    
+    def edit_rules(self):
+        from pathlib import Path
+
+        user_path = self.config_service.get("user_path")
+        runtime = Path(user_path) / ".sorterino_runtime"
+        file_path = runtime / "rules.json"
+
+        self._open_json_editor("Regeln bearbeiten", file_path)
+
+
+    def edit_structure(self):
+        from pathlib import Path
+
+        user_path = self.config_service.get("user_path")
+        runtime = Path(user_path) / ".sorterino_runtime"
+        file_path = runtime / "structure.json"
+
+        self._open_json_editor("Struktur bearbeiten", file_path)
+
+    def _open_json_editor(self, title, file_path):
+
+        window = Toplevel(self)
+        window.title(title)
+        window.geometry("700x600")
+
+        text = Text(window, wrap="none")
+        text.pack(expand=True, fill="both")
+
+        try:
+            if file_path.exists():
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = json.dumps(json.load(f), indent=2)
+            else:
+                content = "{}"
+        except Exception as e:
+            content = f"Fehler beim Laden:\n{e}"
+
+        text.insert("1.0", content)
+
+        def save():
+            try:
+                data = json.loads(text.get("1.0", END))
+
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2)
+
+                messagebox.showinfo("Erfolg", "Gespeichert!")
+                window.destroy()
+
+            except Exception as e:
+                messagebox.showerror("Fehler", f"Ungültiges JSON:\n{e}")
+
+        Button(window, text="💾 Speichern", command=save).pack(pady=10)

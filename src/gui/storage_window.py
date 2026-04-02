@@ -20,7 +20,7 @@ class StorageWindow(ctk.CTkToplevel):
         self.config_service = ConfigService()
 
         self.title("Speicherort")
-        self.geometry("400x260")
+        self.geometry("400x650")
 
         self.create_ui()
         self.load_path()

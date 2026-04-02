@@ -1,27 +1,38 @@
 {
   "BUCHHALTUNG": {
 
-    "Ausgangsrechnungen": {
-      "{Jahr}": {
-        "{month_number} {month_name} {year}": {}
-      }
-    },
-
     "Eingangsrechnungen": {
-      "{Jahr}": {
+      "{year}": {
         "{month_number} {month_name} {year}": {}
       }
     },
 
-    "Kontoauszug": {
-      "{Jahr}": {
+    "Ausgangsrechnungen": {
+      "{year}": {
         "{month_number} {month_name} {year}": {}
       }
     },
 
-    "Mahnung": {
-      "{Jahr}": {}
-    }
+    "Kontoauszuege": {
+      "{year}": {
+        "{month_number} {month_name} {year}": {}
+      }
+    },
 
+    "Mahnungen": {
+      "{year}": {
+        "{month_number} {month_name} {year}": {}
+      }
+    },
+
+    "Angebote": {
+      "{year}": {}
+    },
+
+    "Vertraege": {
+      "{year}": {}
+    },
+
+    "Unsortiert": {}
   }
 }

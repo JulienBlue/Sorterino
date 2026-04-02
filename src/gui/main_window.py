@@ -13,7 +13,7 @@ class MainWindow(ctk.CTkToplevel):
         self.config = config
 
         self.title("Sorterino")
-        self.geometry("420x520")
+        self.geometry("400x650")
 
         try:
             self._build_ui()

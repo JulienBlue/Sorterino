@@ -14,7 +14,7 @@ class LogWindow(ctk.CTkToplevel):
         self.after(200, lambda: self.attributes("-topmost", False))
 
         self.title("Logs")
-        self.geometry("600x400")
+        self.geometry("1000x650")
 
         config = Config(ConfigService().config_path)
         self.log_dir = config.logs_root
@@ -38,7 +38,16 @@ class LogWindow(ctk.CTkToplevel):
             with open(latest_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
+            # 🔥 Scrollposition merken
+            current_position = self.textbox.yview()
+
             self.textbox.delete("0.0", "end")
             self.textbox.insert("0.0", content)
+
+            # 🔥 Nur scrollen wenn vorher unten
+            if current_position[1] == 1.0:
+                self.textbox.yview_moveto(1.0)
+            else:
+                self.textbox.yview_moveto(current_position[0])
 
         self.after(2000, self.update_logs)

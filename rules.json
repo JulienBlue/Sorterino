@@ -1,46 +1,102 @@
 {
   "rules": [
-    {
-      "category": "BUCHHALTUNG",
-      "document_type": "Ausgangsrechnung",
-      "keywords": [
-        "rechnung",
-        "rechnungsnummer",
-        "ust"
-      ],
-      "conditions": {
-        "must_contain_company_name": true
-      }
-    },
+
     {
       "category": "BUCHHALTUNG",
       "document_type": "Eingangsrechnung",
+      "priority": 100,
       "keywords": [
         "rechnung",
+        "rechnungsnummer",
         "betrag",
-        "zahlung"
+        "gesamtbetrag",
+        "brutto",
+        "netto",
+        "zahlung",
+        "zahlbar bis",
+        "lieferant",
+        "gmbh",
+        "ag",
+        "kg",
+        "ug"
       ],
       "conditions": {
         "must_not_contain_company_name": true
       }
     },
+
+    {
+      "category": "BUCHHALTUNG",
+      "document_type": "Ausgangsrechnung",
+      "priority": 90,
+      "keywords": [
+        "rechnung",
+        "rechnungsnummer",
+        "ust",
+        "ust-id",
+        "steuer",
+        "leistungsdatum",
+        "zahlbar bis"
+      ],
+      "conditions": {
+        "must_contain_company_name": true
+      }
+    },
+
     {
       "category": "BUCHHALTUNG",
       "document_type": "Kontoauszug",
+      "priority": 80,
       "keywords": [
         "kontoauszug",
+        "kontostand",
+        "saldo",
         "iban",
-        "wertstellung"
+        "buchung",
+        "wertstellung",
+        "gutschrift",
+        "lastschrift"
       ]
     },
+
     {
       "category": "BUCHHALTUNG",
       "document_type": "Mahnung",
+      "priority": 85,
       "keywords": [
         "mahnung",
         "zahlungserinnerung",
-        "frist"
+        "offener betrag",
+        "frist",
+        "letzte erinnerung",
+        "bitte überweisen"
+      ]
+    },
+
+    {
+      "category": "BUCHHALTUNG",
+      "document_type": "Angebot",
+      "priority": 70,
+      "keywords": [
+        "angebot",
+        "angebotspreis",
+        "gültig bis",
+        "wir bieten an"
+      ]
+    },
+
+    {
+      "category": "BUCHHALTUNG",
+      "document_type": "Vertrag",
+      "priority": 60,
+      "keywords": [
+        "vertrag",
+        "vereinbarung",
+        "laufzeit",
+        "kündigung",
+        "vertragsnummer"
       ]
     }
+
   ]
 }
