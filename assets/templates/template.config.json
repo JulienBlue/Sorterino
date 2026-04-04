@@ -1,0 +1,35 @@
+{
+  "auto_mode": false,
+  "autostart": false,
+
+  "company_profile": {
+    "name": "Deine Firma GmbH",
+    "keywords": [],
+
+    "address": {
+      "street": "",
+      "zip": "",
+      "city": ""
+    },
+
+    "contact": {
+      "email": "",
+      "phone": ""
+    },
+
+    "financial": {
+      "iban": "",
+      "tax_id": ""
+    }
+  },
+
+  "ocr": {
+    "tesseract_path": "third_party/tesseract/tesseract.exe",
+    "poppler_path": "third_party/poppler/Library/bin"
+  },
+
+  "targets": {
+    "manual": "manual_sort",
+    "error": "error"
+  }
+}

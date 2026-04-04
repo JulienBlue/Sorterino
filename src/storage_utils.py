@@ -1,0 +1,161 @@
+import os
+import shutil
+import re
+from pathlib import Path
+from typing import List
+
+from src.models import Document
+
+
+# HELPER / SANITIZE
+def sanitize(text: str) -> str:
+    return re.sub(r'[\\/*?:"<>|]', "", text).strip()
+
+
+# SOURCE / INPUT
+class FolderDocumentSource:
+
+    # CONFIG / INIT
+    def __init__(self, root_path: Path):
+        self.root_path = Path(root_path)
+        self.root_path.mkdir(parents=True, exist_ok=True)
+
+    # SOURCE / FETCH
+    def fetch_documents(self) -> List[Document]:
+
+        documents = []
+
+        for root, _, files in os.walk(self.root_path):
+
+            if os.path.basename(root).startswith("."):
+                continue
+
+            for file_name in files:
+                if file_name.startswith("."):
+                    continue
+
+                full_path = os.path.join(root, file_name)
+
+                if not os.path.isfile(full_path):
+                    continue
+
+                _, ext = os.path.splitext(file_name)
+                if not ext:
+                    continue
+
+                documents.append(Document(source_path=full_path))
+
+        return documents
+
+
+# STORAGE / OUTPUT
+class FilesystemStorage:
+
+    # CONFIG / INIT
+    def __init__(self, base_path: Path):
+        self.base_path = Path(base_path)
+
+    # STORAGE / SAVE
+    def store(self, source_path: str, target_directory: Path, new_name: str) -> str:
+
+        source = Path(source_path)
+
+        target_dir = self.base_path / target_directory
+        target_dir.mkdir(parents=True, exist_ok=True)
+
+        target_path = target_dir / new_name
+        target_path = self._get_unique_path(target_path)
+
+        shutil.move(str(source), str(target_path))
+        return str(target_path)
+
+    # STORAGE / UNIQUE PATH
+    def _get_unique_path(self, target_path: Path) -> Path:
+
+        if not target_path.exists():
+            return target_path
+
+        stem = target_path.stem
+        suffix = target_path.suffix
+        parent = target_path.parent
+
+        counter = 1
+
+        while True:
+            new_name = f"{stem} ({counter}){suffix}"
+            new_path = parent / new_name
+
+            if not new_path.exists():
+                return new_path
+
+            counter += 1
+
+
+# STORAGE / PATH BUILDER
+class StoragePathBuilder:
+
+    # CONFIG / INIT
+    def __init__(self, structure: dict):
+        self.structure = structure
+
+    # PATH / BUILD
+    def build(self, document: Document) -> Path:
+
+        category = document.metadata.category or "DIVERSES"
+        doc_type = document.metadata.document_type or "Unsortiert"
+
+        structure_category = self.structure.get(category, {})
+
+        filename = self._generate_filename(document)
+
+        if doc_type not in structure_category:
+            return Path(category, "Unsortiert", filename)
+
+        node = structure_category[doc_type]
+        path_parts = [category, doc_type]
+
+        # PATH / DATE
+        date = document.extracted_data.get("date")
+
+        if date:
+            try:
+                d, m, y = date.split(".")
+                month_names = [
+                    "Januar","Februar","März","April","Mai","Juni",
+                    "Juli","August","September","Oktober","November","Dezember"
+                ]
+                month_name = month_names[int(m) - 1]
+
+                if "{year}" in node:
+                    path_parts.append(y)
+
+                    sub = node["{year}"]
+
+                    if "{month_number} {month_name}" in sub:
+                        path_parts.append(f"{m} {month_name}")
+
+            except Exception:
+                pass
+
+        return Path(*path_parts) / filename
+
+    # FILENAME / GENERATE
+    def _generate_filename(self, document: Document) -> str:
+
+        parts = []
+
+        if document.extracted_data.get("date"):
+            parts.append(document.extracted_data["date"])
+
+        if document.extracted_data.get("vendor"):
+            parts.append(sanitize(document.extracted_data["vendor"]))
+
+        if document.extracted_data.get("amount"):
+            parts.append(document.extracted_data["amount"])
+
+        if not parts:
+            parts = ["document"]
+
+        ext = Path(document.source_path).suffix
+
+        return "_".join(parts) + ext
