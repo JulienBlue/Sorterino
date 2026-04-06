@@ -1,0 +1,111 @@
+{
+  "rules": [
+
+    { "category": "BUCHHALTUNG", "document_type": "Ausgangsrechnungen",
+      "keywords": [
+        "rechnung","rechnungsnummer",
+        "leistung","leistungserbringer",
+        "ust","steuer","netto","brutto"
+      ] },
+
+    { "category": "BUCHHALTUNG", "document_type": "Eingangsrechnungen",
+      "keywords": [
+        "rechnung","rechnungsnummer",
+        "gesamtbetrag","betrag",
+        "netto","brutto","zahlung",
+        "zu zahlen","zahlbar bis"
+      ] },
+
+    { "category": "BUCHHALTUNG", "document_type": "Mahnungen",
+      "keywords": [
+        "mahnung","zahlungserinnerung",
+        "frist","letzte mahnung","offener betrag"
+      ] },
+
+    { "category": "BUCHHALTUNG", "document_type": "Angebote",
+      "keywords": [
+        "angebot","angebot nr","kostenvoranschlag",
+        "angebot nummer","quotation"
+      ] },
+
+    { "category": "BUCHHALTUNG", "document_type": "Kassenbelege",
+      "keywords": [
+        "quittung","kassenbeleg",
+        "bewirtungsbeleg","eigenbeleg",
+        "bon","barzahlung"
+      ] },
+
+    { "category": "BUCHHALTUNG", "document_type": "Kontoauszuege",
+      "keywords": [
+        "kontoauszug","iban","kontostand",
+        "buchung","saldo","kontobewegung"
+      ] },
+
+    { "category": "BUCHHALTUNG", "document_type": "Kreditkarte",
+      "keywords": [
+        "vivid","kreditkarte","kartenabrechnung",
+        "credit card","statement","kartenumsatz"
+      ] },
+
+    { "category": "BUCHHALTUNG", "document_type": "SEPA_Mandate",
+      "keywords": [
+        "sepa-lastschriftmandat","firmenlastschriftmandat",
+        "lastschriftmandat","mandatsreferenz","sepa mandate"
+      ] },
+
+    { "category": "BUCHHALTUNG", "document_type": "Ruecklaeufer",
+      "keywords": [
+        "zahlung nicht ausgeführt","nicht ausgefuehrt",
+        "rückgabe","rueckgabe","lastschrift nicht eingelöst"
+      ] },
+
+    { "category": "BUCHHALTUNG", "document_type": "Bankmitteilungen",
+      "keywords": [
+        "mitteilung","kundenmitteilung",
+        "rechnungsabschluss","kontoabschluss"
+      ] },
+
+    { "category": "STEUERN", "document_type": "Auswertungen",
+      "keywords": [
+        "bwa","susa","ust-voranmeldung",
+        "fibu","umsatzsteuervoranmeldung"
+      ] },
+
+    { "category": "STEUERN", "document_type": "Steuerberater",
+      "keywords": [
+        "finanzamt","steuerbescheid",
+        "bescheid","steuerfestsetzung"
+      ] },
+
+    { "category": "VERTRAEGE", "document_type": "Extern",
+      "keywords": [
+        "vertrag","vereinbarung",
+        "laufzeit","kündigung","kuendigung"
+      ] },
+
+    { "category": "VERTRAEGE", "document_type": "Intern",
+      "keywords": [
+        "arbeitsvertrag","lohn",
+        "gehalt","arbeitsverhältnis"
+      ] },
+
+    { "category": "FIRMENUNTERLAGEN", "document_type": "Register",
+      "keywords": [
+        "handelsregister","gewerbeanmeldung",
+        "transparenzregister","registerauszug"
+      ] },
+
+    { "category": "FOERDERUNGEN", "document_type": "Foerderung",
+      "keywords": [
+        "förderung","foerderung",
+        "bafa","zuschuss","bewilligung"
+      ] },
+
+    { "category": "INSOLVENZ", "document_type": "Dokumente",
+      "keywords": [
+        "insolvenz","vollstreckung",
+        "pfändung","pfaendung"
+      ] }
+
+  ]
+}
