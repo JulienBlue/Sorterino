@@ -6,8 +6,7 @@ from tkinter import Toplevel, Text, Button, END, messagebox
 import customtkinter as ctk
 
 from src.gui.storage_window import StorageWindow
-from src.config.config_loader import Config
-from src.config.config_service import ConfigService
+from src.config import Config
 from src.autostart_service import AutostartService
 
 
@@ -18,27 +17,23 @@ class ConfigWindow(ctk.CTkToplevel):
         super().__init__(master)
 
         self.on_change = on_change
+        self.config = config if config else Config()
+
+        self.autostart_service = AutostartService()
+
+        self._pipeline_running = False
+        self._auto_thread = None
 
         self.lift()
         self.focus_force()
         self.attributes("-topmost", True)
         self.after(200, lambda: self.attributes("-topmost", False))
 
-        if config:
-            self.config_service = config
-        else:
-            self.config_service = ConfigService()
-
-        self.autostart_service = AutostartService()
-
         self.title("Konfiguration")
         self.geometry("400x650")
 
-        self._pipeline_running = False
-        self._auto_thread = None
-
         self.create_ui()
-        self.load_values()
+        self.after(0, self.load_values)
 
     # UI / BUILD
     def create_ui(self):
@@ -67,13 +62,13 @@ class ConfigWindow(ctk.CTkToplevel):
         self.company_label = ctk.CTkLabel(self, text="Firmenname")
         self.company_label.pack(pady=(15, 0))
 
-        self.company_entry = ctk.CTkEntry(self)
+        self.company_entry = ctk.CTkEntry(self, placeholder_text="Firmenname")
         self.company_entry.pack(padx=20, fill="x")
 
         self.keywords_label = ctk.CTkLabel(self, text="Keywords (Komma getrennt)")
         self.keywords_label.pack(pady=(10, 0))
 
-        self.keywords_entry = ctk.CTkEntry(self)
+        self.keywords_entry = ctk.CTkEntry(self, placeholder_text="Keywords")
         self.keywords_entry.pack(padx=20, fill="x")
 
         self.street_entry = ctk.CTkEntry(self, placeholder_text="Straße")
@@ -120,71 +115,62 @@ class ConfigWindow(ctk.CTkToplevel):
 
     # CONFIG / LOAD
     def load_values(self):
-        if self.config_service.get("auto_mode"):
+        self.config = Config()
+
+        if self.config.get("auto_mode"):
             self.auto_mode_checkbox.select()
 
-        if self.config_service.get("autostart"):
+        if self.config.get("autostart"):
             self.autostart_checkbox.select()
 
-        company = self.config_service.get("company_profile") or {}
+        company = self.config.get("company_profile") or {}
 
         address = company.get("address", {})
         contact = company.get("contact", {})
         financial = company.get("financial", {})
 
-        name = company.get("name", "")
-        if name:
-            self.company_entry.delete(0, "end")
-            self.company_entry.insert(0, name)
+        value = company.get("name")
+        if value:
+            self.company_entry.insert(0, value)
 
-        keywords = ", ".join(company.get("keywords", []))
-        if keywords:
-            self.keywords_entry.delete(0, "end")
-            self.keywords_entry.insert(0, keywords)
+        value = ", ".join(company.get("keywords", []))
+        if value:
+            self.keywords_entry.insert(0, value)
 
-        street = address.get("street", "")
-        if street:
-            self.street_entry.delete(0, "end")
-            self.street_entry.insert(0, street)
+        value = address.get("street")
+        if value:
+            self.street_entry.insert(0, value)
 
-        zip_code = address.get("zip", "")
-        if zip_code:
-            self.zip_entry.delete(0, "end")
-            self.zip_entry.insert(0, zip_code)
+        value = address.get("zip")
+        if value:
+            self.zip_entry.insert(0, value)
 
-        city = address.get("city", "")
-        if city:
-            self.city_entry.delete(0, "end")
-            self.city_entry.insert(0, city)
+        value = address.get("city")
+        if value:
+            self.city_entry.insert(0, value)
 
-        email = contact.get("email", "")
-        if email:
-            self.email_entry.delete(0, "end")
-            self.email_entry.insert(0, email)
+        value = contact.get("email")
+        if value:
+            self.email_entry.insert(0, value)
 
-        phone = contact.get("phone", "")
-        if phone:
-            self.phone_entry.delete(0, "end")
-            self.phone_entry.insert(0, phone)
+        value = contact.get("phone")
+        if value:
+            self.phone_entry.insert(0, value)
 
-        iban = financial.get("iban", "")
-        if iban:
-            self.iban_entry.delete(0, "end")
-            self.iban_entry.insert(0, iban)
+        value = financial.get("iban")
+        if value:
+            self.iban_entry.insert(0, value)
 
-        tax = financial.get("tax_id", "")
-        if tax:
-            self.tax_entry.delete(0, "end")
-            self.tax_entry.insert(0, tax)
+        value = financial.get("tax_id")
+        if value:
+            self.tax_entry.insert(0, value)
 
     # CONFIG / SAVE
     def save_company_profile(self):
-        name = self.company_entry.get().strip()
-        keywords = [k.strip().lower() for k in self.keywords_entry.get().split(",") if k.strip()]
 
         data = {
-            "name": name,
-            "keywords": keywords,
+            "name": self.company_entry.get().strip(),
+            "keywords": [k.strip().lower() for k in self.keywords_entry.get().split(",") if k.strip()],
             "address": {
                 "street": self.street_entry.get().strip(),
                 "zip": self.zip_entry.get().strip(),
@@ -200,12 +186,18 @@ class ConfigWindow(ctk.CTkToplevel):
             }
         }
 
-        self.config_service.set("company_profile", data)
+        self.config.set("company_profile", data)
+        self.config = Config()
+
+        if self.on_change:
+            self.on_change()
 
     # CONFIG / AUTO MODE
     def toggle_auto_mode(self):
         value = self.auto_mode_checkbox.get() == 1
-        self.config_service.set("auto_mode", value)
+        self.config.set("auto_mode", value)
+
+        self.config = Config()
 
         if value:
             from main import run_pipeline
@@ -213,7 +205,11 @@ class ConfigWindow(ctk.CTkToplevel):
             def _auto_loop():
                 import time
 
-                while self.config_service.get("auto_mode"):
+                while True:
+                    config = Config()
+
+                    if not config.get("auto_mode"):
+                        break
 
                     if self._pipeline_running:
                         time.sleep(1)
@@ -240,7 +236,9 @@ class ConfigWindow(ctk.CTkToplevel):
     # CONFIG / AUTOSTART
     def toggle_autostart(self):
         value = self.autostart_checkbox.get() == 1
-        self.config_service.set("autostart", value)
+        self.config.set("autostart", value)
+
+        self.config = Config()
 
         if value:
             self.autostart_service.enable()
@@ -251,7 +249,7 @@ class ConfigWindow(ctk.CTkToplevel):
     def open_storage(self):
         StorageWindow(
             self,
-            config=self.config_service,
+            config=self.config,
             on_change=self.on_change
         )
 
@@ -259,7 +257,7 @@ class ConfigWindow(ctk.CTkToplevel):
     def edit_rules(self):
         from pathlib import Path
 
-        user_path = self.config_service.get("user_path")
+        user_path = self.config.get("user_path")
 
         if not user_path:
             messagebox.showerror("Fehler", "Kein Speicherort gesetzt")
@@ -274,7 +272,7 @@ class ConfigWindow(ctk.CTkToplevel):
     def edit_structure(self):
         from pathlib import Path
 
-        user_path = self.config_service.get("user_path")
+        user_path = self.config.get("user_path")
 
         if not user_path:
             messagebox.showerror("Fehler", "Kein Speicherort gesetzt")

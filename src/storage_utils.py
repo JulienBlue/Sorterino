@@ -6,10 +6,12 @@ from typing import List
 
 from src.models import Document
 
+ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg"}
 
 # HELPER / SANITIZE
 def sanitize(text: str) -> str:
-    return re.sub(r'[\\/*?:"<>|]', "", text).strip()
+    clean = re.sub(r'[\\/*?:"<>|]', "", text)
+    return clean.strip()[:100]
 
 
 # SOURCE / INPUT
@@ -30,17 +32,19 @@ class FolderDocumentSource:
             if os.path.basename(root).startswith("."):
                 continue
 
+            files.sort()
+
             for file_name in files:
                 if file_name.startswith("."):
                     continue
 
-                full_path = os.path.join(root, file_name)
+                full_path = Path(root) / file_name
 
-                if not os.path.isfile(full_path):
+                if not full_path.is_file():
                     continue
 
-                _, ext = os.path.splitext(file_name)
-                if not ext:
+                ext = full_path.suffix.lower()
+                if not ext or ext not in ALLOWED_EXTENSIONS:
                     continue
 
                 documents.append(Document(source_path=full_path))
@@ -66,8 +70,12 @@ class FilesystemStorage:
         target_path = target_dir / new_name
         target_path = self._get_unique_path(target_path)
 
-        shutil.move(str(source), str(target_path))
-        return str(target_path)
+        try:
+            shutil.move(str(source), str(target_path))
+            return str(target_path)
+        except Exception as e:
+            print(f"[ERROR] Datei konnte nicht verschoben werden: {e}")
+            return str(source)
 
     # STORAGE / UNIQUE PATH
     def _get_unique_path(self, target_path: Path) -> Path:
@@ -79,16 +87,31 @@ class FilesystemStorage:
         suffix = target_path.suffix
         parent = target_path.parent
 
-        counter = 1
-
-        while True:
+        for counter in range(1, 10000):
             new_name = f"{stem} ({counter}){suffix}"
             new_path = parent / new_name
 
             if not new_path.exists():
                 return new_path
 
-            counter += 1
+        raise RuntimeError("Kein eindeutiger Dateiname gefunden")
+    
+    # BACKUP
+    def backup(self, source_path: str, target_directory: Path, new_name: str) -> str:
+        source = Path(source_path)
+
+        target_dir = self.base_path / target_directory
+        target_dir.mkdir(parents=True, exist_ok=True)
+
+        target_path = target_dir / new_name
+        target_path = self._get_unique_path(target_path)
+
+        try:
+            shutil.copy2(str(source), str(target_path))
+            return str(target_path)
+        except Exception as e:
+            print(f"[ERROR] Backup fehlgeschlagen: {e}")
+            return str(source)
 
 
 # STORAGE / PATH BUILDER
@@ -110,8 +133,9 @@ class StoragePathBuilder:
 
         if doc_type not in structure_category:
             return Path(category, "Unsortiert", filename)
+        
+        node = structure_category.get(doc_type)
 
-        node = structure_category[doc_type]
         path_parts = [category, doc_type]
 
         # PATH / DATE
@@ -120,10 +144,12 @@ class StoragePathBuilder:
         if date:
             try:
                 d, m, y = date.split(".")
+
                 month_names = [
                     "Januar","Februar","März","April","Mai","Juni",
                     "Juli","August","September","Oktober","November","Dezember"
                 ]
+
                 month_name = month_names[int(m) - 1]
 
                 if "{year}" in node:
@@ -134,8 +160,8 @@ class StoragePathBuilder:
                     if "{month_number} {month_name}" in sub:
                         path_parts.append(f"{m} {month_name}")
 
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[WARN] Datum konnte nicht verarbeitet werden: {e}")
 
         return Path(*path_parts) / filename
 

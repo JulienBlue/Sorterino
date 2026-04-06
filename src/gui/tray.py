@@ -7,10 +7,12 @@ import customtkinter as ctk
 import sys
 import ctypes
 
-from src.config.config_service import ConfigService
+from src.config import Config
 from src.gui.main_window import MainWindow
+from src.initialize_workspace import get_base_path
 
-BASE_DIR = Path(__file__).resolve().parents[2]
+BASE_DIR = get_base_path()
+
 ICON_PATH = BASE_DIR / "assets" / "icons" / "default_icon_128.ico"
 
 
@@ -18,7 +20,7 @@ class TrayApp:
 
     # CONFIG / INIT
     def __init__(self):
-        self.config = ConfigService()
+        self.config = Config()
 
         self.window = None
         self._root = None
@@ -34,7 +36,11 @@ class TrayApp:
 
         def _open():
             try:
+                # 🔥 immer aktuelle Config laden
+                self.config = Config()
+
                 if self.window and self.window.winfo_exists():
+                    self.window.config = self.config  # 🔥 update instance
                     self._bring_to_front(self.window)
                     self.window.protocol("WM_DELETE_WINDOW", self._on_window_close)
                     return
@@ -49,8 +55,8 @@ class TrayApp:
                 self._bring_to_front(self.window)
                 self.window.protocol("WM_DELETE_WINDOW", self._on_window_close)
 
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[ERROR] MainWindow konnte nicht geöffnet werden: {e}")
 
         if self._root:
             self._root.after(0, _open)
@@ -67,19 +73,22 @@ class TrayApp:
 
     # WINDOW / FOCUS
     def _bring_to_front(self, app):
-        app.update_idletasks()
-        app.deiconify()
+        try:
+            app.update_idletasks()
+            app.deiconify()
 
-        hwnd = app.winfo_id()
+            hwnd = app.winfo_id()
 
-        ctypes.windll.user32.ShowWindow(hwnd, 5)
-        ctypes.windll.user32.SetForegroundWindow(hwnd)
+            ctypes.windll.user32.ShowWindow(hwnd, 5)
+            ctypes.windll.user32.SetForegroundWindow(hwnd)
 
-        app.lift()
-        app.focus_force()
+            app.lift()
+            app.focus_force()
 
-        app.attributes("-topmost", True)
-        app.after(200, lambda: app.attributes("-topmost", False))
+            app.attributes("-topmost", True)
+            app.after(200, lambda: app.attributes("-topmost", False))
+        except Exception as e:
+            print(f"[WARN] Fenster konnte nicht fokussiert werden: {e}")
 
     # WINDOW / CLOSE
     def _on_window_close(self):
@@ -89,7 +98,11 @@ class TrayApp:
 
     # STORAGE / CALLBACK
     def _on_storage_set(self):
+        # 🔥 Config neu laden
+        self.config = Config()
+
         if self.window and self.window.winfo_exists():
+            self.window.config = self.config  # 🔥 aktualisieren
             self._bring_to_front(self.window)
 
     # APP / RUN

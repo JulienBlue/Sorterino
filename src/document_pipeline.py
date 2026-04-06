@@ -70,6 +70,18 @@ class DocumentPipeline:
         self.logger.log(f"IN: {filename}")
         self.logger.info(f"Verarbeite {document.source_path}")
 
+        # BACKUP
+        
+        try:
+            self.runtime.backup(
+                document.source_path,
+                "backup",
+                filename
+            )
+            self.logger.debug(f"Backup erstellt: {filename}")
+        except Exception as e:
+            self.logger.warning(f"Backup fehlgeschlagen: {e}")
+
         # FORMAT / CHECK
         if ext not in self.supported_extensions:
             self.logger.info(f"Unsupported Format {ext}")

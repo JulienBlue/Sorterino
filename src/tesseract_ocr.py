@@ -61,30 +61,30 @@ class TesseractOCR:
     # OCR / ENTRY
     def extract_text(self, file_path: str) -> str:
 
-        if not os.path.exists(file_path):
-            self.logger.error(f"OCR Fehler Datei existiert nicht {file_path}")
+        if not file_path:
+            self.logger.error("OCR Fehler: file_path ist None oder leer")
+            return ""
+
+        file_path_str = str(file_path)
+
+        if not os.path.exists(file_path_str):
+            self.logger.error(f"OCR Fehler Datei existiert nicht {file_path_str}")
             return ""
 
         try:
-            if file_path.lower().endswith(".pdf"):
-                text = self._extract_from_pdf(file_path)
+            if file_path_str.lower().endswith(".pdf"):
+                return self._extract_from_pdf(file_path_str)
             else:
-                text = self._extract_from_image(file_path)
-
-            if not text or not text.strip():
-                self.logger.warning("Kein OCR Text gefunden")
-                return ""
-
-            return text
+                return self._extract_from_image(file_path_str)
 
         except Exception as e:
-            self.logger.error(f"OCR Fehler bei {file_path} {e}")
+            self.logger.error(f"OCR Fehler bei {file_path_str} {e}")
             return ""
 
     # OCR / PDF
     def _extract_from_pdf(self, file_path: str) -> str:
 
-        text_output: List[str] = []
+        self.logger.debug(f"PDF → Image conversion startet: {file_path}")
 
         try:
             images = convert_from_path(
@@ -95,6 +95,14 @@ class TesseractOCR:
         except Exception as e:
             self.logger.error(f"PDF Konvertierungsfehler bei {file_path} {e}")
             return ""
+
+        self.logger.debug(f"Anzahl Bilder: {len(images)}")
+
+        if not images:
+            self.logger.warning("Keine Bilder aus PDF erzeugt")
+            return ""
+
+        text_output: List[str] = []
 
         for index, img in enumerate(images):
             try:
@@ -114,10 +122,17 @@ class TesseractOCR:
                 )
                 continue
 
-        return "\n".join(text_output)
+        final_text = "\n".join(text_output)
+
+        if not final_text.strip():
+            self.logger.warning("Kein OCR Text aus PDF extrahiert")
+
+        return final_text
 
     # OCR / IMAGE
     def _extract_from_image(self, file_path: str) -> str:
+
+        self.logger.debug(f"OCR Image Verarbeitung: {file_path}")
 
         try:
             with Image.open(file_path) as img:
@@ -129,7 +144,11 @@ class TesseractOCR:
                     lang=self.language
                 )
 
-                return text or ""
+                if not text or not text.strip():
+                    self.logger.warning("Kein OCR Text aus Bild extrahiert")
+                    return ""
+
+                return text
 
         except Exception as e:
             self.logger.error(f"OCR Bildfehler bei {file_path} {e}")

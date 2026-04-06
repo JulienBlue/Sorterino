@@ -3,8 +3,7 @@ import tempfile
 import os
 import json
 
-from src.config.config_loader import Config
-from src.config.config_service import ConfigService
+from src.config import Config
 from src.initialize_workspace import initialize_workspace
 
 from src.storage_utils import FolderDocumentSource, FilesystemStorage
@@ -19,15 +18,17 @@ LOCK_FILE = os.path.join(tempfile.gettempdir(), "sorterino.lock")
 
 # CONFIG / LOAD
 def load_config_safe():
-    service = ConfigService()
-    path = service.config_path
+    try:
+        config = Config()
 
-    config = Config(path)
+        if not config.user_path:
+            return None
 
-    if not config.user_path:
+        return config
+
+    except Exception as e:
+        print(f"[ERROR] Config konnte nicht geladen werden: {e}")
         return None
-
-    return config
 
 
 # IO / JSON LOAD
@@ -36,9 +37,9 @@ def load_json_safe(path, fallback):
         if path.exists():
             with open(path, "r", encoding="utf-8") as f:
                 return json.load(f)
-        else:
-            return fallback
-    except Exception:
+        return fallback
+    except Exception as e:
+        print(f"[ERROR] JSON Laden fehlgeschlagen ({path}): {e}")
         return fallback
 
 
@@ -47,6 +48,7 @@ def run_pipeline() -> None:
     global _pipeline_running
 
     if _pipeline_running:
+        print("[INFO] Pipeline läuft bereits")
         return
 
     _pipeline_running = True
@@ -55,6 +57,7 @@ def run_pipeline() -> None:
         config = load_config_safe()
 
         if not config or not config.user_path:
+            print("[WARN] Kein Speicherort gesetzt")
             return
 
         initialize_workspace(config)
@@ -63,9 +66,6 @@ def run_pipeline() -> None:
         rules = rules_data.get("rules", [])
 
         logger = FileLogger(config.logs_root)
-        if not hasattr(logger, "_init"):
-            logger.info("Pipeline gestartet")
-            logger._init = True
 
         try:
             ocr_service = TesseractOCR(
@@ -73,7 +73,8 @@ def run_pipeline() -> None:
                 tesseract_path=str(config.tesseract_path),
                 logger=logger
             )
-        except Exception:
+        except Exception as e:
+            print(f"[ERROR] OCR Init fehlgeschlagen: {e}")
             return
 
         runtime_storage = FilesystemStorage(config.runtime_root)
@@ -92,10 +93,13 @@ def run_pipeline() -> None:
             structure=load_json_safe(config.structure_path, {})
         )
 
-        pipeline.run()
+        try:
+            pipeline.run()
+        except Exception as e:
+            print(f"[ERROR] Pipeline Lauf fehlgeschlagen: {e}")
 
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[ERROR] Unerwarteter Fehler in run_pipeline: {e}")
 
     finally:
         _pipeline_running = False
@@ -104,16 +108,28 @@ def run_pipeline() -> None:
 # APP / MAIN
 def main():
     if os.path.exists(LOCK_FILE):
-        return
-
-    with open(LOCK_FILE, "w") as f:
-        f.write("running")
+        print("[WARN] Sorterino läuft bereits oder wurde nicht sauber beendet")
+        try:
+            os.remove(LOCK_FILE)
+        except Exception as e:
+            print(f"[ERROR] Lockfile konnte nicht entfernt werden: {e}")
+            return
 
     try:
+        with open(LOCK_FILE, "w") as f:
+            f.write("running")
+
         run_pipeline()
+
+    except Exception as e:
+        print(f"[ERROR] Fehler in main(): {e}")
+
     finally:
         if os.path.exists(LOCK_FILE):
-            os.remove(LOCK_FILE)
+            try:
+                os.remove(LOCK_FILE)
+            except Exception as e:
+                print(f"[ERROR] Lockfile Cleanup fehlgeschlagen: {e}")
 
 
 # ENTRY / START
@@ -121,6 +137,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        pass
-    except Exception:
+        print("[INFO] Programm durch Benutzer beendet")
+    except Exception as e:
+        print(f"[FATAL] Unhandled Exception: {e}")
         sys.exit(1)

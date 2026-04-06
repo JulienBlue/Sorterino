@@ -1,8 +1,7 @@
 import customtkinter as ctk
 from tkinter import messagebox
 
-from src.config.config_loader import Config
-from src.config.config_service import ConfigService
+from src.config import Config
 
 
 class LogWindow(ctk.CTkToplevel):
@@ -19,8 +18,7 @@ class LogWindow(ctk.CTkToplevel):
         self.title("Logs")
         self.geometry("1000x650")
 
-        service = ConfigService()
-        config = Config(service.config_path)
+        config = Config()
 
         if config.runtime_root is None:
             messagebox.showerror(

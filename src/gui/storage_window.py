@@ -1,10 +1,8 @@
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
-from pathlib import Path
 
-from src.config.config_service import ConfigService
 from src.initialize_workspace import initialize_workspace
-from src.config.config_loader import Config
+from src.config import Config
 
 
 class StorageWindow(ctk.CTkToplevel):
@@ -13,7 +11,7 @@ class StorageWindow(ctk.CTkToplevel):
     def __init__(self, master, config=None, on_change=None):
         super().__init__(master)
 
-        self.config_service = config if config else ConfigService()
+        self.config = config if config else Config()
         self.on_change = on_change
 
         self.lift()
@@ -24,7 +22,7 @@ class StorageWindow(ctk.CTkToplevel):
         self.grab_set()
 
         self.title("Speicherort")
-        self.geometry("400x650")
+        self.geometry("400x300")
 
         self.create_ui()
         self.load_path()
@@ -42,55 +40,42 @@ class StorageWindow(ctk.CTkToplevel):
         self.path_box = ctk.CTkTextbox(self, height=100)
         self.path_box.pack(padx=10, pady=10, fill="both")
 
-        self.init_runtime_btn = ctk.CTkButton(
-            self,
-            text="Runtime initialisieren",
-            command=self.initialize_runtime
-        )
-        self.init_runtime_btn.pack(pady=10)
-
     # CONFIG / LOAD
     def load_path(self):
-        path = self.config_service.get("user_path")
+        self.path_box.delete("0.0", "end")
 
+        path = self.config.get("user_path")
         if path:
             self.path_box.insert("0.0", path)
 
-    # CONFIG / SELECT
+    # CONFIG / SELECT + AUTO INIT
     def select_path(self):
         path = filedialog.askdirectory()
 
-        if path:
-            self.path_box.delete("0.0", "end")
-            self.path_box.insert("0.0", path)
-
-            self.config_service.set("user_path", path)
-
-            if self.on_change:
-                self.after(100, self.on_change)
-
-            self.destroy()
-
-    # RUNTIME / INIT
-    def initialize_runtime(self):
-
-        user_path = self.config_service.get("user_path")
-
-        if not user_path:
-            messagebox.showerror("Fehler", "Kein Speicherort gesetzt")
+        if not path:
             return
 
-        user_path = Path(user_path)
+        # UI sofort aktualisieren
+        self.path_box.delete("0.0", "end")
+        self.path_box.insert("0.0", path)
 
-        self.config_service.set("user_path", str(user_path))
+        try:
+            self.config.set("user_path", path)
 
-        config = Config(self.config_service.config_path)
+            self.config = Config()
 
-        initialize_workspace(config)
+            initialize_workspace(self.config)
+
+        except Exception as e:
+            messagebox.showerror(
+                "Fehler",
+                f"Initialisierung fehlgeschlagen:\n{e}"
+            )
+            return
 
         messagebox.showinfo(
             "Sorterino",
-            f"Runtime erstellt unter\n{user_path}"
+            f"Speicherort gesetzt & Runtime bereit:\n{path}"
         )
 
         if self.on_change:

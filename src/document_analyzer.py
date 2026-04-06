@@ -61,7 +61,7 @@ class DocumentAnalyzer:
                 best = rule
 
         if not best:
-            return Classification("MANUELL", 0.0)
+            return Classification("MANUELL", 0.0, "Unsortiert")
 
         return Classification(
             category=best["category"],
