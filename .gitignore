@@ -19,7 +19,6 @@ venv/
 dist/
 build/
 installer_output/
-installer/
 
 # -------------------------
 # Runtime (User Data)
