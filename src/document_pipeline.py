@@ -99,7 +99,11 @@ class DocumentPipeline:
 
         # OCR / PROCESS
         self.logger.debug("OCR läuft")
-        text = self.ocr.extract_text(document.source_path)
+        if not self.ocr:
+            self.logger.warning("OCR deaktiviert → direkt manuell")
+            text = ""
+        else:
+            text = self.ocr.extract_text(document.source_path)
 
         if not text:
             self.logger.info("Kein Text erkannt manuell")

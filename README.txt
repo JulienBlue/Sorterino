@@ -1,191 +1,189 @@
-# 🚀 Sorterino v0.7.0
+SORTERINO v0.7.5
+Automatische Dokumentenablage für Rechnungen, Verträge und mehr
 
-## ✨ Überblick
 
-Sorterino ist eine lokale Desktop-Anwendung zur automatisierten Verarbeitung von Dokumenten.
-
-Das System arbeitet vollständig offline und verarbeitet Dateien nach folgendem Prinzip:
-
-OCR → Klassifikation → strukturierte Ablage
-
-Die gesamte Logik ist konfigurierbar und kommt ohne Cloud-Anbindung aus.
 
 ---
 
-## 🧠 Funktionsweise
+WAS IST SORTERINO?
 
-1. Dokumente werden aus dem Input-Ordner geladen
-2. OCR extrahiert Textinhalte (Tesseract lokal)
-3. Klassifikation erfolgt regelbasiert über Keywords
-4. Dokumente werden automatisch strukturiert abgelegt
+Sorterino ist ein Programm, das deine Dokumente automatisch erkennt, sortiert und in eine strukturierte Ordnerstruktur ablegt.
 
-Nicht eindeutig zuordenbare Dokumente werden in den Bereich für manuelle Sortierung verschoben.
+Du legst Dateien einfach in einen Ordner – den Rest macht Sorterino automatisch.
 
 ---
 
-## ⚙️ Architektur
+SCHNELLSTART (EMPFOHLEN)
 
-### 🔹 Pipeline
+1. Programm starten (Sorterino.exe)
+2. Speicherort auswählen
+3. Fertig
 
-Die Verarbeitung erfolgt über eine entkoppelte Pipeline:
+Sorterino erstellt automatisch:
 
-* DocumentPipeline
-* DocumentAnalyzer
-* TesseractOCR
-* FilesystemStorage
-
-Die Pipeline ist unabhängig von GUI und CLI nutzbar.
-
----
-
-### 🔹 Datenmodell
-
-Zentrale Objekte:
-
-* Document
-* DocumentStatus
-* Classification
-* DocumentMetadata
-
-Status-Flow:
-
-NEW → ANALYZED → CLASSIFIED → STORED
-↘ ERROR
+* einen Input-Ordner
+* eine Runtime-Struktur
+* eine automatische Ordnerstruktur für deine Dokumente
 
 ---
 
-## 📝 Logging-Konzept
+WIE FUNKTIONIERT DAS?
 
-Sorterino verwendet bewusst ein zweigeteiltes Logging-System:
+Sorterino arbeitet in 5 Schritten:
 
-### 📄 Logfile
-
-Wird persistent gespeichert und enthält:
-
-* `logger.log()` → fachliche Ereignisse (Ein- und Ausgang von Dokumenten)
-* `logger.error()` → Fehlerfälle
-
-### 🖥 Konsole
-
-Wird nur zur Laufzeit angezeigt und enthält:
-
-* `logger.info()` → Ablauf-Informationen
-* `logger.debug()` → technische Details
-* `logger.warning()` → Hinweise
-
-👉 Ziel dieses Ansatzes ist eine klare Trennung zwischen:
-
-* **Business-relevanten Logs (persistent)**
-* **technischen Laufzeitinformationen (nur während Ausführung sichtbar)**
+1. Datei wird erkannt (Input-Ordner)
+2. Text wird extrahiert (OCR, falls nötig)
+3. Dokument wird analysiert (Keywords)
+4. Kategorie wird bestimmt
+5. Datei wird automatisch einsortiert
 
 ---
 
-## 📁 Runtime-Struktur
+WICHTIGE ORDNER
 
-Beim ersten Start wird eine isolierte Laufzeitumgebung erstellt:
+Nach dem ersten Start findest du in deinem Speicherort:
 
-.sorterino_runtime/
+Sorterino - Input
+→ Hier legst du deine Dokumente rein
 
-* incoming/
-* logs/
-* error/
-* manual_sort/
-* processed/
-* rules.json
-* structure.json
-* config.json
+Sorterino - Manuelle Sortierung
+→ Hier landen unklare Dokumente
 
-Zusätzlich werden Verknüpfungen im Benutzerordner erstellt:
-
-* Sorterino - Input
-* Sorterino - Manuelle Sortierung
+.sorterino_runtime (versteckt)
+→ Technischer Arbeitsbereich
 
 ---
 
-## 🧾 Konfiguration
+UNTERSTÜTZTE DATEIEN
 
-Die Anwendung ist vollständig über JSON-Dateien konfigurierbar:
+* PDF
+* PNG
+* JPG / JPEG
 
-* `rules.json` → Klassifikationsregeln
-* `structure.json` → Zielordnerstruktur
-* `config.json` → Systemkonfiguration
-
-Ein globaler Basispfad wird zusätzlich in einer Benutzerkonfiguration gespeichert.
+Andere Dateien werden ignoriert.
 
 ---
 
-## 🖥 GUI Features
+AUTOMATISCHE SORTIERUNG
 
-* Tray-Anwendung
-* Einstellungsdialog
-* JSON-Editor für Regeln und Struktur
-* Log-Viewer
-* Automatikmodus
-* Autostart-Funktion
+Sorterino erkennt z. B.:
 
----
+* Rechnungen
+* Angebote
+* Mahnungen
+* Kontoauszüge
+* Verträge
+* Steuerdokumente
 
-## 🔄 Betriebsmodi
+Die Ablage erfolgt automatisch nach:
 
-### Manuell
-
-Pipeline wird über die GUI gestartet
-
-### Automatikmodus
-
-Pipeline läuft in regelmäßigen Intervallen im Hintergrund
+Kategorie → Dokumenttyp → Jahr → Monat
 
 ---
 
-## ⚠️ Hinweise
+WENN ETWAS NICHT ERKANNT WIRD
 
-* OCR-Ergebnisse sind abhängig von der Dokumentqualität
-* Unterstützte Formate: PDF, PNG, JPG, JPEG
-* Nicht erkannte Dokumente werden in `manual_sort` verschoben
-* Fehlerhafte Dokumente werden in `error` abgelegt
+Dann landet die Datei hier:
 
----
+Sorterino - Manuelle Sortierung
 
-## 🛠 Installation
-
-### Virtuelle Umgebung erstellen
-
-python -m venv .venv
-
-### Aktivieren
-
-.venv\Scripts\activate
-
-### Abhängigkeiten installieren
-
-pip install -r requirements.txt
+Du kannst sie dort selbst einsortieren.
 
 ---
 
-## ▶️ Start
+E-MAIL IMPORT (OPTIONAL)
 
-### Pipeline (CLI)
+Sorterino kann Anhänge direkt aus deinem E-Mail-Postfach laden.
 
-python main.py
+So aktivierst du das:
 
-### GUI
+1. Einstellungen öffnen
+2. E-Mail aktivieren
+3. Anbieter auswählen (z. B. Gmail)
+4. E-Mail + App-Passwort eingeben
+5. Verbindung testen
 
-python -m src.gui.app
+WICHTIG:
 
----
-
-## 📦 Build
-
-### EXE erstellen
-
-pyinstaller Sorterino.spec --noconfirm
-
-### Installer erstellen
-
-iscc installer.iss
+* Es werden nur neue (ungelesene) Mails verarbeitet
+* Nur Anhänge werden gespeichert
+* Unterstützte Formate: PDF / Bilder
 
 ---
 
-## 🧑‍💻 Kontext
+AUTOMATIKMODUS
 
-IHK Abschlussprojekt – Fachinformatiker Anwendungsentwicklung
+Wenn aktiviert:
+
+* Sorterino läuft im Hintergrund
+* prüft regelmäßig neue Dateien
+* sortiert automatisch
+
+---
+
+LOGS ANZEIGEN
+
+Über "Logs anzeigen" kannst du sehen:
+
+* was verarbeitet wurde
+* ob Fehler aufgetreten sind
+
+---
+
+TYPISCHE PROBLEME
+
+OCR funktioniert nicht
+→ Tesseract fehlt oder ist falsch konfiguriert
+
+Keine Dateien werden verarbeitet
+→ Prüfe den Input-Ordner
+
+E-Mail funktioniert nicht
+→ App-Passwort verwenden (kein normales Passwort!)
+
+---
+
+DEINSTALLATION
+
+Beim Entfernen kannst du auswählen:
+
+* Konfiguration löschen
+* Daten löschen
+* Verknüpfungen entfernen
+
+---
+
+DATENSCHUTZ
+
+Sorterino arbeitet vollständig lokal:
+
+* keine Cloud
+* keine Datenübertragung
+* keine externen Server
+
+---
+
+VERSION 0.7.5
+
+* Stabiler Mail-Import
+* Verbesserte Fehlerbehandlung
+* Robuster Workflow
+* Automatische Dateiduplikat-Behandlung
+
+---
+
+TIPP
+
+Je besser die Dokumentqualität, desto besser die Erkennung.
+
+---
+Dieses Projekt steht unter der MIT-Lizenz.
+
+
+---
+
+AUTOR
+
+Entwickelt von
+Julien Blue Hirte
+im Auftrag der Seraph IT GmbH

@@ -10,13 +10,16 @@ from src.storage_utils import FolderDocumentSource, FilesystemStorage
 from src.tesseract_ocr import TesseractOCR
 from src.logger import FileLogger
 from src.document_pipeline import DocumentPipeline
+from src.mail_fetcher import fetch_attachments
 
 _pipeline_running = False
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), "sorterino.lock")
 
 
+# =========================
 # CONFIG / LOAD
+# =========================
 def load_config_safe():
     try:
         config = Config()
@@ -31,7 +34,9 @@ def load_config_safe():
         return None
 
 
+# =========================
 # IO / JSON LOAD
+# =========================
 def load_json_safe(path, fallback):
     try:
         if path.exists():
@@ -43,7 +48,9 @@ def load_json_safe(path, fallback):
         return fallback
 
 
+# =========================
 # PIPELINE / RUN
+# =========================
 def run_pipeline() -> None:
     global _pipeline_running
 
@@ -60,6 +67,9 @@ def run_pipeline() -> None:
             print("[WARN] Kein Speicherort gesetzt")
             return
 
+        # =========================
+        # INIT WORKSPACE
+        # =========================
         initialize_workspace(config)
 
         rules_data = load_json_safe(config.rules_path, {})
@@ -67,16 +77,32 @@ def run_pipeline() -> None:
 
         logger = FileLogger(config.logs_root)
 
+        # =========================
+        # MAIL (IMMER ZUERST, GENAU 1x)
+        # =========================
+        try:
+            fetch_attachments(config)
+        except Exception as e:
+            print(f"[MAIL ERROR] {e}")
+
+        # =========================
+        # OCR (OPTIONAL)
+        # =========================
+        ocr_service = None
+
         try:
             ocr_service = TesseractOCR(
                 poppler_path=str(config.poppler_path),
                 tesseract_path=str(config.tesseract_path),
                 logger=logger
             )
+            print("[OCR] Initialisiert")
         except Exception as e:
-            print(f"[ERROR] OCR Init fehlgeschlagen: {e}")
-            return
+            print(f"[OCR WARNING] OCR deaktiviert: {e}")
 
+        # =========================
+        # PIPELINE SETUP
+        # =========================
         runtime_storage = FilesystemStorage(config.runtime_root)
         archive_storage = FilesystemStorage(config.user_path)
 
@@ -93,6 +119,9 @@ def run_pipeline() -> None:
             structure=load_json_safe(config.structure_path, {})
         )
 
+        # =========================
+        # RUN
+        # =========================
         try:
             pipeline.run()
         except Exception as e:
@@ -105,7 +134,9 @@ def run_pipeline() -> None:
         _pipeline_running = False
 
 
+# =========================
 # APP / MAIN
+# =========================
 def main():
     if os.path.exists(LOCK_FILE):
         print("[WARN] Sorterino läuft bereits oder wurde nicht sauber beendet")
@@ -132,7 +163,9 @@ def main():
                 print(f"[ERROR] Lockfile Cleanup fehlgeschlagen: {e}")
 
 
+# =========================
 # ENTRY / START
+# =========================
 if __name__ == "__main__":
     try:
         main()

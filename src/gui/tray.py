@@ -22,6 +22,8 @@ class TrayApp:
     def __init__(self):
         self.config = Config()
 
+        self._auto_thread = None
+
         self.window = None
         self._root = None
 
@@ -125,8 +127,59 @@ class TrayApp:
 
             self._root.after(200, _open_setup)
 
+        threading.Thread(target=self._monitor_auto_mode, daemon=True).start()
         threading.Thread(target=self.icon.run, daemon=True).start()
+
         self._root.mainloop()
+
+
+    def _auto_loop(self):
+        import time
+        from main import run_pipeline
+        from src.config import Config
+
+        print("[AUTO] Thread gestartet")
+
+        while True:
+            try:
+                config = Config()
+
+                if not config.get("auto_mode"):
+                    print("[AUTO] beendet")
+                    break
+
+                print("[AUTO] Tick → starte Pipeline")
+
+                run_pipeline()
+
+            except Exception as e:
+                print(f"[AUTO ERROR] {e}")
+
+            time.sleep(10)
+
+    def _monitor_auto_mode(self):
+        import time
+        from src.config import Config
+
+        while True:
+            try:
+                config = Config()
+
+                if config.get("auto_mode"):
+                    if not self._auto_thread or not self._auto_thread.is_alive():
+                        print("[AUTO] dynamisch gestartet")
+
+                        self._auto_thread = threading.Thread(
+                            target=self._auto_loop,
+                            daemon=True
+                        )
+                        self._auto_thread.start()
+
+            except Exception as e:
+                print(f"[AUTO MONITOR ERROR] {e}")
+
+            time.sleep(5)
+
 
     # APP / EXIT
     def exit_app(self, icon=None, item=None):

@@ -1,6 +1,6 @@
 import threading
 import json
-import tkinter as tk
+import imaplib
 from tkinter import Toplevel, Text, Button, END, messagebox
 
 import customtkinter as ctk
@@ -9,10 +9,11 @@ from src.gui.storage_window import StorageWindow
 from src.config import Config
 from src.autostart_service import AutostartService
 
+import keyring
+
 
 class ConfigWindow(ctk.CTkToplevel):
 
-    # CONFIG / INIT
     def __init__(self, master=None, config=None, on_change=None):
         super().__init__(master)
 
@@ -30,44 +31,30 @@ class ConfigWindow(ctk.CTkToplevel):
         self.after(200, lambda: self.attributes("-topmost", False))
 
         self.title("Konfiguration")
-        self.geometry("400x650")
+        self.geometry("400x875")
 
         self.create_ui()
         self.after(0, self.load_values)
 
-    # UI / BUILD
+    # =========================
+    # UI
+    # =========================
     def create_ui(self):
 
-        self.storage_btn = ctk.CTkButton(
-            self,
-            text="Speicherort",
-            command=self.open_storage
-        )
+        self.storage_btn = ctk.CTkButton(self, text="Speicherort", command=self.open_storage)
         self.storage_btn.pack(pady=10)
 
-        self.auto_mode_checkbox = ctk.CTkCheckBox(
-            self,
-            text="Automatikmodus",
-            command=self.toggle_auto_mode
-        )
+        self.auto_mode_checkbox = ctk.CTkCheckBox(self, text="Automatikmodus", command=self.toggle_auto_mode)
         self.auto_mode_checkbox.pack(pady=5)
 
-        self.autostart_checkbox = ctk.CTkCheckBox(
-            self,
-            text="Autostart",
-            command=self.toggle_autostart
-        )
+        self.autostart_checkbox = ctk.CTkCheckBox(self, text="Autostart", command=self.toggle_autostart)
         self.autostart_checkbox.pack(pady=5)
 
-        self.company_label = ctk.CTkLabel(self, text="Firmenname")
-        self.company_label.pack(pady=(15, 0))
-
+        ctk.CTkLabel(self, text="Firmenname").pack(pady=(15, 0))
         self.company_entry = ctk.CTkEntry(self, placeholder_text="Firmenname")
         self.company_entry.pack(padx=20, fill="x")
 
-        self.keywords_label = ctk.CTkLabel(self, text="Keywords (Komma getrennt)")
-        self.keywords_label.pack(pady=(10, 0))
-
+        ctk.CTkLabel(self, text="Keywords (Komma getrennt)").pack(pady=(10, 0))
         self.keywords_entry = ctk.CTkEntry(self, placeholder_text="Keywords")
         self.keywords_entry.pack(padx=20, fill="x")
 
@@ -89,32 +76,63 @@ class ConfigWindow(ctk.CTkToplevel):
         self.iban_entry = ctk.CTkEntry(self, placeholder_text="IBAN")
         self.iban_entry.pack(pady=(10, 0), padx=20, fill="x")
 
-        self.tax_entry = ctk.CTkEntry(self, placeholder_text="Steuer-ID")
+        self.tax_entry = ctk.CTkEntry(self, placeholder_text="USt.-ID")
         self.tax_entry.pack(padx=20, fill="x")
 
-        self.rules_btn = ctk.CTkButton(
-            self,
-            text="Regeln bearbeiten",
-            command=self.edit_rules
-        )
-        self.rules_btn.pack(pady=5)
+        ctk.CTkButton(self, text="Regeln bearbeiten", command=self.edit_rules).pack(pady=5)
+        ctk.CTkButton(self, text="Struktur bearbeiten", command=self.edit_structure).pack(pady=5)
 
-        self.structure_btn = ctk.CTkButton(
-            self,
-            text="Struktur bearbeiten",
-            command=self.edit_structure
-        )
-        self.structure_btn.pack(pady=5)
+        # =========================
+        # MAIL
+        # =========================
+        ctk.CTkLabel(self, text="E-Mail Integration").pack(pady=(20, 0))
 
-        self.save_btn = ctk.CTkButton(
+        self.mail_enabled = ctk.CTkCheckBox(self, text="E-Mail Abruf aktiv")
+        self.mail_enabled.pack(pady=5)
+
+        self.mail_provider = ctk.CTkOptionMenu(
             self,
-            text="Firmenprofil speichern",
-            command=self.save_company_profile
+            values=[
+                "Benutzerdefiniert",
+                "Gmail",
+                "Outlook / Hotmail",
+                "GMX",
+                "Web.de",
+                "IONOS",
+                "iCloud"
+            ],
+            command=self.on_provider_change
         )
+        self.mail_provider.pack(padx=20, pady=(5, 0), fill="x")
+
+        self.mail_server_entry = ctk.CTkEntry(self, placeholder_text="IMAP Server")
+        self.mail_server_entry.pack(padx=20, fill="x")
+
+        self.mail_user_entry = ctk.CTkEntry(self, placeholder_text="E-Mail Adresse")
+        self.mail_user_entry.pack(padx=20, fill="x")
+
+        self.mail_pass_entry = ctk.CTkEntry(self, placeholder_text="App-Passwort", show="*")
+        self.mail_pass_entry.pack(padx=20, fill="x")
+
+        self.mail_test_btn = ctk.CTkButton(
+            self,
+            text="Verbindung testen",
+            command=self.test_mail_connection
+        )
+        self.mail_test_btn.pack(pady=10)
+
+        self.save_btn = ctk.CTkButton(self, text="Speichern", command=self.save_company_profile)
         self.save_btn.pack(pady=15)
 
-    # CONFIG / LOAD
+    # =========================
+    # LOAD
+    # =========================
     def load_values(self):
+
+        def safe_insert(entry, value):
+            if value:
+                entry.insert(0, value)
+
         self.config = Config()
 
         if self.config.get("auto_mode"):
@@ -129,43 +147,45 @@ class ConfigWindow(ctk.CTkToplevel):
         contact = company.get("contact", {})
         financial = company.get("financial", {})
 
-        value = company.get("name")
-        if value:
-            self.company_entry.insert(0, value)
+        safe_insert(self.company_entry, company.get("name"))
+        safe_insert(self.keywords_entry, ", ".join(company.get("keywords", [])))
+        safe_insert(self.street_entry, address.get("street"))
+        safe_insert(self.zip_entry, address.get("zip"))
+        safe_insert(self.city_entry, address.get("city"))
+        safe_insert(self.email_entry, contact.get("email"))
+        safe_insert(self.phone_entry, contact.get("phone"))
+        safe_insert(self.iban_entry, financial.get("iban"))
+        safe_insert(self.tax_entry, financial.get("tax_id"))
 
-        value = ", ".join(company.get("keywords", []))
-        if value:
-            self.keywords_entry.insert(0, value)
+        email_cfg = self.config.get("email") or {}
 
-        value = address.get("street")
-        if value:
-            self.street_entry.insert(0, value)
+        if email_cfg.get("enabled"):
+            self.mail_enabled.select()
 
-        value = address.get("zip")
-        if value:
-            self.zip_entry.insert(0, value)
+        server = email_cfg.get("imap_server")
 
-        value = address.get("city")
-        if value:
-            self.city_entry.insert(0, value)
+        provider_map = {
+            "imap.gmail.com": "Gmail",
+            "imap-mail.outlook.com": "Outlook / Hotmail",
+            "imap.gmx.net": "GMX",
+            "imap.web.de": "Web.de",
+            "imap.ionos.de": "IONOS",
+            "imap.mail.me.com": "iCloud"
+        }
 
-        value = contact.get("email")
-        if value:
-            self.email_entry.insert(0, value)
+        if server:
+            self.mail_server_entry.insert(0, server)
+            self.mail_provider.set(provider_map.get(server, "Benutzerdefiniert"))
+        else:
+            self.mail_provider.set("Benutzerdefiniert")
 
-        value = contact.get("phone")
-        if value:
-            self.phone_entry.insert(0, value)
+        user = keyring.get_password("SorterinoMail", "email_user")
+        if user:
+            self.mail_user_entry.insert(0, user)
 
-        value = financial.get("iban")
-        if value:
-            self.iban_entry.insert(0, value)
-
-        value = financial.get("tax_id")
-        if value:
-            self.tax_entry.insert(0, value)
-
-    # CONFIG / SAVE
+    # =========================
+    # SAVE
+    # =========================
     def save_company_profile(self):
 
         data = {
@@ -187,110 +207,118 @@ class ConfigWindow(ctk.CTkToplevel):
         }
 
         self.config.set("company_profile", data)
-        self.config = Config()
+
+        email_data = {
+            "enabled": self.mail_enabled.get() == 1,
+            "imap_server": self.mail_server_entry.get().strip()
+        }
+
+        self.config.set("email", email_data)
+
+        user = self.mail_user_entry.get().strip()
+        password = self.mail_pass_entry.get().strip()
+
+        if user and password:
+            keyring.set_password("SorterinoMail", "email_user", user)
+            keyring.set_password("SorterinoMail", "email_pass", password)
+
+        self.mail_pass_entry.delete(0, "end")
 
         if self.on_change:
             self.on_change()
 
-    # CONFIG / AUTO MODE
+    # =========================
+    # MAIL
+    # =========================
+    def on_provider_change(self, choice):
+        mapping = {
+            "Gmail": "imap.gmail.com",
+            "Outlook / Hotmail": "imap-mail.outlook.com",
+            "GMX": "imap.gmx.net",
+            "Web.de": "imap.web.de",
+            "IONOS": "imap.ionos.de",
+            "iCloud": "imap.mail.me.com"
+        }
+
+        if choice in mapping:
+            self.mail_server_entry.delete(0, "end")
+            self.mail_server_entry.insert(0, mapping[choice])
+
+    def test_mail_connection(self):
+
+        server = self.mail_server_entry.get().strip()
+        user = self.mail_user_entry.get().strip()
+        password = self.mail_pass_entry.get().strip()
+
+        # 🔥 fallback aus keyring
+        if not password:
+            password = keyring.get_password("SorterinoMail", "email_pass")
+
+        if not server or not user or not password:
+            messagebox.showerror("Fehler", "Bitte alle Felder ausfüllen")
+            return
+
+        try:
+            mail = imaplib.IMAP4_SSL(server)
+            mail.login(user, password)
+            mail.logout()
+
+            messagebox.showinfo("Erfolg", "Verbindung erfolgreich!")
+
+        except Exception as e:
+            messagebox.showerror("Fehler", f"Verbindung fehlgeschlagen:\n{e}")
+
+    # =========================
+    # REST
+    # =========================
     def toggle_auto_mode(self):
         value = self.auto_mode_checkbox.get() == 1
         self.config.set("auto_mode", value)
 
-        self.config = Config()
-
         if value:
-            from main import run_pipeline
+            print("[AUTO] aktiviert")
+        else:
+            print("[AUTO] deaktiviert")
 
-            def _auto_loop():
-                import time
-
-                while True:
-                    config = Config()
-
-                    if not config.get("auto_mode"):
-                        break
-
-                    if self._pipeline_running:
-                        time.sleep(1)
-                        continue
-
-                    self._pipeline_running = True
-
-                    try:
-                        run_pipeline()
-                    except Exception:
-                        time.sleep(10)
-                    finally:
-                        self._pipeline_running = False
-
-                    time.sleep(5)
-
-            if self._auto_thread is None or not self._auto_thread.is_alive():
-                self._auto_thread = threading.Thread(target=_auto_loop, daemon=True)
-                self._auto_thread.start()
-
-        if self.on_change:
-            self.on_change()
-
-    # CONFIG / AUTOSTART
     def toggle_autostart(self):
         value = self.autostart_checkbox.get() == 1
         self.config.set("autostart", value)
-
-        self.config = Config()
 
         if value:
             self.autostart_service.enable()
         else:
             self.autostart_service.disable()
 
-    # UI / STORAGE
     def open_storage(self):
-        StorageWindow(
-            self,
-            config=self.config,
-            on_change=self.on_change
-        )
+        StorageWindow(self, config=self.config, on_change=self.on_change)
 
-    # CONFIG / RULES
     def edit_rules(self):
         from pathlib import Path
 
         user_path = self.config.get("user_path")
-
         if not user_path:
             messagebox.showerror("Fehler", "Kein Speicherort gesetzt")
             return
 
-        runtime = Path(user_path) / ".sorterino_runtime"
-        file_path = runtime / "rules.json"
+        self._open_json_editor("Regeln bearbeiten", Path(user_path) / ".sorterino_runtime" / "rules.json")
 
-        self._open_json_editor("Regeln bearbeiten", file_path)
-
-    # CONFIG / STRUCTURE
     def edit_structure(self):
         from pathlib import Path
 
         user_path = self.config.get("user_path")
-
         if not user_path:
             messagebox.showerror("Fehler", "Kein Speicherort gesetzt")
             return
 
-        runtime = Path(user_path) / ".sorterino_runtime"
-        file_path = runtime / "structure.json"
+        self._open_json_editor("Struktur bearbeiten", Path(user_path) / ".sorterino_runtime" / "structure.json")
 
-        self._open_json_editor("Struktur bearbeiten", file_path)
-
-    # UI / JSON EDITOR
     def _open_json_editor(self, title, file_path):
 
         window = Toplevel(self)
         window.title(title)
         window.geometry("700x600")
 
-        text = Text(window, wrap="none")
+        text = Text(window)
         text.pack(expand=True, fill="both")
 
         try:
@@ -300,21 +328,18 @@ class ConfigWindow(ctk.CTkToplevel):
             else:
                 content = "{}"
         except Exception as e:
-            content = f"Fehler beim Laden\n{e}"
+            content = str(e)
 
         text.insert("1.0", content)
 
         def save():
             try:
                 data = json.loads(text.get("1.0", END))
-
                 with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2)
-
                 messagebox.showinfo("Erfolg", "Gespeichert")
                 window.destroy()
-
             except Exception as e:
-                messagebox.showerror("Fehler", f"Ungültiges JSON\n{e}")
+                messagebox.showerror("Fehler", str(e))
 
         Button(window, text="Speichern", command=save).pack(pady=10)

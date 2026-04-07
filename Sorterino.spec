@@ -21,6 +21,9 @@ a = Analysis(
         'pystray',
         'pystray._win32',
         'customtkinter',
+        'keyring.backends.Windows',
+        'email',
+        'imaplib',
     ],
 )
 

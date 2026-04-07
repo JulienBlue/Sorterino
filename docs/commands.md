@@ -70,6 +70,9 @@ git push origin v0.7.0
 rmdir /s /q dist
 rmdir /s /q build
 
+
+
+
 pyinstaller Sorterino.spec --noconfirm
 
-iscc installer_docs/installer.iss
+iscc installer.iss
