@@ -1,6 +1,5 @@
-import threading
+import keyring
 import json
-import imaplib
 from tkinter import Toplevel, Text, Button, END, messagebox
 
 import customtkinter as ctk
@@ -31,7 +30,7 @@ class ConfigWindow(ctk.CTkToplevel):
         self.after(200, lambda: self.attributes("-topmost", False))
 
         self.title("Konfiguration")
-        self.geometry("400x875")
+        self.geometry("400x825")
 
         self.create_ui()
         self.after(0, self.load_values)
@@ -53,6 +52,14 @@ class ConfigWindow(ctk.CTkToplevel):
         ctk.CTkLabel(self, text="Firmenname").pack(pady=(15, 0))
         self.company_entry = ctk.CTkEntry(self, placeholder_text="Firmenname")
         self.company_entry.pack(padx=20, fill="x")
+
+        ctk.CTkLabel(self, text="Vorname").pack(pady=(10, 0))
+        self.first_name_entry = ctk.CTkEntry(self, placeholder_text="Vorname")
+        self.first_name_entry.pack(padx=20, fill="x")
+
+        ctk.CTkLabel(self, text="Nachname").pack(pady=(10, 0))
+        self.last_name_entry = ctk.CTkEntry(self, placeholder_text="Nachname")
+        self.last_name_entry.pack(padx=20, fill="x")
 
         ctk.CTkLabel(self, text="Keywords (Komma getrennt)").pack(pady=(10, 0))
         self.keywords_entry = ctk.CTkEntry(self, placeholder_text="Keywords")
@@ -79,50 +86,13 @@ class ConfigWindow(ctk.CTkToplevel):
         self.tax_entry = ctk.CTkEntry(self, placeholder_text="USt.-ID")
         self.tax_entry.pack(padx=20, fill="x")
 
-        ctk.CTkButton(self, text="Regeln bearbeiten", command=self.edit_rules).pack(pady=5)
-        ctk.CTkButton(self, text="Struktur bearbeiten", command=self.edit_structure).pack(pady=5)
-
-        # =========================
-        # MAIL
-        # =========================
-        ctk.CTkLabel(self, text="E-Mail Integration").pack(pady=(20, 0))
-
-        self.mail_enabled = ctk.CTkCheckBox(self, text="E-Mail Abruf aktiv")
-        self.mail_enabled.pack(pady=5)
-
-        self.mail_provider = ctk.CTkOptionMenu(
-            self,
-            values=[
-                "Benutzerdefiniert",
-                "Gmail",
-                "Outlook / Hotmail",
-                "GMX",
-                "Web.de",
-                "IONOS",
-                "iCloud"
-            ],
-            command=self.on_provider_change
-        )
-        self.mail_provider.pack(padx=20, pady=(5, 0), fill="x")
-
-        self.mail_server_entry = ctk.CTkEntry(self, placeholder_text="IMAP Server")
-        self.mail_server_entry.pack(padx=20, fill="x")
-
-        self.mail_user_entry = ctk.CTkEntry(self, placeholder_text="E-Mail Adresse")
-        self.mail_user_entry.pack(padx=20, fill="x")
-
-        self.mail_pass_entry = ctk.CTkEntry(self, placeholder_text="App-Passwort", show="*")
-        self.mail_pass_entry.pack(padx=20, fill="x")
-
-        self.mail_test_btn = ctk.CTkButton(
-            self,
-            text="Verbindung testen",
-            command=self.test_mail_connection
-        )
-        self.mail_test_btn.pack(pady=10)
-
         self.save_btn = ctk.CTkButton(self, text="Speichern", command=self.save_company_profile)
         self.save_btn.pack(pady=15)
+
+        ctk.CTkButton(self, text="Regeln bearbeiten", command=self.edit_rules).pack(pady=5)
+        ctk.CTkButton(self, text="Struktur bearbeiten", command=self.edit_structure).pack(pady=15)
+
+        ctk.CTkButton(self, text="E-Mail Integration", command=self.open_mail_window).pack(pady=5)
 
     # =========================
     # LOAD
@@ -142,12 +112,15 @@ class ConfigWindow(ctk.CTkToplevel):
             self.autostart_checkbox.select()
 
         company = self.config.get("company_profile") or {}
+        person = company.get("person", {})
 
         address = company.get("address", {})
         contact = company.get("contact", {})
         financial = company.get("financial", {})
 
         safe_insert(self.company_entry, company.get("name"))
+        safe_insert(self.first_name_entry, person.get("first_name"))
+        safe_insert(self.last_name_entry, person.get("last_name"))
         safe_insert(self.keywords_entry, ", ".join(company.get("keywords", [])))
         safe_insert(self.street_entry, address.get("street"))
         safe_insert(self.zip_entry, address.get("zip"))
@@ -157,32 +130,6 @@ class ConfigWindow(ctk.CTkToplevel):
         safe_insert(self.iban_entry, financial.get("iban"))
         safe_insert(self.tax_entry, financial.get("tax_id"))
 
-        email_cfg = self.config.get("email") or {}
-
-        if email_cfg.get("enabled"):
-            self.mail_enabled.select()
-
-        server = email_cfg.get("imap_server")
-
-        provider_map = {
-            "imap.gmail.com": "Gmail",
-            "imap-mail.outlook.com": "Outlook / Hotmail",
-            "imap.gmx.net": "GMX",
-            "imap.web.de": "Web.de",
-            "imap.ionos.de": "IONOS",
-            "imap.mail.me.com": "iCloud"
-        }
-
-        if server:
-            self.mail_server_entry.insert(0, server)
-            self.mail_provider.set(provider_map.get(server, "Benutzerdefiniert"))
-        else:
-            self.mail_provider.set("Benutzerdefiniert")
-
-        user = keyring.get_password("SorterinoMail", "email_user")
-        if user:
-            self.mail_user_entry.insert(0, user)
-
     # =========================
     # SAVE
     # =========================
@@ -190,6 +137,10 @@ class ConfigWindow(ctk.CTkToplevel):
 
         data = {
             "name": self.company_entry.get().strip(),
+            "person": {
+                "first_name": self.first_name_entry.get().strip(),
+                "last_name": self.last_name_entry.get().strip()
+            },
             "keywords": [k.strip().lower() for k in self.keywords_entry.get().split(",") if k.strip()],
             "address": {
                 "street": self.street_entry.get().strip(),
@@ -208,65 +159,12 @@ class ConfigWindow(ctk.CTkToplevel):
 
         self.config.set("company_profile", data)
 
-        email_data = {
-            "enabled": self.mail_enabled.get() == 1,
-            "imap_server": self.mail_server_entry.get().strip()
-        }
-
-        self.config.set("email", email_data)
-
-        user = self.mail_user_entry.get().strip()
-        password = self.mail_pass_entry.get().strip()
-
-        if user and password:
-            keyring.set_password("SorterinoMail", "email_user", user)
-            keyring.set_password("SorterinoMail", "email_pass", password)
-
-        self.mail_pass_entry.delete(0, "end")
-
-        if self.on_change:
-            self.on_change()
-
     # =========================
     # MAIL
     # =========================
-    def on_provider_change(self, choice):
-        mapping = {
-            "Gmail": "imap.gmail.com",
-            "Outlook / Hotmail": "imap-mail.outlook.com",
-            "GMX": "imap.gmx.net",
-            "Web.de": "imap.web.de",
-            "IONOS": "imap.ionos.de",
-            "iCloud": "imap.mail.me.com"
-        }
-
-        if choice in mapping:
-            self.mail_server_entry.delete(0, "end")
-            self.mail_server_entry.insert(0, mapping[choice])
-
-    def test_mail_connection(self):
-
-        server = self.mail_server_entry.get().strip()
-        user = self.mail_user_entry.get().strip()
-        password = self.mail_pass_entry.get().strip()
-
-        # 🔥 fallback aus keyring
-        if not password:
-            password = keyring.get_password("SorterinoMail", "email_pass")
-
-        if not server or not user or not password:
-            messagebox.showerror("Fehler", "Bitte alle Felder ausfüllen")
-            return
-
-        try:
-            mail = imaplib.IMAP4_SSL(server)
-            mail.login(user, password)
-            mail.logout()
-
-            messagebox.showinfo("Erfolg", "Verbindung erfolgreich!")
-
-        except Exception as e:
-            messagebox.showerror("Fehler", f"Verbindung fehlgeschlagen:\n{e}")
+    def open_mail_window(self):
+        from src.gui.mail_window import MailWindow
+        MailWindow(self, config=self.config)
 
     # =========================
     # REST
@@ -343,3 +241,19 @@ class ConfigWindow(ctk.CTkToplevel):
                 messagebox.showerror("Fehler", str(e))
 
         Button(window, text="Speichern", command=save).pack(pady=10)
+
+    def clear_mail_credentials_ui(self):
+        try:
+            keyring.delete_password("SorterinoMail", "email_user")
+        except:
+            pass
+
+        try:
+            keyring.delete_password("SorterinoMail", "email_pass")
+        except:
+            pass
+
+        self.mail_user_entry.delete(0, "end")
+        self.mail_pass_entry.delete(0, "end")
+
+        messagebox.showinfo("Erfolg", "E-Mail Zugangsdaten wurden gelöscht")

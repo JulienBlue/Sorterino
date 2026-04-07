@@ -1,189 +1,126 @@
 SORTERINO v0.7.5
 Automatische Dokumentenablage für Rechnungen, Verträge und mehr
 
-
-
 ---
 
 WAS IST SORTERINO?
 
-Sorterino ist ein Programm, das deine Dokumente automatisch erkennt, sortiert und in eine strukturierte Ordnerstruktur ablegt.
+Sorterino ist ein lokales Tool zur automatischen Dokumentenverarbeitung.
 
-Du legst Dateien einfach in einen Ordner – den Rest macht Sorterino automatisch.
+Du legst Dateien in einen Ordner – Sorterino erkennt, analysiert und sortiert sie automatisch in eine strukturierte Ablage.
+
+Keine Cloud. Keine Datenübertragung. Alles lokal.
 
 ---
 
-SCHNELLSTART (EMPFOHLEN)
+SCHNELLSTART
 
-1. Programm starten (Sorterino.exe)
+1. Sorterino starten (Sorterino.exe)
 2. Speicherort auswählen
 3. Fertig
 
 Sorterino erstellt automatisch:
 
-* einen Input-Ordner
-* eine Runtime-Struktur
-* eine automatische Ordnerstruktur für deine Dokumente
+* Input-Ordner
+* Runtime-Umgebung
+* Struktur für Dokumente
 
 ---
 
 WIE FUNKTIONIERT DAS?
 
-Sorterino arbeitet in 5 Schritten:
+Pipeline:
 
-1. Datei wird erkannt (Input-Ordner)
-2. Text wird extrahiert (OCR, falls nötig)
-3. Dokument wird analysiert (Keywords)
-4. Kategorie wird bestimmt
-5. Datei wird automatisch einsortiert
+1. Datei wird erkannt
+2. OCR (optional)
+3. Textanalyse (Keywords)
+4. Klassifikation
+5. Ablage im Zielpfad
 
 ---
 
-WICHTIGE ORDNER
-
-Nach dem ersten Start findest du in deinem Speicherort:
+ORDNERSTRUKTUR
 
 Sorterino - Input
-→ Hier legst du deine Dokumente rein
+→ Eingang für neue Dokumente
 
 Sorterino - Manuelle Sortierung
-→ Hier landen unklare Dokumente
+→ nicht erkannte Dokumente
 
-.sorterino_runtime (versteckt)
-→ Technischer Arbeitsbereich
+.sorterino_runtime
+→ interner Arbeitsbereich
 
 ---
 
-UNTERSTÜTZTE DATEIEN
+DATEITYPEN
 
 * PDF
 * PNG
 * JPG / JPEG
 
-Andere Dateien werden ignoriert.
-
 ---
 
 AUTOMATISCHE SORTIERUNG
 
-Sorterino erkennt z. B.:
-
-* Rechnungen
-* Angebote
-* Mahnungen
-* Kontoauszüge
-* Verträge
-* Steuerdokumente
-
-Die Ablage erfolgt automatisch nach:
+Ablage erfolgt nach:
 
 Kategorie → Dokumenttyp → Jahr → Monat
 
 ---
 
-WENN ETWAS NICHT ERKANNT WIRD
+E-MAIL INTEGRATION
 
-Dann landet die Datei hier:
+Jetzt eigenes Fenster:
 
-Sorterino - Manuelle Sortierung
+Einstellungen → "E-Mail Integration"
 
-Du kannst sie dort selbst einsortieren.
+Features:
 
----
-
-E-MAIL IMPORT (OPTIONAL)
-
-Sorterino kann Anhänge direkt aus deinem E-Mail-Postfach laden.
-
-So aktivierst du das:
-
-1. Einstellungen öffnen
-2. E-Mail aktivieren
-3. Anbieter auswählen (z. B. Gmail)
-4. E-Mail + App-Passwort eingeben
-5. Verbindung testen
-
-WICHTIG:
-
-* Es werden nur neue (ungelesene) Mails verarbeitet
-* Nur Anhänge werden gespeichert
-* Unterstützte Formate: PDF / Bilder
+* IMAP Abruf
+* nur ungelesene Mails
+* nur Anhänge
+* automatische Speicherung im Input
 
 ---
 
 AUTOMATIKMODUS
 
-Wenn aktiviert:
-
-* Sorterino läuft im Hintergrund
-* prüft regelmäßig neue Dateien
-* sortiert automatisch
+* läuft im Hintergrund
+* verarbeitet regelmäßig neue Dateien
 
 ---
 
-LOGS ANZEIGEN
+LOGGING
 
-Über "Logs anzeigen" kannst du sehen:
-
-* was verarbeitet wurde
-* ob Fehler aufgetreten sind
+* Logs über GUI einsehbar
+* Trennung zwischen Datei-Log und Konsole
 
 ---
 
-TYPISCHE PROBLEME
+WENN ETWAS NICHT ERKANNT WIRD
 
-OCR funktioniert nicht
-→ Tesseract fehlt oder ist falsch konfiguriert
-
-Keine Dateien werden verarbeitet
-→ Prüfe den Input-Ordner
-
-E-Mail funktioniert nicht
-→ App-Passwort verwenden (kein normales Passwort!)
-
----
-
-DEINSTALLATION
-
-Beim Entfernen kannst du auswählen:
-
-* Konfiguration löschen
-* Daten löschen
-* Verknüpfungen entfernen
-
----
-
-DATENSCHUTZ
-
-Sorterino arbeitet vollständig lokal:
-
-* keine Cloud
-* keine Datenübertragung
-* keine externen Server
+→ landet in "Manuelle Sortierung"
 
 ---
 
 VERSION 0.7.5
 
-* Stabiler Mail-Import
-* Verbesserte Fehlerbehandlung
-* Robuster Workflow
-* Automatische Dateiduplikat-Behandlung
+* Mail-System entkoppelt (eigenes Fenster)
+* stabiler Pipeline-Flow
+* Duplicate Handling verbessert
+* Logging klarer strukturiert
 
 ---
 
-TIPP
+DATENSCHUTZ
 
-Je besser die Dokumentqualität, desto besser die Erkennung.
-
----
-Dieses Projekt steht unter der MIT-Lizenz.
-
+100% lokal
+keine Cloud
+keine externen Server
 
 ---
 
 AUTOR
 
-Entwickelt von
 Julien Blue Hirte
-im Auftrag der Seraph IT GmbH
+Seraph IT GmbH

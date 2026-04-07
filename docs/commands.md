@@ -61,11 +61,10 @@ iscc installer_docs/installer.iss
 
 ## 🔥 Typischer Release-Flow
 git add .
-git commit -m "release: v0.7.0"
-
-git tag -a v0.7.0 -m "Sorterino v0.7.0"
+git commit -m "release: v0.7.5"
+git tag -a v0.7.5 -m "Sorterino v0.7.5"
 git push origin main
-git push origin v0.7.0
+git push origin v0.7.5
 
 rmdir /s /q dist
 rmdir /s /q build
@@ -73,6 +72,25 @@ rmdir /s /q build
 
 
 
+# Änderungen hinzufügen
+git add .
+
+# Commit
+git commit -m "release: v0.7.5 (mail refactor + gui cleanup)"
+
+# Tag erstellen
+git tag -a v0.7.5 -m "Sorterino v0.7.5"
+
+# Push
+git push origin main
+git push origin v0.7.5
+
+# Cleanup
+rmdir /s /q dist
+rmdir /s /q build
+
+# Build EXE
 pyinstaller Sorterino.spec --noconfirm
 
+# Installer
 iscc installer.iss

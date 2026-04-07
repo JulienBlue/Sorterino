@@ -2,13 +2,19 @@
   "auto_mode": false,
   "autostart": false,
 
-  "email":{
+  "email": {
     "enabled": false,
     "imap_server": ""
-    },
-    
+  },
+
   "company_profile": {
     "name": "Deine Firma GmbH",
+
+    "person": {
+      "first_name": "",
+      "last_name": ""
+    },
+
     "keywords": [],
 
     "address": {
