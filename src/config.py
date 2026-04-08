@@ -9,7 +9,7 @@ class Config:
 
     # CONFIG / INIT
     def __init__(self):
-        self.raw = {} 
+        self.raw = {}
 
         self.base_config_path = Path.home() / ".sorterino_config.json"
 
@@ -64,13 +64,20 @@ class Config:
         self.raw[key] = value
         self._write_json(self.config_path, self.raw)
 
-    # CONFIG / OCR INIT
+    # =========================
+    # OCR INIT (FIXED 🔥)
+    # =========================
     def _init_ocr(self):
         project_root = get_base_path()
 
+        internal_base = project_root / "_internal"
+        base = internal_base if internal_base.exists() else project_root
+
         ocr = self.raw.get("ocr", {})
 
+        # =========================
         # TESSERACT
+        # =========================
         custom_tess = ocr.get("tesseract_path")
 
         if custom_tess:
@@ -82,17 +89,19 @@ class Config:
                 self.tesseract_path = Path(system)
             else:
                 self.tesseract_path = (
-                    project_root / "third_party" / "tesseract" / "tesseract.exe"
+                    base / "third_party" / "tesseract" / "tesseract.exe"
                 ).resolve()
 
+        # =========================
         # POPPLER
+        # =========================
         custom_poppler = ocr.get("poppler_path")
 
         if custom_poppler:
             self.poppler_path = (project_root / custom_poppler).resolve()
         else:
             self.poppler_path = (
-                project_root / "third_party" / "poppler" / "Library" / "bin"
+                base / "third_party" / "poppler" / "Library" / "bin"
             ).resolve()
 
     # CONFIG / DEFAULT RUNTIME

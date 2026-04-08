@@ -8,9 +8,13 @@ import os
 
 # CONFIG / BASE PATH
 def get_base_path():
+    import sys
+    from pathlib import Path
+
     if getattr(sys, "frozen", False):
-        return Path(sys._MEIPASS)
-    return Path(__file__).resolve().parents[2]
+        return Path(sys.executable).parent
+    else:
+        return Path(__file__).resolve().parents[2]
 
 
 # CONFIG / TEMPLATE

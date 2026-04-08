@@ -1,19 +1,11 @@
 {
   "rules": [
 
-    { "category": "BUCHHALTUNG", "document_type": "Ausgangsrechnungen",
+    { "category": "BUCHHALTUNG", "document_type": "Rechnung",
       "keywords": [
         "rechnung","rechnungsnummer",
-        "leistung","leistungserbringer",
-        "ust","steuer","netto","brutto"
-      ] },
-
-    { "category": "BUCHHALTUNG", "document_type": "Eingangsrechnungen",
-      "keywords": [
-        "rechnung","rechnungsnummer",
-        "gesamtbetrag","betrag",
-        "netto","brutto","zahlung",
-        "zu zahlen","zahlbar bis"
+        "betrag","gesamtbetrag",
+        "netto","brutto","ust","steuer"
       ] },
 
     { "category": "BUCHHALTUNG", "document_type": "Mahnungen",

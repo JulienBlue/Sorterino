@@ -105,7 +105,7 @@ class DocumentPipeline:
         else:
             text = self.ocr.extract_text(document.source_path)
 
-        if not text:
+        if text is None:
             self.logger.info("Kein Text erkannt manuell")
 
             self.runtime.store(

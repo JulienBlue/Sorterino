@@ -1,5 +1,5 @@
 #define MyAppName "Sorterino"
-#define MyAppVersion "v0.7.5"
+#define MyAppVersion "v0.8"
 #define MyAppPublisher "Seraph IT GmbH"
 #define MyAppExeName "Sorterino.exe"
 
