@@ -105,7 +105,7 @@ class DocumentPipeline:
         else:
             text = self.ocr.extract_text(document.source_path)
 
-        if text is None:
+        if not text or not text.strip():
             self.logger.info("Kein Text erkannt manuell")
 
             self.runtime.store(
@@ -177,6 +177,8 @@ class DocumentPipeline:
             )
 
             self.logger.log(f"OUT: {filename} {final}")
+            self.logger.debug(f"________________________________")
+
 
             document.mark_stored(str(final))
 

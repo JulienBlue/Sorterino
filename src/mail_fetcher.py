@@ -8,9 +8,9 @@ import keyring
 ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg"}
 
 
-# =========================
+
 # HELPER
-# =========================
+
 def decode_filename(name):
     if not name:
         return None
@@ -23,9 +23,9 @@ def decode_filename(name):
     return decoded
 
 
-# =========================
+
 # MAIN
-# =========================
+
 def fetch_attachments(config):
     print("\n[MAIL] =============================")
     print("[MAIL] Starte Abruf")
@@ -59,9 +59,9 @@ def fetch_attachments(config):
     mail = None
 
     try:
-        # =========================
+        
         # CONNECT
-        # =========================
+        
         print("[MAIL] Verbinde...")
         mail = imaplib.IMAP4_SSL(server)
 
@@ -75,9 +75,9 @@ def fetch_attachments(config):
             print("[MAIL] Konnte INBOX nicht öffnen")
             return
 
-        # =========================
+        
         # SEARCH (UID!)
-        # =========================
+        
         status, messages = mail.uid("search", None, '(UNSEEN UNFLAGGED)')
         print(f"[MAIL DEBUG] MATCHING: {messages}")
 
@@ -88,9 +88,9 @@ def fetch_attachments(config):
         mail_ids = messages[0].split()
         print(f"[MAIL] Verarbeite {len(mail_ids)} Mail(s)")
 
-        # =========================
+        
         # LOOP
-        # =========================
+        
         for uid in mail_ids:
             print(f"\n[MAIL] ===== Mail UID {uid.decode()} =====")
 
@@ -108,9 +108,9 @@ def fetch_attachments(config):
 
             saved_any = False
 
-            # =========================
+            
             # ATTACHMENTS
-            # =========================
+            
             for part in msg.walk():
 
                 disposition = part.get_content_disposition()
@@ -154,9 +154,9 @@ def fetch_attachments(config):
                 except Exception as e:
                     print(f"[MAIL] Speicherfehler: {e}")
 
-            # =========================
+            
             # FLAGGING (UID!)
-            # =========================
+            
             if saved_any:
                 try:
                     mail.uid("store", uid, "+FLAGS", "(\\Flagged)")

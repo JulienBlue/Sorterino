@@ -168,20 +168,65 @@ class StoragePathBuilder:
     # FILENAME / GENERATE
     def _generate_filename(self, document: Document) -> str:
 
-        parts = []
+        data = document.extracted_data
+        doc_type = document.metadata.document_type or ""
 
-        if document.extracted_data.get("date"):
-            parts.append(document.extracted_data["date"])
-
-        if document.extracted_data.get("vendor"):
-            parts.append(sanitize(document.extracted_data["vendor"]))
-
-        if document.extracted_data.get("amount"):
-            parts.append(document.extracted_data["amount"])
-
-        if not parts:
-            parts = ["document"]
+        date = data.get("date")
+        vendor = data.get("vendor")
+        amount = data.get("amount")
+        invoice_number = data.get("invoice_number")
+        description = data.get("description")
 
         ext = Path(document.source_path).suffix
 
-        return "_".join(parts) + ext
+        # =========================
+        # 📤 AUSGANGSRECHNUNG
+        # =========================
+        if doc_type == "Ausgangsrechnungen":
+
+            parts = ["Rechnung"]
+
+            # 🔥 WICHTIG: aus extracted_data, NICHT regex
+            if invoice_number:
+                parts.append(invoice_number)
+
+            if date:
+                parts.append(date)
+
+            if vendor:
+                parts.append(sanitize(vendor))
+            else:
+                parts.append("Kunde")
+
+            return "_".join(parts) + ext
+
+        # =========================
+        # 📥 EINGANGSRECHNUNG
+        # =========================
+        else:
+
+            parts = []
+
+            # Datum
+            if date:
+                parts.append(date)
+
+            # Vendor
+            if vendor:
+                parts.append(sanitize(vendor))
+            else:
+                fallback = Path(document.source_path).stem.split(" - ")[0]
+                parts.append(sanitize(fallback) or "Unbekannt")
+
+            # Beschreibung
+            if description:
+                parts.append(sanitize(description))
+
+            # Betrag
+            if amount:
+                parts.append(amount)
+
+            if not parts:
+                parts = ["document"]
+
+            return "_".join(parts) + ext

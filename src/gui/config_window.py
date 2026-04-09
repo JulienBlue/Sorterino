@@ -35,9 +35,9 @@ class ConfigWindow(ctk.CTkToplevel):
         self.create_ui()
         self.after(0, self.load_values)
 
-    # =========================
+    
     # UI
-    # =========================
+    
     def create_ui(self):
 
         self.storage_btn = ctk.CTkButton(self, text="Speicherort", command=self.open_storage)
@@ -94,9 +94,9 @@ class ConfigWindow(ctk.CTkToplevel):
 
         ctk.CTkButton(self, text="E-Mail Integration", command=self.open_mail_window).pack(pady=5)
 
-    # =========================
+    
     # LOAD
-    # =========================
+    
     def load_values(self):
 
         def safe_insert(entry, value):
@@ -130,9 +130,9 @@ class ConfigWindow(ctk.CTkToplevel):
         safe_insert(self.iban_entry, financial.get("iban"))
         safe_insert(self.tax_entry, financial.get("tax_id"))
 
-    # =========================
+    
     # SAVE
-    # =========================
+    
     def save_company_profile(self):
 
         data = {
@@ -159,16 +159,16 @@ class ConfigWindow(ctk.CTkToplevel):
 
         self.config.set("company_profile", data)
 
-    # =========================
+    
     # MAIL
-    # =========================
+    
     def open_mail_window(self):
         from src.gui.mail_window import MailWindow
         MailWindow(self, config=self.config)
 
-    # =========================
+    
     # REST
-    # =========================
+    
     def toggle_auto_mode(self):
         value = self.auto_mode_checkbox.get() == 1
         self.config.set("auto_mode", value)

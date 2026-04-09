@@ -64,9 +64,9 @@ class Config:
         self.raw[key] = value
         self._write_json(self.config_path, self.raw)
 
-    # =========================
+    
     # OCR INIT (FIXED 🔥)
-    # =========================
+    
     def _init_ocr(self):
         project_root = get_base_path()
 
@@ -75,26 +75,22 @@ class Config:
 
         ocr = self.raw.get("ocr", {})
 
-        # =========================
+        
         # TESSERACT
-        # =========================
+        
         custom_tess = ocr.get("tesseract_path")
 
         if custom_tess:
-            self.tesseract_path = (project_root / custom_tess).resolve()
-        else:
-            system = shutil.which("tesseract")
+            path = Path(custom_tess)
 
-            if system:
-                self.tesseract_path = Path(system)
-            else:
-                self.tesseract_path = (
-                    base / "third_party" / "tesseract" / "tesseract.exe"
-                ).resolve()
+            if not path.is_absolute():
+                path = project_root / path
 
-        # =========================
+            self.tesseract_path = path.resolve()
+
+        
         # POPPLER
-        # =========================
+        
         custom_poppler = ocr.get("poppler_path")
 
         if custom_poppler:

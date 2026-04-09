@@ -24,9 +24,9 @@ class MailWindow(ctk.CTkToplevel):
         self.create_ui()
         self.load_values()
 
-    # =========================
+    
     # UI
-    # =========================
+    
     def create_ui(self):
 
         ctk.CTkLabel(self, text="E-Mail Integration").pack(pady=(10, 5))
@@ -64,9 +64,9 @@ class MailWindow(ctk.CTkToplevel):
 
         ctk.CTkButton(self, text="Speichern", command=self.save).pack(pady=10)
 
-    # =========================
+    
     # LOAD
-    # =========================
+    
     def load_values(self):
 
         email_cfg = self.config.get("email") or {}
@@ -95,9 +95,9 @@ class MailWindow(ctk.CTkToplevel):
         if user and email_cfg.get("enabled"):
             self.mail_user_entry.insert(0, user)
 
-    # =========================
+    
     # SAVE
-    # =========================
+    
     def save(self):
 
         email_data = {
@@ -119,9 +119,9 @@ class MailWindow(ctk.CTkToplevel):
         messagebox.showinfo("Erfolg", "Gespeichert")
         self.destroy()
 
-    # =========================
+    
     # HELPERS
-    # =========================
+    
     def on_provider_change(self, choice):
         mapping = {
             "Gmail": "imap.gmail.com",

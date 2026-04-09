@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 from uuid import uuid4
-
+from pathlib import Path
 
 # STATUS / KONSTANTEN
 class DocumentStatus:
@@ -27,7 +27,6 @@ class DocumentMetadata:
     document_type: Optional[str]
     invoice_date: Optional[str] = None
 
-
 # MODEL / DOCUMENT
 @dataclass
 class Document:
@@ -42,17 +41,18 @@ class Document:
     target_path: Optional[str] = None
     status: str = DocumentStatus.NEW
 
-    # STATUS / ANALYZED
+    @property
+    def filename(self) -> str:
+        return Path(self.source_path).name
+    
     def mark_analyzed(self, text: str):
         self.extracted_text = text
         self.status = DocumentStatus.ANALYZED
 
-    # STATUS / CLASSIFIED
     def mark_classified(self, classification: Classification):
         self.classification = classification
         self.status = DocumentStatus.CLASSIFIED
 
-    # STATUS / STORED
     def mark_stored(self, path: str):
         self.target_path = path
         self.status = DocumentStatus.STORED
