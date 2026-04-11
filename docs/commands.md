@@ -44,53 +44,31 @@ pyinstaller Sorterino.spec --noconfirm
 pyinstaller Sorterino.spec --noconfirm --debug=all
 
 ## 📦 Installer erstellen
-iscc installer_docs/installer.iss
+iscc installer.iss
 
 ## 📁 Wichtige Projektstruktur
 * Anwendung: `dist/Sorterino/`
 * Templates: `assets/templates/`
 * Icons: `assets/icons/`
-* Installer: `installer_docs/`
+* Installer: `installer.iss`
 * Produktstände: `docs/Produktstände/`
 
 ## 💡 Hinweise
 * Templates werden zur Laufzeit in die Runtime kopiert
+* Runtime-Konfigs liegen in `Sorterino - Runtime\configs`
 * Build-Artefakte sind nicht im Git enthalten
 * OCR (Tesseract + Poppler) läuft vollständig lokal
 * Für Releases immer Tag verwenden (vX.X.X)
 
 ## 🔥 Typischer Release-Flow
 git add .
-git commit -m "release: v0.8"
-git tag -a v0.8 -m "Sorterino v0.8"
+git commit -m "release: v0.99"
+git tag -a v0.99 -m "Sorterino v0.99"
 git push origin main
-git push origin v0.8
+git push origin v0.99
 
 rmdir /s /q dist
 rmdir /s /q build
 
-
-
-
-# Änderungen hinzufügen
-git add .
-
-# Commit
-git commit -m "release: v0.7.5 (mail refactor + gui cleanup)"
-
-# Tag erstellen
-git tag -a v0.7.5 -m "Sorterino v0.7.5"
-
-# Push
-git push origin main
-git push origin v0.7.5
-
-# Cleanup
-rmdir /s /q dist
-rmdir /s /q build
-
-# Build EXE
 pyinstaller Sorterino.spec --noconfirm
-
-# Installer
 iscc installer.iss

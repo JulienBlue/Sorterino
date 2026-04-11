@@ -35,8 +35,8 @@ exe = EXE(
     exclude_binaries=True,
     name='Sorterino',
 
-    debug=True,
-    console=True,
+    debug=False,
+    console=False,
 
     disable_windowed_traceback=True,
 

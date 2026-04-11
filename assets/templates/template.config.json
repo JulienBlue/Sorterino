@@ -1,6 +1,7 @@
 {
   "auto_mode": false,
   "autostart": false,
+  "daily_report_time": "18:00",
 
   "email": {
     "enabled": false,

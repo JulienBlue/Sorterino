@@ -6,10 +6,12 @@ from pathlib import Path
 import customtkinter as ctk
 import sys
 import ctypes
+from datetime import datetime, time as dt_time
 
 from src.config import Config
 from src.gui.main_window import MainWindow
 from src.initialize_workspace import get_base_path
+from src.reporting import DailyReportManager
 
 BASE_DIR = get_base_path()
 
@@ -28,7 +30,7 @@ class TrayApp:
         self._root = None
 
         menu = pystray.Menu(
-            pystray.MenuItem("Öffnen", self.open_main_window),
+            pystray.MenuItem("Öffnen", self.open_main_window, default=True),
             pystray.MenuItem("Beenden", self.exit_app),
         )
         self.icon = pystray.Icon("Sorterino", self.create_icon(), "Sorterino", menu)
@@ -128,6 +130,7 @@ class TrayApp:
             self._root.after(200, _open_setup)
 
         threading.Thread(target=self._monitor_auto_mode, daemon=True).start()
+        threading.Thread(target=self._monitor_daily_report, daemon=True).start()
         threading.Thread(target=self.icon.run, daemon=True).start()
 
         self._root.mainloop()
@@ -180,6 +183,38 @@ class TrayApp:
 
             time.sleep(5)
 
+    def _monitor_daily_report(self):
+        import time
+
+        while True:
+            try:
+                config = Config()
+                if not config.logs_root:
+                    time.sleep(60)
+                    continue
+
+                reporter = DailyReportManager(config.logs_root)
+
+                now = datetime.now()
+                raw_time = config.get("daily_report_time") or "18:00"
+                try:
+                    parts = raw_time.split(":")
+                    report_time = dt_time(int(parts[0]), int(parts[1]))
+                except Exception:
+                    report_time = dt_time(18, 0)
+
+                if now.time() >= report_time:
+                    last_date = reporter.get_last_report_date()
+                    today = now.date()
+
+                    if last_date != today.isoformat():
+                        reporter.generate_daily_report(today)
+                        reporter.set_last_report_date(today)
+
+            except Exception as e:
+                print(f"[REPORT ERROR] {e}")
+
+            time.sleep(60)
 
     # APP / EXIT
     def exit_app(self, icon=None, item=None):

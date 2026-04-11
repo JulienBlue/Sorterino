@@ -1,5 +1,5 @@
 #define MyAppName "Sorterino"
-#define MyAppVersion "v0.8"
+#define MyAppVersion "v0.99"
 #define MyAppPublisher "Seraph IT GmbH"
 #define MyAppExeName "Sorterino.exe"
 
@@ -44,8 +44,8 @@ Name: "desktopicon"; Description: "Desktop-Verknüpfung erstellen"; Flags: unche
 
 [Files]
 Source: "dist\Sorterino\*";      DestDir: "{app}";                        Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "assets\templates\*";    DestDir: "{app}\assets\templates";       Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "assets\icons\*";        DestDir: "{app}\assets\icons";           Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "README.txt";            DestDir: "{app}";                        Flags: ignoreversion
+Source: "README_DEV.txt";        DestDir: "{app}";                        Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}";       Filename: "{app}\{#MyAppExeName}"
@@ -143,7 +143,7 @@ begin
   if CurUninstallStep = usUninstall then
   begin
     UserPath := GetUserPath();
-    RuntimePath := UserPath + '\.sorterino_runtime';
+    RuntimePath := UserPath + '\Sorterino - Runtime';
     // Use env var syntax consistently
     ConfigFile := ExpandConstant('{%USERPROFILE}\.sorterino_config.json');
 

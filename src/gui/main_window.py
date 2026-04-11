@@ -18,7 +18,7 @@ class MainWindow(ctk.CTkToplevel):
         self._thread_running = False
 
         self.title("Sorterino")
-        self.geometry("400x650")
+        self.geometry("420x450")
 
         try:
             self._build_ui()
@@ -37,7 +37,7 @@ class MainWindow(ctk.CTkToplevel):
             self,
             text="Sorterino",
             font=("Arial", 22, "bold")
-        ).pack(pady=(20, 10))
+        ).pack(pady=(24, 12))
 
         auto_mode = self.config.get("auto_mode") or False
         user_path = self.config.get("user_path") or "Nicht gesetzt"
@@ -45,7 +45,7 @@ class MainWindow(ctk.CTkToplevel):
         mode_text = "Automatik AN" if auto_mode else "Automatik AUS"
 
         self.mode_label = ctk.CTkLabel(self, text=mode_text)
-        self.mode_label.pack(pady=5)
+        self.mode_label.pack(pady=8)
 
         self.path_label = ctk.CTkLabel(
             self,
@@ -53,38 +53,44 @@ class MainWindow(ctk.CTkToplevel):
             wraplength=380,
             justify="center"
         )
-        self.path_label.pack(pady=10)
+        self.path_label.pack(pady=12)
 
         actions_frame = ctk.CTkFrame(self)
-        actions_frame.pack(pady=10, padx=20, fill="x")
+        actions_frame.pack(pady=12, padx=20, fill="x")
 
         self.manual_btn = ctk.CTkButton(
             actions_frame,
             text="Manueller Start",
             command=self._run_pipeline
         )
-        self.manual_btn.pack(pady=5, fill="x")
+        self.manual_btn.pack(pady=6, fill="x")
 
         if auto_mode:
             self.manual_btn.configure(state="disabled")
 
         ctk.CTkButton(
             actions_frame,
+            text="Daily-Report",
+            command=self._open_daily_report
+        ).pack(pady=6, fill="x")
+
+        ctk.CTkButton(
+            actions_frame,
             text="Logs anzeigen",
             command=self._open_logs
-        ).pack(pady=5, fill="x")
+        ).pack(pady=6, fill="x")
 
         ctk.CTkButton(
             actions_frame,
             text="Einstellungen",
             command=self._open_settings
-        ).pack(pady=5, fill="x")
+        ).pack(pady=6, fill="x")
 
         ctk.CTkButton(
             actions_frame,
             text="Speicherort öffnen",
             command=self._open_storage
-        ).pack(pady=5, fill="x")
+        ).pack(pady=6, fill="x")
 
     # PIPELINE / RUN
     def _run_pipeline(self):
@@ -114,6 +120,13 @@ class MainWindow(ctk.CTkToplevel):
             LogWindow(self)
         except Exception as e:
             print(f"[ERROR] LogWindow konnte nicht geöffnet werden: {e}")
+
+    def _open_daily_report(self):
+        try:
+            from src.gui.daily_report_window import DailyReportWindow
+            DailyReportWindow(self, config=self.config)
+        except Exception as e:
+            print(f"[ERROR] Daily-Report Window konnte nicht geöffnet werden: {e}")
 
     # UI / SETTINGS
     def _open_settings(self):

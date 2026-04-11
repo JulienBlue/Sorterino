@@ -34,6 +34,7 @@ class FileLogger:
     def error(self, message: str):
         line = self._format("ERROR", message)
         self._write_file(line)
+        print(line)
 
     # 🖥 CONSOLE ONLY
     def info(self, message: str):

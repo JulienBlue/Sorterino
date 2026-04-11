@@ -24,10 +24,41 @@ class Config:
 
         self.user_path = Path(self.user_path)
 
-        self.runtime_root = self.user_path / ".sorterino_runtime"
+        # Runtime-Ordner (sichtbar, schöner Name)
+        self.runtime_root = self.user_path / "Sorterino - Runtime"
+
+        # Migration: alte Ordner -> neuer Name
+        old_runtimes = [
+            self.user_path / ".sorterino_runtime",
+            self.user_path / "Sorterino-Runtime",
+        ]
+        for old_runtime in old_runtimes:
+            if old_runtime.exists() and not self.runtime_root.exists():
+                try:
+                    shutil.move(str(old_runtime), str(self.runtime_root))
+                except Exception as e:
+                    print(f"[WARN] Runtime-Migration fehlgeschlagen: {e}")
         self.runtime_root.mkdir(parents=True, exist_ok=True)
 
-        self.config_path = self.runtime_root / "config.json"
+        # Configs-Unterordner
+        self.config_root = self.runtime_root / "configs"
+        self.config_root.mkdir(parents=True, exist_ok=True)
+
+        # Migration: alte Dateien im Runtime-Root -> configs
+        def _move_if_exists(name: str):
+            src = self.runtime_root / name
+            dst = self.config_root / name
+            if src.exists() and not dst.exists():
+                try:
+                    shutil.move(str(src), str(dst))
+                except Exception as e:
+                    print(f"[WARN] Konnte {name} nicht verschieben: {e}")
+
+        _move_if_exists("config.json")
+        _move_if_exists("rules.json")
+        _move_if_exists("structure.json")
+
+        self.config_path = self.config_root / "config.json"
 
         if not self.config_path.exists():
             self._create_default_runtime_config()
@@ -37,8 +68,8 @@ class Config:
         # PATHS
         self.logs_root = self.runtime_root / "logs"
         self.incoming_root = self.runtime_root / "incoming"
-        self.rules_path = self.runtime_root / "rules.json"
-        self.structure_path = self.runtime_root / "structure.json"
+        self.rules_path = self.config_root / "rules.json"
+        self.structure_path = self.config_root / "structure.json"
 
         # OCR
         self._init_ocr()

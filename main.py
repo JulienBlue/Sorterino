@@ -69,7 +69,6 @@ def run_pipeline() -> None:
         initialize_workspace(config)
 
         rules_data = load_json_safe(config.rules_path, {})
-        rules = rules_data.get("rules", [])
 
         logger = FileLogger(config.logs_root)
 
@@ -110,7 +109,7 @@ def run_pipeline() -> None:
             runtime_storage=runtime_storage,
             archive_storage=archive_storage,
             logger=logger,
-            rules=rules,
+            rules=rules_data,
             structure=load_json_safe(config.structure_path, {})
         )
 

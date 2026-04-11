@@ -14,7 +14,7 @@ class MailWindow(ctk.CTkToplevel):
         self.config = config if config else Config()
 
         self.title("E-Mail Integration")
-        self.geometry("400x400")
+        self.geometry("420x450")
 
         self.lift()
         self.focus_force()
@@ -29,10 +29,10 @@ class MailWindow(ctk.CTkToplevel):
     
     def create_ui(self):
 
-        ctk.CTkLabel(self, text="E-Mail Integration").pack(pady=(10, 5))
+        ctk.CTkLabel(self, text="E-Mail Integration").pack(pady=(16, 8))
 
         self.mail_enabled = ctk.CTkCheckBox(self, text="E-Mail Abruf aktiv")
-        self.mail_enabled.pack(pady=5)
+        self.mail_enabled.pack(pady=6)
 
         self.mail_provider = ctk.CTkOptionMenu(
             self,
@@ -47,22 +47,22 @@ class MailWindow(ctk.CTkToplevel):
             ],
             command=self.on_provider_change
         )
-        self.mail_provider.pack(padx=20, pady=(5, 0), fill="x")
+        self.mail_provider.pack(padx=20, pady=(6, 0), fill="x")
 
         self.mail_server_entry = ctk.CTkEntry(self, placeholder_text="IMAP Server")
-        self.mail_server_entry.pack(padx=20, fill="x")
+        self.mail_server_entry.pack(padx=20, pady=(6, 0), fill="x")
 
         self.mail_user_entry = ctk.CTkEntry(self, placeholder_text="E-Mail Adresse")
-        self.mail_user_entry.pack(padx=20, fill="x")
+        self.mail_user_entry.pack(padx=20, pady=(6, 0), fill="x")
 
         self.mail_pass_entry = ctk.CTkEntry(self, placeholder_text="App-Passwort", show="*")
-        self.mail_pass_entry.pack(padx=20, fill="x")
+        self.mail_pass_entry.pack(padx=20, pady=(6, 0), fill="x")
 
-        ctk.CTkButton(self, text="Verbindung testen", command=self.test_mail_connection).pack(pady=10)
+        ctk.CTkButton(self, text="Verbindung testen", command=self.test_mail_connection).pack(pady=12)
 
-        ctk.CTkButton(self, text="Zugangsdaten löschen", command=self.clear_credentials).pack(pady=5)
+        ctk.CTkButton(self, text="Zugangsdaten löschen", command=self.clear_credentials).pack(pady=6)
 
-        ctk.CTkButton(self, text="Speichern", command=self.save).pack(pady=10)
+        ctk.CTkButton(self, text="Speichern", command=self.save).pack(pady=12)
 
     
     # LOAD

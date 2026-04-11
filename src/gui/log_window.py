@@ -16,7 +16,7 @@ class LogWindow(ctk.CTkToplevel):
         self.after(200, lambda: self.attributes("-topmost", False))
 
         self.title("Logs")
-        self.geometry("1000x650")
+        self.geometry("1400x450")
 
         config = Config()
 
@@ -40,7 +40,7 @@ class LogWindow(ctk.CTkToplevel):
     # UI / BUILD
     def create_ui(self):
         self.textbox = ctk.CTkTextbox(self)
-        self.textbox.pack(fill="both", expand=True, padx=10, pady=10)
+        self.textbox.pack(fill="both", expand=True, padx=20, pady=12)
 
     # LOGS / UPDATE
     def update_logs(self):

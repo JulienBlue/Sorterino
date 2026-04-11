@@ -19,6 +19,12 @@
       }
     },
 
+    "Kreditkarte": {
+      "{year}": {
+        "{month_number} {month_name}": {}
+      }
+    },
+
     "Mahnungen": {
       "{year}": {
         "{month_number} {month_name}": {}
@@ -26,6 +32,18 @@
     },
 
     "SEPA_Mandate": {},
+
+    "Ruecklaeufer": {
+      "{year}": {
+        "{month_number} {month_name}": {}
+      }
+    },
+
+    "Bankmitteilungen": {
+      "{year}": {
+        "{month_number} {month_name}": {}
+      }
+    },
 
     "Darlehen": {
       "Tilgungsplaene": {}

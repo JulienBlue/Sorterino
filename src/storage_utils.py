@@ -6,23 +6,18 @@ from typing import List
 
 from src.models import Document
 
-ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg"}
-
-# HELPER / SANITIZE
+# Helfer
 def sanitize(text: str) -> str:
     clean = re.sub(r'[\\/*?:"<>|]', "", text)
     return clean.strip()[:100]
 
 
-# SOURCE / INPUT
 class FolderDocumentSource:
 
-    # CONFIG / INIT
     def __init__(self, root_path: Path):
         self.root_path = Path(root_path)
         self.root_path.mkdir(parents=True, exist_ok=True)
 
-    # SOURCE / FETCH
     def fetch_documents(self) -> List[Document]:
 
         documents = []
@@ -43,23 +38,16 @@ class FolderDocumentSource:
                 if not full_path.is_file():
                     continue
 
-                ext = full_path.suffix.lower()
-                if not ext or ext not in ALLOWED_EXTENSIONS:
-                    continue
-
                 documents.append(Document(source_path=full_path))
 
         return documents
 
 
-# STORAGE / OUTPUT
 class FilesystemStorage:
 
-    # CONFIG / INIT
     def __init__(self, base_path: Path):
         self.base_path = Path(base_path)
 
-    # STORAGE / SAVE
     def store(self, source_path: str, target_directory: Path, new_name: str) -> str:
 
         source = Path(source_path)
@@ -77,7 +65,6 @@ class FilesystemStorage:
             print(f"[ERROR] Datei konnte nicht verschoben werden: {e}")
             return str(source)
 
-    # STORAGE / UNIQUE PATH
     def _get_unique_path(self, target_path: Path) -> Path:
 
         if not target_path.exists():
@@ -96,7 +83,6 @@ class FilesystemStorage:
 
         raise RuntimeError("Kein eindeutiger Dateiname gefunden")
     
-    # BACKUP
     def backup(self, source_path: str, target_directory: Path, new_name: str) -> str:
         source = Path(source_path)
 
@@ -114,14 +100,11 @@ class FilesystemStorage:
             return str(source)
 
 
-# STORAGE / PATH BUILDER
 class StoragePathBuilder:
 
-    # CONFIG / INIT
     def __init__(self, structure: dict):
         self.structure = structure
 
-    # PATH / BUILD
     def build(self, document: Document) -> Path:
 
         category = document.metadata.category or "DIVERSES"
@@ -165,7 +148,6 @@ class StoragePathBuilder:
 
         return Path(*path_parts) / filename
 
-    # FILENAME / GENERATE
     def _generate_filename(self, document: Document) -> str:
 
         data = document.extracted_data
@@ -175,7 +157,6 @@ class StoragePathBuilder:
         vendor = data.get("vendor")
         amount = data.get("amount")
         invoice_number = data.get("invoice_number")
-        description = data.get("description")
 
         ext = Path(document.source_path).suffix
 
@@ -191,6 +172,7 @@ class StoragePathBuilder:
                 parts.append(invoice_number)
 
             if date:
+                parts.append("vom")
                 parts.append(date)
 
             if vendor:
@@ -198,7 +180,7 @@ class StoragePathBuilder:
             else:
                 parts.append("Kunde")
 
-            return "_".join(parts) + ext
+            return " ".join(parts) + ext
 
         # =========================
         # 📥 EINGANGSRECHNUNG
@@ -210,6 +192,8 @@ class StoragePathBuilder:
             # Datum
             if date:
                 parts.append(date)
+            else:
+                parts.append("ohne Datum")
 
             # Vendor
             if vendor:
@@ -218,10 +202,6 @@ class StoragePathBuilder:
                 fallback = Path(document.source_path).stem.split(" - ")[0]
                 parts.append(sanitize(fallback) or "Unbekannt")
 
-            # Beschreibung
-            if description:
-                parts.append(sanitize(description))
-
             # Betrag
             if amount:
                 parts.append(amount)
@@ -229,4 +209,4 @@ class StoragePathBuilder:
             if not parts:
                 parts = ["document"]
 
-            return "_".join(parts) + ext
+            return " - ".join(parts) + ext

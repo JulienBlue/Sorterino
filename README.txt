@@ -1,4 +1,4 @@
-SORTERINO v0.7.5
+SORTERINO v0.99
 Automatische Dokumentenablage für Rechnungen, Verträge und mehr
 
 ---
@@ -17,7 +17,8 @@ SCHNELLSTART
 
 1. Sorterino starten (Sorterino.exe)
 2. Speicherort auswählen
-3. Fertig
+3. Einstellungen prüfen
+4. Fertig
 
 Sorterino erstellt automatisch:
 
@@ -47,8 +48,20 @@ Sorterino - Input
 Sorterino - Manuelle Sortierung
 → nicht erkannte Dokumente
 
-.sorterino_runtime
+Sorterino - Runtime
 → interner Arbeitsbereich
+
+Sorterino - Runtime\configs
+→ Konfiguration (config, rules, structure)
+
+Sorterino - Runtime\logs
+→ Logs + Daily Reports
+
+Sorterino - Runtime\backup
+→ Backup der Originaldateien
+
+Sorterino - Runtime\error
+→ Dateien mit Fehlern (OCR/Processing)
 
 ---
 
@@ -70,8 +83,6 @@ Kategorie → Dokumenttyp → Jahr → Monat
 
 E-MAIL INTEGRATION
 
-Jetzt eigenes Fenster:
-
 Einstellungen → "E-Mail Integration"
 
 Features:
@@ -88,12 +99,23 @@ AUTOMATIKMODUS
 * läuft im Hintergrund
 * verarbeitet regelmäßig neue Dateien
 
+Autostart:
+
+* startet Sorterino automatisch mit Windows
+
 ---
 
 LOGGING
 
 * Logs über GUI einsehbar
 * Trennung zwischen Datei-Log und Konsole
+* Daily Report als TXT im Log-Ordner
+* Daily Report JSON in logs\daily_reports
+
+Daily Report Zeit:
+
+* in den Einstellungen setzen
+* letzter Report ist per Button erreichbar
 
 ---
 
@@ -103,12 +125,28 @@ WENN ETWAS NICHT ERKANNT WIRD
 
 ---
 
-VERSION 0.7.5
+WAS DU EINSTELLEN KANNST
 
-* Mail-System entkoppelt (eigenes Fenster)
-* stabiler Pipeline-Flow
-* Duplicate Handling verbessert
-* Logging klarer strukturiert
+* Speicherort (Basis-Pfad)
+* Automatikmodus
+* Autostart
+* Mail Integration (IMAP + Aktivierung)
+* Daily Report Zeit
+* Persönliche Daten (für Erkennung)
+* Rules + Structure (nur über GUI)
+
+---
+
+* Wenn Sortierung nicht passt → melde dich bei mir, ich liefere neue Rules / Structure
+
+---
+
+VERSION 0.99
+
+* Production Build (GUI-only, keine Konsole)
+* Runtime Ordner sichtbar und sauber benannt
+* Regeln + Extraktion aus rules.json
+* Daily Report integriert
 
 ---
 

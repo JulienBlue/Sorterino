@@ -1,4 +1,4 @@
-# SORTERINO v0.7.5 – DEVELOPER README
+# SORTERINO v0.99 – DEVELOPER README
 
 ---
 
@@ -12,23 +12,42 @@ CORE
 * document_analyzer.py
 * storage_utils.py
 * mail_fetcher.py
+* initialize_workspace.py
+* tesseract_ocr.py
+* reporting.py
+* logger.py
+* config.py
+* models.py
+* autostart_service.py
 
 GUI
 
 * main_window.py
 * config_window.py
-* mail_window.py (NEU → entkoppelt)
+* mail_window.py (separat)
 * log_window.py
+* daily_report_window.py
+* user_window.py
+* storage_window.py
+* tray.py
+
+ASSETS
+
+* assets/templates/template.config.json
+* assets/templates/template.rules.json
+* assets/templates/template.structure.json
+* assets/icons/*
+* third_party/*
 
 ---
 
-WICHTIGE ÄNDERUNG (v0.7.5)
+WICHTIGE ÄNDERUNGEN
 
-E-Mail Integration wurde vollständig aus ConfigWindow entfernt.
-
-→ eigenes Window: mail_window.py
-→ eigene Config-Verwaltung
-→ klare Separation of Concerns
+* Runtime Ordner: "Sorterino - Runtime"
+* config/rules/structure liegen in "Sorterino - Runtime\configs"
+* Daily Report erzeugt JSON + TXT
+* Production Build: GUI-only (keine Konsole)
+* Regeln + Extraktion kommen aus rules.json
 
 ---
 
@@ -51,14 +70,15 @@ Keyword-basiert:
 
 Score = Treffer / Keywords
 
-Boost:
-
-* Firmenkeywords → Ausgangsrechnung
-* Zahlungsbegriffe → Eingangsrechnung
-
 Fallback:
 
-→ MANUELL
+* Dateiname kann Eingang/Ausgang erzwingen
+* sonst → MANUELL
+
+Dateiname-Overrides:
+
+* Ausgangsrechnungen: "Rechnung_100012 vom 03.03.2025 Kunde.pdf"
+* Eingangsrechnungen: "03.03.2025 Lieferant - 123,45.pdf"
 
 ---
 
@@ -67,9 +87,8 @@ SCHWACHSTELLE (AKTUELL!)
 Regel-Engine:
 
 * rein keyword-basiert
-* keine Gewichtung
 * kein Kontextverständnis
-* Konflikte nicht sauber gelöst
+* Konflikte nur über einfache Prioritäten gelöst
 
 → nächster Fokusbereich
 
@@ -93,8 +112,7 @@ MAIL SYSTEM
 
 * IMAP (UNSEEN)
 * Attachments only
-* Keyring für Credentials
-* Flagging nach Verarbeitung
+* nur aktiv, wenn Mail in config aktiviert ist
 
 ---
 
@@ -111,27 +129,22 @@ CONSOLE:
 * warning
 * debug
 
+Daily:
+
+* daily_events.jsonl
+* daily_report_YYYY-MM-DD.txt
+* daily_reports\YYYY-MM-DD.json
+
+Daily Report Ablauf:
+
+* Sammeln in daily_events.jsonl
+* Generierung per Scheduler (Zeit in config)
+* TXT für Nutzer + JSON für Struktur
+
 ---
 
-KNOWN ISSUES
 
-* Regeln zu simpel
-* wenig Robustheit bei OCR-Ausfall
-* keine Confidence-Schwellen
-* keine Mehrfachklassifikation
-
----
-
-NÄCHSTER SCHRITT
-
-→ Regel-Engine überarbeiten
-
-Ziele:
-
-* stabilere Klassifikation
-* bessere Trennung Eingangs/Ausgang
-* Score-System verbessern
-* Gewichtungen einführen
+→ Wenn Sortierung beim Nutzer hakt, liefere ich neue Rules / Structure
 
 ---
 
@@ -146,11 +159,12 @@ Projekt zeigt:
 
 ---
 
-VERSION 0.7.5
+VERSION 0.99
 
-* Mail-System refactored
-* Architektur verbessert
-* Grundlage für Regel-Engine Upgrade
+* rules.json enthält Regeln + Extraktion
+* Dateiname kann Klassifikation überschreiben
+* Daily Report integriert
+* Build: Production ready
 
 ---
 

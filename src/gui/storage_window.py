@@ -22,7 +22,7 @@ class StorageWindow(ctk.CTkToplevel):
         self.grab_set()
 
         self.title("Speicherort")
-        self.geometry("400x300")
+        self.geometry("420x450")
 
         self.create_ui()
         self.load_path()
@@ -35,10 +35,10 @@ class StorageWindow(ctk.CTkToplevel):
             text="Speicherort auswählen",
             command=self.select_path
         )
-        self.select_btn.pack(pady=10)
+        self.select_btn.pack(pady=12)
 
-        self.path_box = ctk.CTkTextbox(self, height=100)
-        self.path_box.pack(padx=10, pady=10, fill="both")
+        self.path_box = ctk.CTkTextbox(self, height=200)
+        self.path_box.pack(padx=20, pady=12, fill="both")
 
     # CONFIG / LOAD
     def load_path(self):

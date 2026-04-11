@@ -37,10 +37,11 @@ $IgnoredFolders | ForEach-Object { Write-Host " - $_" }
 # Output vorbereiten
 # -------------------------------
 
-$OutputDir = Join-Path $ScriptDir "Produktstände"
+$OutputDirName = "Produktst" + [char]0x00E4 + "nde"
+$OutputDir = Join-Path $ScriptDir $OutputDirName
 
 if (-not (Test-Path $OutputDir)) {
-    New-Item -ItemType Directory -Path $OutputDir | Out-Null
+    New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 }
 
 $OutputFile = Join-Path $OutputDir "Projektstand_$Version.txt"
@@ -116,7 +117,7 @@ $IgnoredFolders | ForEach-Object { $Content += $_ }
 # Schreiben
 # -------------------------------
 
-$Content | Out-File $OutputFile -Encoding utf8BOM
+$Content | Out-File $OutputFile -Encoding utf8
 
 Write-Host ""
 Write-Host "Projektstand gespeichert unter:"

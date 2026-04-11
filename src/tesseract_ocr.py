@@ -59,17 +59,17 @@ class TesseractOCR:
         self.language = "deu+eng+fra"
 
     # OCR / ENTRY
-    def extract_text(self, file_path: str) -> str:
+    def extract_text(self, file_path: str):
 
         if not file_path:
             self.logger.error("OCR Fehler: file_path ist None oder leer")
-            return ""
+            return None
 
         file_path_str = str(file_path)
 
         if not os.path.exists(file_path_str):
             self.logger.error(f"OCR Fehler Datei existiert nicht {file_path_str}")
-            return ""
+            return None
 
         try:
             if file_path_str.lower().endswith(".pdf"):
@@ -79,7 +79,7 @@ class TesseractOCR:
 
         except Exception as e:
             self.logger.error(f"OCR Fehler bei {file_path_str} {e}")
-            return ""
+            return None
 
     # OCR / PDF
     def _extract_from_pdf(self, file_path: str) -> str:
@@ -94,7 +94,7 @@ class TesseractOCR:
             )
         except Exception as e:
             self.logger.error(f"PDF Konvertierungsfehler bei {file_path} {e}")
-            return ""
+            return None
 
         self.logger.debug(f"Anzahl Bilder: {len(images)}")
 
@@ -152,4 +152,4 @@ class TesseractOCR:
 
         except Exception as e:
             self.logger.error(f"OCR Bildfehler bei {file_path} {e}")
-            return ""
+            return None
