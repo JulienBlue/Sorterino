@@ -4,15 +4,11 @@
       "(rechnung\\s*(nr\\.?|nummer)?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
       "(rechn\\.\\s*nr\\.?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
       "(rg[\\.\\-\\s]*nr\\.?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
-      "(rgnr[:\\s\\-]*)([a-z0-9/\\-]{3,})",
-      "(beleg\\s*(nr\\.?|nummer)?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
-      "(dokument\\s*(nr\\.?|nummer)?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
       "(invoice\\s*(no\\.?|number)?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
-      "(inv[\\.\\s]*no\\.?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
       "(rechnung[_\\s\\-]*)(\\d{3,})"
     ],
     "invoice_number_blacklist": [
-      "re","ref","re:","awb","pos","nr","en","summe","seite"
+      "re", "ref", "re:", "nr", "summe", "seite"
     ],
     "amount_patterns": [
       "\\b\\d{1,3}(?:\\.\\d{3})*,\\d{2}\\b",
@@ -20,166 +16,40 @@
       "\\b\\d+[.,]\\d{2}\\b"
     ],
     "description_keywords": [
-      "installation","lizenz","abo","vertrag","leistung","service","support","wartung"
+      "installation", "lizenz", "abo", "vertrag", "leistung", "service"
     ],
     "description_blacklist": [
-      "datum","rechnung","betrag","mwst","gesamt","kunde"
+      "datum", "rechnung", "betrag", "mwst", "gesamt", "kunde"
     ],
     "description_max_length": 80,
     "description_max_words": 5,
     "vendor_blacklist": [
-      "betrag","summe","rechnung","datum","seite","total","mwst",
-      "bank","verbindung","bankverbindung","iban","bic","konto","swift",
-      "guten tag","vielen dank","freundliche grüße",
-      "leistung","zahlungsbedingungen","rechnungsbetrag","übersicht",
-      "im auftrag von","auftrag von","service","team","kunde","rechnung nr"
+      "betrag", "summe", "rechnung", "datum", "seite", "total", "mwst",
+      "bank", "verbindung", "bankverbindung", "iban", "bic", "konto",
+      "guten tag", "vielen dank", "leistung", "zahlungsbedingungen",
+      "rechnungsbetrag", "übersicht", "service", "team", "kunde"
     ],
-    "vendor_company_suffixes": ["gmbh","ag","ug","kg","ltd"],
-    "vendor_address_terms": ["straße","str.","gasse","platz"],
+    "vendor_company_suffixes": ["gmbh", "ag", "ug", "kg", "ltd"],
+    "vendor_address_terms": ["straße", "str.", "gasse", "platz"],
     "vendor_max_words": 5,
     "vendor_max_digits": 2,
     "vendor_scan_window": 10
   },
   "rules": [
-
-    { "category": "BUCHHALTUNG", "document_type": "Rechnung",
+    {
+      "category": "BUCHHALTUNG",
+      "document_type": "Rechnung",
       "keywords": [
-        "rechnung","rechnungsnummer","rechnungsnr",
-        "betrag","gesamtbetrag","netto","brutto",
-        "ust","steuer",
-        "zahlbar bis","zahlungsziel","zahlungsbedingungen",
-        "invoice","amount due","subtotal","total","paid",
-        "payment","charge","subscription","license","billing"
-      ] },
-
-    { "category": "BUCHHALTUNG", "document_type": "Mahnungen",
-      "keywords": [
-        "mahnung","zahlungserinnerung",
-        "frist","letzte mahnung","offener betrag"
-      ] },
-
-    { "category": "BUCHHALTUNG", "document_type": "Angebote",
-      "keywords": [
-        "angebot","angebot nr","kostenvoranschlag",
-        "angebot nummer","quotation"
-      ] },
-
-    { "category": "BUCHHALTUNG", "document_type": "Kassenbelege",
-      "keywords": [
-        "quittung","kassenbeleg",
-        "bewirtungsbeleg","eigenbeleg",
-        "bon","barzahlung"
-      ] },
-
-    { "category": "BUCHHALTUNG", "document_type": "Kontoauszuege",
-      "keywords": [
-        "kontoauszug","kontostand",
-        "buchung","saldo","kontobewegung"
-      ] },
-
-    { "category": "BUCHHALTUNG", "document_type": "Kreditkarte",
-      "keywords": [
-        "kreditkarte","kartenabrechnung",
-        "credit card","statement","kartenumsatz",
-        "vivid","mastercard","visa"
-      ] },
-
-    { "category": "BUCHHALTUNG", "document_type": "SEPA_Mandate",
-      "keywords": [
-        "sepa-lastschriftmandat","firmenlastschriftmandat",
-        "lastschriftmandat","mandatsreferenz","sepa mandate"
-      ] },
-
-    { "category": "BUCHHALTUNG", "document_type": "Ruecklaeufer",
-      "keywords": [
-        "zahlung nicht ausgeführt","nicht ausgefuehrt",
-        "rückgabe","rueckgabe","lastschrift nicht eingelöst"
-      ] },
-
-    { "category": "BUCHHALTUNG", "document_type": "Bankmitteilungen",
-      "keywords": [
-        "mitteilung","kundenmitteilung",
-        "rechnungsabschluss","kontoabschluss"
-      ] },
-
-    { "category": "STEUERN", "document_type": "Auswertungen",
-      "keywords": [
-        "bwa","susa","ust-voranmeldung",
-        "fibu","umsatzsteuervoranmeldung",
-        "elster","ust-va"
-      ] },
-
-    { "category": "STEUERN", "document_type": "Steuerberater",
-      "keywords": [
-        "steuerberater","finanzamt",
-        "steuerbescheid","bescheid","steuerfestsetzung"
-      ] },
-
-    { "category": "VERTRAEGE", "document_type": "Extern",
-      "keywords": [
-        "vertrag","vereinbarung",
-        "laufzeit","kündigung","kuendigung"
-      ] },
-
-    { "category": "VERTRAEGE", "document_type": "Intern",
-      "keywords": [
-        "arbeitsvertrag","lohn",
-        "gehalt","arbeitsverhältnis"
-      ] },
-
-    { "category": "PERSONAL", "document_type": "Mitarbeiter",
-      "keywords": [
-        "lohnabrechnung","gehaltsabrechnung",
-        "personalnummer","mitarbeiter"
-      ] },
-
-    { "category": "PERSONAL", "document_type": "Vertraege",
-      "keywords": [
-        "arbeitsvertrag","ausbildungsvertrag",
-        "arbeitsverhältnis","befristung"
-      ] },
-
-    { "category": "PERSONAL", "document_type": "Krankenkassen",
-      "keywords": [
-        "krankenkasse","aok","dak",
-        "barmer","tk","ikk","knappschaft"
-      ] },
-
-    { "category": "PERSONAL", "document_type": "Ausbildung",
-      "keywords": [
-        "ausbildung","ausbildungsnachweis",
-        "rahmenlehrplan","ihk","ausbildungsberuf"
-      ] },
-
-    { "category": "FIRMENUNTERLAGEN", "document_type": "Allgemein",
-      "keywords": [
-        "betriebsnummer","ust-id","steuer-id",
-        "steuernummer","gewerbeanmeldung"
-      ] },
-
-    { "category": "FIRMENUNTERLAGEN", "document_type": "Register",
-      "keywords": [
-        "handelsregister","gewerbeanmeldung",
-        "transparenzregister","registerauszug"
-      ] },
-
-    { "category": "FIRMENUNTERLAGEN", "document_type": "Versicherungen",
-      "keywords": [
-        "versicherung","bkv","vbg",
-        "unfallversicherung","beitragssatz"
-      ] },
-
-    { "category": "FOERDERUNGEN", "document_type": "Foerderung",
-      "keywords": [
-        "förderung","foerderung",
-        "bafa","zuschuss","bewilligung"
-      ] },
-
-    { "category": "INSOLVENZ", "document_type": "Dokumente",
-      "keywords": [
-        "insolvenz","vollstreckung",
-        "pfändung","pfaendung"
-      ] }
-
+        "rechnung",
+        "rechnungsnummer",
+        "invoice",
+        "zahlbar bis",
+        "zahlungsbedingungen",
+        "netto",
+        "brutto",
+        "gesamtbetrag",
+        "amount due"
+      ]
+    }
   ]
 }

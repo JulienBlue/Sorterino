@@ -1,174 +1,174 @@
-# SORTERINO v0.99 – DEVELOPER README
+# SORTERINO v1.0 – DEVELOPER README
+
+---
+
+PROJEKTSTAND
+
+Sorterino 1.0 ist bewusst auf eine stabile Rechnungsverarbeitung reduziert.
+
+Der aktuelle Fokus liegt auf:
+
+* Eingangsrechnungen
+* Ausgangsrechnungen
+* OCR-basierter Textextraktion
+* regelbasierter Klassifikation
+* standardisierter Benennung
+* manueller Fallback-Ablage bei unsicheren Fällen
+
+Andere Dokumenttypen sind im produktiven Stand bewusst nicht mehr Bestandteil der Templates.
 
 ---
 
 ARCHITEKTUR
 
-Klare Trennung:
-
 CORE
 
-* document_pipeline.py
-* document_analyzer.py
-* storage_utils.py
-* mail_fetcher.py
-* initialize_workspace.py
-* tesseract_ocr.py
-* reporting.py
-* logger.py
-* config.py
-* models.py
-* autostart_service.py
+* `main.py`
+* `src/config.py`
+* `src/initialize_workspace.py`
+* `src/document_pipeline.py`
+* `src/document_analyzer.py`
+* `src/storage_utils.py`
+* `src/tesseract_ocr.py`
+* `src/mail_fetcher.py`
+* `src/reporting.py`
+* `src/logger.py`
+* `src/models.py`
+* `src/autostart_service.py`
 
 GUI
 
-* main_window.py
-* config_window.py
-* mail_window.py (separat)
-* log_window.py
-* daily_report_window.py
-* user_window.py
-* storage_window.py
-* tray.py
+* `src/gui/app.py`
+* `src/gui/main_window.py`
+* `src/gui/config_window.py`
+* `src/gui/storage_window.py`
+* `src/gui/user_window.py`
+* `src/gui/mail_window.py`
+* `src/gui/log_window.py`
+* `src/gui/daily_report_window.py`
+* `src/gui/tray.py`
 
 ASSETS
 
-* assets/templates/template.config.json
-* assets/templates/template.rules.json
-* assets/templates/template.structure.json
-* assets/icons/*
-* third_party/*
+* `assets/templates/template.config.json`
+* `assets/templates/template.rules.json`
+* `assets/templates/template.structure.json`
+* `assets/icons/*`
+* `third_party/*`
 
 ---
 
-WICHTIGE ÄNDERUNGEN
+AKTUELLER FLOW
 
-* Runtime Ordner: "Sorterino - Runtime"
-* config/rules/structure liegen in "Sorterino - Runtime\configs"
-* Daily Report erzeugt JSON + TXT
-* Production Build: GUI-only (keine Konsole)
-* Regeln + Extraktion kommen aus rules.json
+`run_pipeline()`:
 
----
-
-PIPELINE FLOW
-
-run_pipeline():
-
-1. Config laden
+1. Basis- und Runtime-Config laden
 2. Workspace initialisieren
-3. Mail Fetch (1x, vor Pipeline)
-4. OCR init
-5. Dokumente laden
-6. Verarbeitung
+3. IMAP-Abruf ausführen, falls aktiviert
+4. OCR initialisieren
+5. Dokumente aus dem Input laden
+6. Backup erstellen
+7. OCR und Extraktion durchführen
+8. Eingangs- oder Ausgangsrechnung bestimmen
+9. Pflichtdaten prüfen
+10. Datei benennen und ablegen
+11. unklare Fälle in die manuelle Sortierung legen
 
 ---
 
 KLASSIFIKATION
 
-Keyword-basiert:
+Die Klassifikation ist im aktuellen Stand absichtlich schlank.
 
-Score = Treffer / Keywords
+* `rules.json` enthält eine Rechnungsregel
+* Dateiname kann Eingang oder Ausgang zusätzlich erzwingen
+* eigener Rechnungssteller wird über die gepflegten Firmendaten erkannt
+* alles Unsichere geht in `BUCHHALTUNG\Unsortiert`
 
-Fallback:
+Pflichtdaten für automatische Ablage:
 
-* Dateiname kann Eingang/Ausgang erzwingen
-* sonst → MANUELL
-
-Dateiname-Overrides:
-
-* Ausgangsrechnungen: "Rechnung_100012 vom 03.03.2025 Kunde.pdf"
-* Eingangsrechnungen: "03.03.2025 Lieferant - 123,45.pdf"
+* Eingangsrechnung: `date`, `vendor`
+* Ausgangsrechnung: `date`, `vendor`, `invoice_number`
 
 ---
 
-SCHWACHSTELLE (AKTUELL!)
+BENENNUNG
 
-Regel-Engine:
+Eingangsrechnungen:
+`TT.MM.JJJJ - Lieferant - Betrag.pdf`
 
-* rein keyword-basiert
-* kein Kontextverständnis
-* Konflikte nur über einfache Prioritäten gelöst
-
-→ nächster Fokusbereich
+Ausgangsrechnungen:
+`Rechnung <Nummer> vom <Datum> <Kunde>.pdf`
 
 ---
 
-STORAGE
+KONFIGURATION
 
-Path Builder basiert auf:
+Basis-Config:
 
-* Kategorie
-* Dokumenttyp
-* Datum
+* `%USERPROFILE%\.sorterino_config.json`
+* enthält den gewählten Speicherort
 
-Fallback:
+Runtime:
 
-→ DIVERSES / Unsortiert
+* `<user_path>\Sorterino - Runtime\configs\config.json`
+* `<user_path>\Sorterino - Runtime\configs\rules.json`
+* `<user_path>\Sorterino - Runtime\configs\structure.json`
 
----
+Templates für neue Installationen:
 
-MAIL SYSTEM
+* `assets/templates/template.config.json`
+* `assets/templates/template.rules.json`
+* `assets/templates/template.structure.json`
 
-* IMAP (UNSEEN)
-* Attachments only
-* nur aktiv, wenn Mail in config aktiviert ist
-
----
-
-LOGGING
-
-FILE:
-
-* log()
-* error()
-
-CONSOLE:
-
-* info
-* warning
-* debug
-
-Daily:
-
-* daily_events.jsonl
-* daily_report_YYYY-MM-DD.txt
-* daily_reports\YYYY-MM-DD.json
-
-Daily Report Ablauf:
-
-* Sammeln in daily_events.jsonl
-* Generierung per Scheduler (Zeit in config)
-* TXT für Nutzer + JSON für Struktur
+Wichtig:
+Wenn die Sortierung beim Nutzer nicht sauber passt, sollen bevorzugt `rules.json` und `structure.json` angepasst werden, nicht die Kernlogik.
 
 ---
 
+LOGGING UND REPORTING
 
-→ Wenn Sortierung beim Nutzer hakt, liefere ich neue Rules / Structure
+Logs liegen in:
 
----
+* `<runtime>\logs`
 
-IHK RELEVANZ
+Daily Reports:
 
-Projekt zeigt:
+* TXT für Nutzer
+* JSON für strukturierte Weiterverarbeitung
 
-* modulare Architektur
-* GUI/Logic Separation
-* lokale Datenverarbeitung
-* erweiterbares Regelwerk
+Zusätzlich gibt es:
 
----
-
-VERSION 0.99
-
-* rules.json enthält Regeln + Extraktion
-* Dateiname kann Klassifikation überschreiben
-* Daily Report integriert
-* Build: Production ready
+* Backup der Originaldateien
+* manuellen Fallback
+* Fehlerablage bei technischen Problemen
 
 ---
 
-AUTHOR
+BUILD
+
+Executable:
+
+* `pyinstaller Sorterino.spec --noconfirm`
+
+Installer:
+
+* `iscc installer.iss`
+
+Ziel ist ein produktionsnaher Build für Endnutzer. Konfigurationsanpassungen sollen später möglichst über GUI, `rules.json` und `structure.json` erfolgen.
+
+---
+
+VERSION 1.0
+
+* produktionsorientierter Stand
+* Templates auf Rechnungsverarbeitung reduziert
+* Eingangs- und Ausgangsrechnungen stabil getrennt
+* manuelle Sortierung sauber eingebunden
+
+---
+
+AUTOR
 
 Julien Blue Hirte
 Seraph IT GmbH

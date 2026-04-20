@@ -19,8 +19,6 @@ ICON_PATH = BASE_DIR / "assets" / "icons" / "default_icon_128.ico"
 
 
 class TrayApp:
-
-    # CONFIG / INIT
     def __init__(self):
         self.config = Config()
 
@@ -35,24 +33,20 @@ class TrayApp:
         )
         self.icon = pystray.Icon("Sorterino", self.create_icon(), "Sorterino", menu)
 
-    # UI / MAIN WINDOW
     def open_main_window(self, icon=None, item=None):
 
         def _open():
             try:
-                # 🔥 immer aktuelle Config laden
                 self.config = Config()
 
                 if self.window and self.window.winfo_exists():
-                    self.window.config = self.config  # 🔥 update instance
+                    self.window.config = self.config
                     self._bring_to_front(self.window)
                     self.window.protocol("WM_DELETE_WINDOW", self._on_window_close)
                     return
 
                 self.window = MainWindow(
                     master=self._root,
-                    pipeline=None,
-                    logger=None,
                     config=self.config
                 )
 
@@ -65,7 +59,6 @@ class TrayApp:
         if self._root:
             self._root.after(0, _open)
 
-    # SYSTEM / ICON
     def create_icon(self):
         if ICON_PATH.exists():
             return Image.open(ICON_PATH)
@@ -75,7 +68,6 @@ class TrayApp:
         draw.text((10, 20), "S", fill="white")
         return img
 
-    # WINDOW / FOCUS
     def _bring_to_front(self, app):
         try:
             app.update_idletasks()
@@ -94,22 +86,18 @@ class TrayApp:
         except Exception as e:
             print(f"[WARN] Fenster konnte nicht fokussiert werden: {e}")
 
-    # WINDOW / CLOSE
     def _on_window_close(self):
         if self.window:
             self.window.destroy()
             self.window = None
 
-    # STORAGE / CALLBACK
     def _on_storage_set(self):
-        # 🔥 Config neu laden
         self.config = Config()
 
         if self.window and self.window.winfo_exists():
-            self.window.config = self.config  # 🔥 aktualisieren
+            self.window.config = self.config
             self._bring_to_front(self.window)
 
-    # APP / RUN
     def run(self):
         self._root = ctk.CTk()
         self._root.withdraw()
@@ -134,7 +122,6 @@ class TrayApp:
         threading.Thread(target=self.icon.run, daemon=True).start()
 
         self._root.mainloop()
-
 
     def _auto_loop(self):
         import time
@@ -216,7 +203,6 @@ class TrayApp:
 
             time.sleep(60)
 
-    # APP / EXIT
     def exit_app(self, icon=None, item=None):
         try:
             self.icon.stop()

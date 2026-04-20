@@ -6,7 +6,6 @@ from typing import List
 
 from src.models import Document
 
-# Helfer
 def sanitize(text: str) -> str:
     clean = re.sub(r'[\\/*?:"<>|]', "", text)
     return clean.strip()[:100]
@@ -121,7 +120,6 @@ class StoragePathBuilder:
 
         path_parts = [category, doc_type]
 
-        # PATH / DATE
         date = document.extracted_data.get("date")
 
         if date:
@@ -156,18 +154,37 @@ class StoragePathBuilder:
         date = data.get("date")
         vendor = data.get("vendor")
         amount = data.get("amount")
+        currency = data.get("currency")
         invoice_number = data.get("invoice_number")
 
         ext = Path(document.source_path).suffix
 
-        # =========================
-        # 📤 AUSGANGSRECHNUNG
-        # =========================
-        if doc_type == "Ausgangsrechnungen":
+        if doc_type == "Kontoauszuege":
+            parts = ["Kontoauszug"]
 
+            if vendor:
+                parts.append(sanitize(vendor))
+
+            month_name = None
+            if date:
+                try:
+                    _, m, _ = date.split(".")
+                    month_names = [
+                        "Januar","Februar","März","April","Mai","Juni",
+                        "Juli","August","September","Oktober","November","Dezember"
+                    ]
+                    month_name = month_names[int(m) - 1]
+                except Exception:
+                    month_name = None
+
+            if month_name:
+                parts.append(month_name)
+
+            return " - ".join(parts) + ext
+
+        if doc_type == "Ausgangsrechnungen":
             parts = ["Rechnung"]
 
-            # 🔥 WICHTIG: aus extracted_data, NICHT regex
             if invoice_number:
                 parts.append(invoice_number)
 
@@ -182,31 +199,27 @@ class StoragePathBuilder:
 
             return " ".join(parts) + ext
 
-        # =========================
-        # 📥 EINGANGSRECHNUNG
-        # =========================
-        else:
-
+        if doc_type == "Eingangsrechnungen":
             parts = []
 
-            # Datum
             if date:
                 parts.append(date)
             else:
                 parts.append("ohne Datum")
 
-            # Vendor
             if vendor:
                 parts.append(sanitize(vendor))
             else:
                 fallback = Path(document.source_path).stem.split(" - ")[0]
                 parts.append(sanitize(fallback) or "Unbekannt")
 
-            # Betrag
             if amount:
-                parts.append(amount)
-
-            if not parts:
-                parts = ["document"]
+                amount_label = amount
+                if currency == "USD":
+                    amount_label = f"{amount} USD"
+                parts.append(amount_label)
 
             return " - ".join(parts) + ext
+
+        fallback_name = sanitize(Path(document.source_path).stem) or "document"
+        return fallback_name + ext

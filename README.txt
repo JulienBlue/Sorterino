@@ -1,158 +1,149 @@
-SORTERINO v0.99
-Automatische Dokumentenablage für Rechnungen, Verträge und mehr
+SORTERINO v1.0
+Automatische Dokumentenablage für Eingangs- und Ausgangsrechnungen
 
 ---
 
 WAS IST SORTERINO?
 
-Sorterino ist ein lokales Tool zur automatischen Dokumentenverarbeitung.
+Sorterino ist ein lokales Windows-Tool zur automatischen Rechnungsverarbeitung.
 
-Du legst Dateien in einen Ordner – Sorterino erkennt, analysiert und sortiert sie automatisch in eine strukturierte Ablage.
+Du legst Dokumente in den Input-Ordner oder lässt Anhänge per IMAP abrufen. Sorterino liest die Dateien per OCR aus, unterscheidet Eingangs- und Ausgangsrechnungen und legt sie passend ab.
 
-Keine Cloud. Keine Datenübertragung. Alles lokal.
+Alles läuft lokal. Keine Cloud. Keine externe Datenverarbeitung.
+
+---
+
+WAS SORTERINO IN VERSION 1.0 KANN
+
+* Eingangsrechnungen erkennen
+* Ausgangsrechnungen erkennen
+* Datum, Betrag, Rechnungsnummer und Firma/Kunde extrahieren
+* Dateien automatisch passend benennen
+* unklare Fälle in die manuelle Sortierung legen
+* Logs und Daily Reports schreiben
+
+Wenn die Sortierung in Einzelfällen nicht passt, melde dich bei mir. Dann passe ich dir die Rules oder die Structure an, ohne dass der Code geändert werden muss.
 
 ---
 
 SCHNELLSTART
 
-1. Sorterino starten (Sorterino.exe)
+1. `Sorterino.exe` starten
 2. Speicherort auswählen
-3. Einstellungen prüfen
-4. Fertig
+3. Firmendaten in den Einstellungen vollständig eintragen
+4. Einstellungen speichern
+5. Dateien in `Sorterino - Input` legen oder IMAP aktivieren
 
-Sorterino erstellt automatisch:
+Beim ersten Start erstellt Sorterino automatisch:
 
-* Input-Ordner
-* Runtime-Umgebung
-* Struktur für Dokumente
-
----
-
-WIE FUNKTIONIERT DAS?
-
-Pipeline:
-
-1. Datei wird erkannt
-2. OCR (optional)
-3. Textanalyse (Keywords)
-4. Klassifikation
-5. Ablage im Zielpfad
+* `Sorterino - Runtime`
+* `Sorterino - Input`
+* `Sorterino - Manuelle Sortierung`
 
 ---
 
-ORDNERSTRUKTUR
+WICHTIGE EINSTELLUNGEN
 
-Sorterino - Input
-→ Eingang für neue Dokumente
+Diese Angaben müssen sauber gepflegt sein:
 
-Sorterino - Manuelle Sortierung
-→ nicht erkannte Dokumente
+* Speicherort
+* Firmenname
+* Ansprechpartner
+* Adresse
+* E-Mail
+* Telefon
+* IBAN
+* Steuer-ID
 
-Sorterino - Runtime
-→ interner Arbeitsbereich
+Diese Angaben kannst du zusätzlich nutzen:
 
-Sorterino - Runtime\configs
-→ Konfiguration (config, rules, structure)
-
-Sorterino - Runtime\logs
-→ Logs + Daily Reports
-
-Sorterino - Runtime\backup
-→ Backup der Originaldateien
-
-Sorterino - Runtime\error
-→ Dateien mit Fehlern (OCR/Processing)
+* Automatikmodus
+* Autostart
+* IMAP-Abruf
+* Daily-Report-Zeit
 
 ---
 
-DATEITYPEN
+ORDNER
+
+`Sorterino - Runtime`
+interner Arbeitsbereich
+
+`Sorterino - Input`
+Eingang für neue Dateien
+
+`Sorterino - Manuelle Sortierung`
+Ablage für unklare oder unvollständige Fälle
+
+`Sorterino - Runtime\configs`
+`config.json`, `rules.json`, `structure.json`
+
+`Sorterino - Runtime\logs`
+Logs und Daily Reports
+
+`Sorterino - Runtime\backup`
+Sicherung der Originaldateien
+
+`Sorterino - Runtime\error`
+Dateien mit technischen Fehlern
+
+---
+
+UNTERSTÜTZTE DATEIEN
 
 * PDF
 * PNG
-* JPG / JPEG
+* JPG
+* JPEG
 
 ---
 
-AUTOMATISCHE SORTIERUNG
+BENENNUNG
 
-Ablage erfolgt nach:
+Eingangsrechnungen:
+`TT.MM.JJJJ - Lieferant - Betrag.pdf`
 
-Kategorie → Dokumenttyp → Jahr → Monat
+Ausgangsrechnungen:
+`Rechnung <Nummer> vom <Datum> <Kunde>.pdf`
 
----
-
-E-MAIL INTEGRATION
-
-Einstellungen → "E-Mail Integration"
-
-Features:
-
-* IMAP Abruf
-* nur ungelesene Mails
-* nur Anhänge
-* automatische Speicherung im Input
+Wenn wichtige Informationen fehlen, wird nicht unsauber geraten. Solche Dateien landen in `Sorterino - Manuelle Sortierung`.
 
 ---
 
-AUTOMATIKMODUS
+E-MAIL
 
-* läuft im Hintergrund
-* verarbeitet regelmäßig neue Dateien
+Die E-Mail-Integration arbeitet per IMAP.
 
-Autostart:
+Wenn aktiviert:
 
-* startet Sorterino automatisch mit Windows
-
----
-
-LOGGING
-
-* Logs über GUI einsehbar
-* Trennung zwischen Datei-Log und Konsole
-* Daily Report als TXT im Log-Ordner
-* Daily Report JSON in logs\daily_reports
-
-Daily Report Zeit:
-
-* in den Einstellungen setzen
-* letzter Report ist per Button erreichbar
+* werden ungelesene Mails geprüft
+* werden nur Anhänge übernommen
+* werden die Anhänge lokal in den Input überführt
 
 ---
 
-WENN ETWAS NICHT ERKANNT WIRD
+LOGS UND DAILY REPORT
 
-→ landet in "Manuelle Sortierung"
+Sorterino protokolliert:
 
----
+* Verarbeitung
+* Klassifikation
+* Fehler
+* Zielpfade
 
-WAS DU EINSTELLEN KANNST
-
-* Speicherort (Basis-Pfad)
-* Automatikmodus
-* Autostart
-* Mail Integration (IMAP + Aktivierung)
-* Daily Report Zeit
-* Persönliche Daten (für Erkennung)
-* Rules + Structure (nur über GUI)
+Zusätzlich gibt es Daily Reports als TXT und JSON im Log-Ordner.
 
 ---
 
-* Wenn Sortierung nicht passt → melde dich bei mir, ich liefere neue Rules / Structure
+HINWEIS
 
----
-
-VERSION 0.99
-
-* Production Build (GUI-only, keine Konsole)
-* Runtime Ordner sichtbar und sauber benannt
-* Regeln + Extraktion aus rules.json
-* Daily Report integriert
+Sorterino 1.0 ist bewusst auf die produktive Nutzung für Rechnungen reduziert. Weitere Dokumenttypen können später wieder ergänzt werden, aktuell ist der Fokus aber eine stabile und nachvollziehbare Rechnungsverarbeitung.
 
 ---
 
 DATENSCHUTZ
 
-100% lokal
+100 % lokal
 keine Cloud
 keine externen Server
 

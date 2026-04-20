@@ -8,8 +8,6 @@ from src.reporting import DailyReportManager
 
 
 class DocumentPipeline:
-
-    # CONFIG / INIT
     def __init__(
         self,
         config,
@@ -44,9 +42,7 @@ class DocumentPipeline:
         self.manual_sort_target = targets.get("manual", "manual_sort")
         self.error_target = targets.get("error", "error")
 
-    # PIPELINE / START
     def run(self):
-
         total = 0
 
         for source in self.sources:
@@ -63,50 +59,57 @@ class DocumentPipeline:
         else:
             self.logger.info(f"Pipeline fertig {total} Dokument(e) verarbeitet")
 
-    # PIPELINE / PROCESS
-    def _process(self, document: Document):
+    def _store_runtime(self, document, target, filename, log_label, event_status, reason):
+        final = self.runtime.store(document.source_path, target, filename)
+        self.logger.log(f"{log_label}: {filename}")
+        self.reporter.record_event({
+            "status": event_status,
+            "reason": reason,
+            "original_name": filename,
+            "final_name": Path(final).name if final else filename,
+            "target_folder": str(Path(final).parent) if final else str(target),
+        })
+        return final
 
+    def _missing_required_data(self, document: Document):
+        doc_type = (document.metadata.document_type or "") if document.metadata else ""
+        data = document.extracted_data or {}
+
+        if doc_type == "Ausgangsrechnungen":
+            required = {
+                "date": data.get("date"),
+                "vendor": data.get("vendor"),
+                "invoice_number": data.get("invoice_number"),
+            }
+        elif doc_type == "Eingangsrechnungen":
+            required = {
+                "date": data.get("date"),
+                "vendor": data.get("vendor"),
+            }
+        else:
+            return []
+
+        return [key for key, value in required.items() if not value]
+
+    def _process(self, document: Document):
         filename = os.path.basename(document.source_path)
         ext = os.path.splitext(filename)[1].lower()
 
         self.logger.log(f"IN: {filename}")
         self.logger.info(f"Verarbeite {document.source_path}")
-
-        # BACKUP
         
         try:
-            self.runtime.backup(
-                document.source_path,
-                "backup",
-                filename
-            )
+            self.runtime.backup(document.source_path, "backup", filename)
             self.logger.debug(f"Backup erstellt: {filename}")
         except Exception as e:
             self.logger.warning(f"Backup fehlgeschlagen: {e}")
 
-        # FORMAT / CHECK
         if ext not in self.supported_extensions:
             self.logger.info(f"Unsupported Format {ext}")
-
-            final = self.runtime.store(
-                document.source_path,
-                self.error_target,
-                filename
-            )
-
-            self.logger.log(f"UNSUPPORTED: {filename}")
-            self.reporter.record_event({
-                "status": "error",
-                "reason": "unsupported_format",
-                "original_name": filename,
-                "final_name": Path(final).name if final else filename,
-                "target_folder": str(Path(final).parent) if final else str(self.error_target),
-            })
-
+            self._store_runtime(document, self.error_target, filename, "UNSUPPORTED", "error", "unsupported_format")
             document.status = DocumentStatus.ERROR
             return
 
-        # OCR / PROCESS
         self.logger.debug("OCR läuft")
         if not self.ocr:
             self.logger.warning("OCR deaktiviert → direkt manuell")
@@ -116,51 +119,19 @@ class DocumentPipeline:
 
         if text is None:
             self.logger.error("OCR Fehler → Datei in Error")
-
-            final = self.runtime.store(
-                document.source_path,
-                self.error_target,
-                filename
-            )
-
-            self.logger.log(f"ERROR: {filename}")
-            self.reporter.record_event({
-                "status": "error",
-                "reason": "ocr_error",
-                "original_name": filename,
-                "final_name": Path(final).name if final else filename,
-                "target_folder": str(Path(final).parent) if final else str(self.error_target),
-            })
-
+            self._store_runtime(document, self.error_target, filename, "ERROR", "error", "ocr_error")
             document.status = DocumentStatus.ERROR
             return
 
         if not text or not text.strip():
             self.logger.info("Kein Text erkannt manuell")
-
-            final = self.runtime.store(
-                document.source_path,
-                self.manual_sort_target,
-                filename
-            )
-
-            self.logger.log(f"MANUAL: {filename}")
-            self.reporter.record_event({
-                "status": "manual",
-                "reason": "ocr_empty",
-                "original_name": filename,
-                "final_name": Path(final).name if final else filename,
-                "target_folder": str(Path(final).parent) if final else str(self.manual_sort_target),
-            })
-
+            self._store_runtime(document, self.manual_sort_target, filename, "MANUAL", "manual", "ocr_empty")
             document.status = DocumentStatus.STORED
             return
 
         self.logger.debug(f"OCR Länge {len(text)} Zeichen")
 
         document.mark_analyzed(text)
-
-        # ANALYSE / LOGIK
         classification, metadata, extracted = self.analyzer.analyze(document)
 
         self.logger.info(
@@ -172,22 +143,7 @@ class DocumentPipeline:
 
         if not classification.category or classification.category == "MANUELL":
             self.logger.info("Nicht zuordenbar manuell")
-
-            final = self.runtime.store(
-                document.source_path,
-                self.manual_sort_target,
-                filename
-            )
-
-            self.logger.log(f"MANUAL: {filename}")
-            self.reporter.record_event({
-                "status": "manual",
-                "reason": "classify_none",
-                "original_name": filename,
-                "final_name": Path(final).name if final else filename,
-                "target_folder": str(Path(final).parent) if final else str(self.manual_sort_target),
-            })
-
+            self._store_runtime(document, self.manual_sort_target, filename, "MANUAL", "manual", "classify_none")
             document.status = DocumentStatus.STORED
             return
 
@@ -195,32 +151,33 @@ class DocumentPipeline:
         document.metadata = metadata
         document.extracted_data = extracted
 
-        # STORAGE / PATH
+        missing_fields = self._missing_required_data(document)
+        if missing_fields:
+            self.logger.info(
+                "Unvollständige Extraktion manuell "
+                + ", ".join(missing_fields)
+            )
+            self._store_runtime(
+                document,
+                self.manual_sort_target,
+                filename,
+                "MANUAL",
+                "manual",
+                "missing_required_data",
+            )
+            document.status = DocumentStatus.STORED
+            return
+
         try:
             target_path = self.path_builder.build(document)
         except Exception as e:
             self.logger.error(f"{filename} PATH ERROR {e}")
-
-            final = self.runtime.store(
-                document.source_path,
-                self.error_target,
-                filename
-            )
-
-            self.reporter.record_event({
-                "status": "error",
-                "reason": "path_error",
-                "original_name": filename,
-                "final_name": Path(final).name if final else filename,
-                "target_folder": str(Path(final).parent) if final else str(self.error_target),
-            })
-
+            self._store_runtime(document, self.error_target, filename, "ERROR", "error", "path_error")
             document.status = DocumentStatus.ERROR
             return
 
         self.logger.debug(f"Zielpfad {target_path}")
 
-        # STORAGE / SAVE
         try:
             final = self.archive.store(
                 document.source_path,
@@ -243,19 +200,5 @@ class DocumentPipeline:
 
         except Exception as e:
             self.logger.error(f"{filename} {str(e)}")
-
-            final = self.runtime.store(
-                document.source_path,
-                self.error_target,
-                filename
-            )
-
-            self.reporter.record_event({
-                "status": "error",
-                "reason": "store_error",
-                "original_name": filename,
-                "final_name": Path(final).name if final else filename,
-                "target_folder": str(Path(final).parent) if final else str(self.error_target),
-            })
-
+            self._store_runtime(document, self.error_target, filename, "ERROR", "error", "store_error")
             document.status = DocumentStatus.ERROR

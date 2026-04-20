@@ -1,5 +1,5 @@
 #define MyAppName "Sorterino"
-#define MyAppVersion "v0.99"
+#define MyAppVersion "v1.0"
 #define MyAppPublisher "Seraph IT GmbH"
 #define MyAppExeName "Sorterino.exe"
 
@@ -139,42 +139,42 @@ var
   ResultCode: Integer;
   RuntimePath: String;
   ConfigFile: String;
+  InputLinkPath: String;
+  ManualLinkPath: String;
 begin
   if CurUninstallStep = usUninstall then
   begin
     UserPath := GetUserPath();
     RuntimePath := UserPath + '\Sorterino - Runtime';
-    // Use env var syntax consistently
     ConfigFile := ExpandConstant('{%USERPROFILE}\.sorterino_config.json');
+    InputLinkPath := UserPath + '\Sorterino - Input';
+    ManualLinkPath := UserPath + '\Sorterino - Manuelle Sortierung';
 
-    // Config
-    if MsgBox('Benutzer-Konfiguration löschen?' + #13#10 +
-              '(~/.sorterino_config.json)',
+    if MsgBox('Gespeicherte Benutzer-Konfiguration löschen?' + #13#10 +
+              '(' + ConfigFile + ')',
               mbConfirmation, MB_YESNO) = IDYES then
     begin
       if FileExists(ConfigFile) then
         DeleteFile(ConfigFile);
     end;
 
-    // Runtime
-    if MsgBox('Runtime-Daten löschen?' + #13#10 + '(' + UserPath + ')',
+    if MsgBox('Runtime-Daten löschen?' + #13#10 + '(' + RuntimePath + ')',
               mbConfirmation, MB_YESNO) = IDYES then
     begin
       if DirExists(RuntimePath) then
         DelTree(RuntimePath, True, True, True);
     end;
 
-    // Verknüpfungen
-    if MsgBox('Verknüpfungen entfernen?' + #13#10 +
-              '(Input / Manuelle Sortierung)',
+    if MsgBox('Input- und Manuelle-Sortierung-Verknüpfungen entfernen?' + #13#10 +
+              '(' + InputLinkPath + ' / ' + ManualLinkPath + ')',
               mbConfirmation, MB_YESNO) = IDYES then
     begin
       Exec('cmd.exe',
-        '/c rmdir /S /Q "' + UserPath + '\Sorterino - Input"',
+        '/c rmdir /S /Q "' + InputLinkPath + '"',
         '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
       Exec('cmd.exe',
-        '/c rmdir /S /Q "' + UserPath + '\Sorterino - Manuelle Sortierung"',
+        '/c rmdir /S /Q "' + ManualLinkPath + '"',
         '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     end;
   end;

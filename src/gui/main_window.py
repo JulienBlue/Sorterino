@@ -7,13 +7,9 @@ from main import run_pipeline
 
 
 class MainWindow(ctk.CTkToplevel):
-
-    # CONFIG / INIT
-    def __init__(self, master, pipeline, logger, config):
+    def __init__(self, master, config):
         super().__init__(master)
 
-        self.pipeline = pipeline
-        self.logger = logger
         self.config = config
         self._thread_running = False
 
@@ -27,11 +23,28 @@ class MainWindow(ctk.CTkToplevel):
 
         self.bind("<FocusIn>", lambda e: self._refresh_ui())
 
-    # UI / BUILD
-    def _build_ui(self):
-
-        # 🔥 immer aktuelle Config laden
+    def _load_config(self):
         self.config = Config()
+        return (
+            self.config.get("auto_mode") or False,
+            self.config.get("user_path") or "Nicht gesetzt"
+        )
+
+    def _apply_ui_state(self, auto_mode, user_path):
+        mode_text = "Automatik AN" if auto_mode else "Automatik AUS"
+
+        if hasattr(self, "mode_label"):
+            self.mode_label.configure(text=mode_text)
+
+        if hasattr(self, "path_label"):
+            self.path_label.configure(text=f"Speicherort\n{user_path}")
+
+        if hasattr(self, "manual_btn"):
+            state = "disabled" if auto_mode or self._thread_running else "normal"
+            self.manual_btn.configure(state=state)
+
+    def _build_ui(self):
+        auto_mode, user_path = self._load_config()
 
         ctk.CTkLabel(
             self,
@@ -39,17 +52,12 @@ class MainWindow(ctk.CTkToplevel):
             font=("Arial", 22, "bold")
         ).pack(pady=(24, 12))
 
-        auto_mode = self.config.get("auto_mode") or False
-        user_path = self.config.get("user_path") or "Nicht gesetzt"
-
-        mode_text = "Automatik AN" if auto_mode else "Automatik AUS"
-
-        self.mode_label = ctk.CTkLabel(self, text=mode_text)
+        self.mode_label = ctk.CTkLabel(self, text="")
         self.mode_label.pack(pady=8)
 
         self.path_label = ctk.CTkLabel(
             self,
-            text=f"Speicherort\n{user_path}",
+            text="",
             wraplength=380,
             justify="center"
         )
@@ -64,9 +72,6 @@ class MainWindow(ctk.CTkToplevel):
             command=self._run_pipeline
         )
         self.manual_btn.pack(pady=6, fill="x")
-
-        if auto_mode:
-            self.manual_btn.configure(state="disabled")
 
         ctk.CTkButton(
             actions_frame,
@@ -91,6 +96,8 @@ class MainWindow(ctk.CTkToplevel):
             text="Speicherort öffnen",
             command=self._open_storage
         ).pack(pady=6, fill="x")
+
+        self._apply_ui_state(auto_mode, user_path)
 
     # PIPELINE / RUN
     def _run_pipeline(self):
@@ -139,10 +146,7 @@ class MainWindow(ctk.CTkToplevel):
     # UI / STORAGE
     def _open_storage(self):
         try:
-            # 🔥 aktuelle Config laden
-            self.config = Config()
-
-            path = self.config.get("user_path")
+            _, path = self._load_config()
 
             if path and os.path.exists(path):
                 os.startfile(path)
@@ -153,31 +157,11 @@ class MainWindow(ctk.CTkToplevel):
 
     # UI / REFRESH
     def _refresh_ui(self):
-
         try:
-            # 🔥 NEU LADEN (entscheidend!)
-            self.config = Config()
-
-            auto_mode = self.config.get("auto_mode") or False
-            user_path = self.config.get("user_path") or "Nicht gesetzt"
-
+            auto_mode, user_path = self._load_config()
         except Exception as e:
             print(f"[WARN] UI Refresh Fehler: {e}")
             auto_mode = False
             user_path = "Nicht gesetzt"
 
-        mode_text = "Automatik AN" if auto_mode else "Automatik AUS"
-
-        if hasattr(self, "mode_label"):
-            self.mode_label.configure(text=mode_text)
-
-        if hasattr(self, "path_label"):
-            self.path_label.configure(
-                text=f"Speicherort\n{user_path}"
-            )
-
-        if hasattr(self, "manual_btn"):
-            if auto_mode or self._thread_running:
-                self.manual_btn.configure(state="disabled")
-            else:
-                self.manual_btn.configure(state="normal")
+        self._apply_ui_state(auto_mode, user_path)

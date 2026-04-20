@@ -62,10 +62,10 @@ iscc installer.iss
 
 ## 🔥 Typischer Release-Flow
 git add .
-git commit -m "release: v0.99"
-git tag -a v0.99 -m "Sorterino v0.99"
+git commit -m "release: v1.0"
+git tag -a v1.0 -m "Sorterino v1.0"
 git push origin main
-git push origin v0.99
+git push origin v1.0
 
 rmdir /s /q dist
 rmdir /s /q build

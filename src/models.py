@@ -1,9 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
-from uuid import uuid4
 from pathlib import Path
 
-# STATUS / KONSTANTEN
 class DocumentStatus:
     NEW = "NEW"
     ANALYZED = "ANALYZED"
@@ -12,7 +10,6 @@ class DocumentStatus:
     ERROR = "ERROR"
 
 
-# MODEL / CLASSIFICATION
 @dataclass
 class Classification:
     category: str
@@ -20,18 +17,16 @@ class Classification:
     document_type: Optional[str] = None
 
 
-# MODEL / METADATA
 @dataclass
 class DocumentMetadata:
     category: Optional[str]
     document_type: Optional[str]
     invoice_date: Optional[str] = None
 
-# MODEL / DOCUMENT
+
 @dataclass
 class Document:
     source_path: str
-    id: str = field(default_factory=lambda: str(uuid4()))
 
     extracted_text: Optional[str] = None
     classification: Optional[Classification] = None
