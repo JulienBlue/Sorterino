@@ -1,0 +1,35 @@
+{
+  "date": "2026-04-20",
+  "summary": {
+    "total": 3,
+    "success": 2,
+    "manual": 0,
+    "error": 1
+  },
+  "items": [
+    {
+      "timestamp": "2026-04-20T08:14:03",
+      "status": "success",
+      "reason": "ok",
+      "original_name": "scan_2026-04-20_001.pdf",
+      "final_name": "20.04.2026 - Stadtwerke Musterstadt - 185,40.pdf",
+      "target_folder": "F:\\Ablage\\BUCHHALTUNG\\Eingangsrechnungen\\2026\\04 April"
+    },
+    {
+      "timestamp": "2026-04-20T08:16:12",
+      "status": "success",
+      "reason": "ok",
+      "original_name": "rechnung_70015.pdf",
+      "final_name": "Rechnung 70015 vom 20.04.2026 Musterkunde GmbH.pdf",
+      "target_folder": "F:\\Ablage\\BUCHHALTUNG\\Ausgangsrechnungen\\2026\\04 April"
+    },
+    {
+      "timestamp": "2026-04-20T08:18:40",
+      "status": "error",
+      "reason": "ocr_error",
+      "original_name": "scan_unscharf.pdf",
+      "final_name": "scan_unscharf.pdf",
+      "target_folder": "F:\\Ablage\\Sorterino - Runtime\\error"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+sorterino.log
+[2026-04-20 08:14:02] [LOG] IN: scan_2026-04-20_001.pdf
+[2026-04-20 08:14:03] [LOG] OUT: scan_2026-04-20_001.pdf F:\Ablage\BUCHHALTUNG\Eingangsrechnungen\2026\04 April\20.04.2026 - Stadtwerke Musterstadt - 185,40.pdf
+[2026-04-20 08:18:40] [ERROR] OCR Fehler -> Datei in Error
+
+daily_report_2026-04-20.txt
+- Gesamt: 3
+- Erfolgreich: 2
+- Manuell: 0
+- Fehler: 1

@@ -1,0 +1,41 @@
+{
+  "auto_mode": false,
+  "autostart": false,
+  "daily_report_time": "18:00",
+  "email": {
+    "enabled": true,
+    "imap_server": "imap.beispiel.de"
+  },
+  "company_profile": {
+    "name": "Seraph IT GmbH",
+    "person": {
+      "first_name": "Julien",
+      "last_name": "Hirte"
+    },
+    "keywords": [
+      "seraph it",
+      "seraph-it.de"
+    ],
+    "address": {
+      "street": "Beispielweg 12",
+      "zip": "12345",
+      "city": "Musterstadt"
+    },
+    "contact": {
+      "email": "info@seraph-it.de",
+      "phone": "+49 123 4567890"
+    },
+    "financial": {
+      "iban": "DE02120300000000202051",
+      "tax_id": "DE123456789"
+    }
+  },
+  "ocr": {
+    "tesseract_path": "third_party/tesseract/tesseract.exe",
+    "poppler_path": "third_party/poppler/Library/bin"
+  },
+  "targets": {
+    "manual": "manual_sort",
+    "error": "error"
+  }
+}

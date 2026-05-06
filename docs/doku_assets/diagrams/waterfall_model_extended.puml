@@ -1,0 +1,37 @@
+@startuml
+title Erweitertes Wasserfallmodell - Sorterino
+top to bottom direction
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Segoe UI
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1.5
+skinparam rectangle {
+  RoundCorner 8
+  BorderColor #444444
+  FontColor #222222
+  BackgroundColor #F7F7F7
+}
+
+rectangle "Anforderungsanalyse" as A
+rectangle "Systementwurf" as B
+rectangle "Implementierung" as C
+rectangle "Test" as D
+rectangle "Einfuehrung" as E
+
+A --> B
+B --> C
+C --> D
+D --> E
+
+B ..> A
+C ..> B
+D ..> C
+E ..> D
+
+note right of A
+Sorterino
+end note
+
+@enduml

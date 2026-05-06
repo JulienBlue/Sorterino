@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1200" viewBox="0 0 1100 1200">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#1F2937"/>
+            </marker>
+            <style>
+              text {
+                font-family: Segoe UI, Arial, sans-serif;
+                font-size: 16px;
+                fill: #0F172A;
+                white-space: pre;
+              }
+              .title {
+                font-size: 26px;
+                font-weight: 700;
+              }
+              .small {
+                font-size: 14px;
+              }
+            </style>
+          </defs>
+          <rect width="100%" height="100%" fill="#F8FAFC"/>
+
+        <text x="60" y="70" class="title">Programmablaufplan</text>
+        <rect x="370" y="110" width="360" height="70" rx="14" fill="#DCEBFF" stroke="#284B63" stroke-width="2"/>
+<text x="550.0" y="145.0" text-anchor="middle" dominant-baseline="middle">Start / run_pipeline()</text><line x1="550" y1="180" x2="550" y2="230" stroke="#1F2937" stroke-width="2.5" marker-end="url(#arrow)"/><rect x="320" y="230" width="460" height="80" rx="14" fill="#FDE68A" stroke="#284B63" stroke-width="2"/>
+<text x="550.0" y="270.0" text-anchor="middle" dominant-baseline="middle">Konfiguration laden und Workspace initialisieren</text><line x1="550" y1="310" x2="550" y2="360" stroke="#1F2937" stroke-width="2.5" marker-end="url(#arrow)"/><rect x="320" y="360" width="460" height="80" rx="14" fill="#E5E7EB" stroke="#284B63" stroke-width="2"/>
+<text x="550.0" y="400.0" text-anchor="middle" dominant-baseline="middle">E-Mail-Anhänge abrufen (optional)</text><line x1="550" y1="440" x2="550" y2="490" stroke="#1F2937" stroke-width="2.5" marker-end="url(#arrow)"/><rect x="320" y="490" width="460" height="80" rx="14" fill="#DFF3E4" stroke="#284B63" stroke-width="2"/>
+<text x="550.0" y="530.0" text-anchor="middle" dominant-baseline="middle">OCR-Dienst initialisieren</text><line x1="550" y1="570" x2="550" y2="620" stroke="#1F2937" stroke-width="2.5" marker-end="url(#arrow)"/><rect x="320" y="620" width="460" height="80" rx="14" fill="#FCE7F3" stroke="#284B63" stroke-width="2"/>
+<text x="550.0" y="660.0" text-anchor="middle" dominant-baseline="middle">Dokumente aus Input-Ordner laden</text><line x1="550" y1="700" x2="550" y2="750" stroke="#1F2937" stroke-width="2.5" marker-end="url(#arrow)"/><rect x="320" y="750" width="460" height="80" rx="14" fill="#E9D5FF" stroke="#284B63" stroke-width="2"/>
+<text x="550.0" y="790.0" text-anchor="middle" dominant-baseline="middle">Pro Dokument: Backup -> OCR -> Analyse -> Klassifikation</text><line x1="550" y1="830" x2="550" y2="880" stroke="#1F2937" stroke-width="2.5" marker-end="url(#arrow)"/><rect x="320" y="880" width="460" height="90" rx="14" fill="#FFE3D3" stroke="#284B63" stroke-width="2"/>
+        <text x="550.0" y="925.0" text-anchor="middle" dominant-baseline="middle">Fehlende Pflichtdaten?
+Ja -> manuelle Sortierung
+Nein -> Zielpfad bestimmen</text><line x1="550" y1="970" x2="550" y2="1020" stroke="#1F2937" stroke-width="2.5" marker-end="url(#arrow)"/><rect x="320" y="1020" width="460" height="90" rx="14" fill="#BFDBFE" stroke="#284B63" stroke-width="2"/>
+        <text x="550.0" y="1065.0" text-anchor="middle" dominant-baseline="middle">Archivablage / Error-Ablage
+Daily Report Event schreiben</text><line x1="550" y1="1110" x2="550" y2="1140" stroke="#1F2937" stroke-width="2.5" marker-end="url(#arrow)"/><rect x="410" y="1140" width="280" height="50" rx="14" fill="#DCEBFF" stroke="#284B63" stroke-width="2"/>
+<text x="550.0" y="1165.0" text-anchor="middle" dominant-baseline="middle">Ende</text>
+        </svg>

@@ -1,0 +1,28 @@
+class DocumentStatus:
+    NEW = "NEW"
+    ANALYZED = "ANALYZED"
+    CLASSIFIED = "CLASSIFIED"
+    STORED = "STORED"
+    ERROR = "ERROR"
+
+@dataclass
+class Classification:
+    category: str
+    confidence: float
+    document_type: Optional[str] = None
+
+@dataclass
+class DocumentMetadata:
+    category: Optional[str]
+    document_type: Optional[str]
+    invoice_date: Optional[str] = None
+
+@dataclass
+class Document:
+    source_path: str
+    extracted_text: Optional[str] = None
+    classification: Optional[Classification] = None
+    metadata: Optional[DocumentMetadata] = None
+    extracted_data: dict = field(default_factory=dict)
+    target_path: Optional[str] = None
+    status: str = DocumentStatus.NEW

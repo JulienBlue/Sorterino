@@ -1,0 +1,28 @@
+def _process(self, document: Document):
+    filename = os.path.basename(document.source_path)
+    self.logger.log(f"IN: {filename}")
+    self.runtime.backup(document.source_path, "backup", filename)
+
+    text = self.ocr.extract_text(document.source_path) if self.ocr else ""
+    if text is None:
+        self._store_runtime(document, self.error_target, filename, "ERROR", "error", "ocr_error")
+        return
+
+    if not text.strip():
+        self._store_runtime(document, self.manual_sort_target, filename, "MANUAL", "manual", "ocr_empty")
+        return
+
+    document.mark_analyzed(text)
+    classification, metadata, extracted = self.analyzer.analyze(document)
+    document.mark_classified(classification)
+    document.metadata = metadata
+    document.extracted_data = extracted
+
+    missing_fields = self._missing_required_data(document)
+    if missing_fields:
+        self._store_runtime(document, self.manual_sort_target, filename, "MANUAL", "manual", "missing_required_data")
+        return
+
+    target_path = self.path_builder.build(document)
+    final = self.archive.store(document.source_path, target_path.parent, target_path.name)
+    self.logger.log(f"OUT: {filename} {final}")

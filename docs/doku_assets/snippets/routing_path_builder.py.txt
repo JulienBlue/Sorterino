@@ -1,0 +1,27 @@
+class StoragePathBuilder:
+    def build(self, document: Document) -> Path:
+        category = document.metadata.category or "DIVERSES"
+        doc_type = document.metadata.document_type or "Unsortiert"
+        structure_category = self.structure.get(category, {})
+        filename = self._generate_filename(document)
+
+        if doc_type not in structure_category:
+            return Path(category, "Unsortiert", filename)
+
+        path_parts = [category, doc_type]
+        date = document.extracted_data.get("date")
+
+        if date:
+            d, m, y = date.split(".")
+            month_name = MONTH_NAMES[int(m) - 1]
+            path_parts.append(y)
+            path_parts.append(f"{m} {month_name}")
+
+        return Path(*path_parts) / filename
+
+    def _generate_filename(self, document: Document) -> str:
+        if document.metadata.document_type == "Ausgangsrechnungen":
+            return f"Rechnung {invoice_number} vom {date} {vendor}.pdf"
+        if document.metadata.document_type == "Eingangsrechnungen":
+            return f"{date} - {vendor} - {amount}.pdf"
+        return f"{fallback_name}.pdf"

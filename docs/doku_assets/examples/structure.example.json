@@ -1,0 +1,15 @@
+{
+  "BUCHHALTUNG": {
+    "Eingangsrechnungen": {
+      "{year}": {
+        "{month_number} {month_name}": {}
+      }
+    },
+    "Ausgangsrechnungen": {
+      "{year}": {
+        "{month_number} {month_name}": {}
+      }
+    },
+    "Unsortiert": {}
+  }
+}

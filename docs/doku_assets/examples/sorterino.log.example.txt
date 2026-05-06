@@ -1,0 +1,6 @@
+[2026-04-20 08:14:02] [LOG] IN: scan_2026-04-20_001.pdf
+[2026-04-20 08:14:03] [LOG] OUT: scan_2026-04-20_001.pdf F:\Ablage\BUCHHALTUNG\Eingangsrechnungen\2026\04 April\20.04.2026 - Stadtwerke Musterstadt - 185,40.pdf
+[2026-04-20 08:16:11] [LOG] IN: rechnung_70015.pdf
+[2026-04-20 08:16:12] [LOG] OUT: rechnung_70015.pdf F:\Ablage\BUCHHALTUNG\Ausgangsrechnungen\2026\04 April\Rechnung 70015 vom 20.04.2026 Musterkunde GmbH.pdf
+[2026-04-20 08:18:39] [LOG] IN: scan_unscharf.pdf
+[2026-04-20 08:18:40] [ERROR] OCR Fehler -> Datei in Error
