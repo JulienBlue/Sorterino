@@ -1,7 +1,27 @@
+# Python Pakete
 pytesseract==0.3.13
 pdf2image==1.17.0
-Pillow==10.4.0
-customtkinter==5.2.2
+Pillow==12.2.0
+customtkinter==6.0.0
 pystray==0.19.5
-keyring==25.6.0
-pyinstaller==6.6.0
+keyring==25.7.0
+pyinstaller==6.21.0
+
+# Third Party
+# - Tesseract OCR   hier installieren -> third_party/tesseract/
+#   Windows Installer: https://github.com/UB-Mannheim/tesseract/wiki
+#   Der Ordner muss genau "tesseract" heißen, ohne Versionsnummer.
+#   Beim Installer unter "Language data" auswählen:
+#   - English
+#   - Orientation and script detection
+#   Zusätzlich unter "Additional language data (download)" auswählen:
+#   - German
+#   - French
+#   Erwartete Sprachdateien in third_party/tesseract/tessdata/:
+#   - deu.traineddata
+#   - eng.traineddata
+#   - fra.traineddata
+#   - osd.traineddata
+# - Poppler         hierhin kopieren -> third_party/poppler/
+#   Windows Builds: https://github.com/oschwartz10612/poppler-windows/releases
+#   Der Ordner muss genau "poppler" heißen, ohne Versionsnummer.

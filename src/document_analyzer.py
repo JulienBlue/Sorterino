@@ -164,9 +164,9 @@ class DocumentAnalyzer:
                 extracted[key] = value
 
         if filename_info.get("force_outgoing"):
-            classification = Classification("BUCHHALTUNG", 1.0, "Ausgangsrechnungen")
+            classification = Classification("Buchhaltung", 1.0, "Ausgangsrechnungen")
         elif filename_info.get("force_incoming"):
-            classification = Classification("BUCHHALTUNG", 0.5, "Eingangsrechnungen")
+            classification = Classification("Buchhaltung", 0.5, "Eingangsrechnungen")
         else:
             classification = self._classify(text_lower)
 
@@ -243,7 +243,7 @@ class DocumentAnalyzer:
         invoice_rule = next(
             (
                 r for r in self.rules
-                if r.get("category") == "BUCHHALTUNG"
+                if r.get("category") == "Buchhaltung"
                 and r.get("document_type") == "Rechnung"
             ),
             None

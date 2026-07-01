@@ -170,11 +170,11 @@ begin
               mbConfirmation, MB_YESNO) = IDYES then
     begin
       Exec('cmd.exe',
-        '/c rmdir /S /Q "' + InputLinkPath + '"',
+        '/c rmdir "' + InputLinkPath + '"',
         '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
       Exec('cmd.exe',
-        '/c rmdir /S /Q "' + ManualLinkPath + '"',
+        '/c rmdir "' + ManualLinkPath + '"',
         '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     end;
   end;

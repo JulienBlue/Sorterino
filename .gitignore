@@ -2,15 +2,11 @@
 # Python
 # -------------------------
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
 
 # -------------------------
 # Virtual Env
 # -------------------------
 .venv/
-venv/
 .env/
 
 # -------------------------
@@ -21,21 +17,9 @@ build/
 installer_output/
 
 # -------------------------
-# Runtime (User Data)
-# -------------------------
-.sorterino_runtime/
-
-# -------------------------
-# Logs
-# -------------------------
-*.log
-logs/
-
-# -------------------------
 # IDE
 # -------------------------
 .vscode/
-.idea/
 
 # -------------------------
 # OS
@@ -44,19 +28,12 @@ logs/
 Thumbs.db
 
 # -------------------------
-# Testing
-# -------------------------
-.pytest_cache/
-
-# -------------------------
 # Third-Party / External
 # -------------------------
 third_party/
 
 # -------------------------
-# Optional / Dev Artefacts
+# Dev Zeug
 # -------------------------
-docs/Produktstände/
-docs/gantt.mmd
-Projekt/
-tools/
+.agents/
+docs/

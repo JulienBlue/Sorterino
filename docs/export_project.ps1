@@ -4,39 +4,34 @@ param (
 
 Write-Host "Script started"
 
-# -------------------------------
 # Projekt-Root bestimmen
-# -------------------------------
-
-$ScriptDir   = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
 
-# -------------------------------
-# Ignore-Liste (einfach & klar!)
-# -------------------------------
-
-$IgnoredFolders = @(
-    ".pytest_cache",
+# Ignoriert wird im Wesentlichen die .gitignore plus docs/.
+# docs/ wird ausgelassen, damit alte Projektstand-Exporte nicht wieder
+# in neue Projektstand-Exporte hineinkopiert werden.
+$IgnoredPaths = @(
+    ".agents",
+    ".DS_Store",
+    ".env",
+    ".git",
     ".venv",
     ".vscode",
-    "docs\Produktstände",
+    "__pycache__",
     "build",
     "dist",
-    "__pycache__"
+    "docs",
+    "installer_output",
+    "third_party",
+    "Thumbs.db"
 )
 
-# -------------------------------
-# Anzeige
-# -------------------------------
-
 Write-Host ""
-Write-Host "Ignorierte Ordner:"
-$IgnoredFolders | ForEach-Object { Write-Host " - $_" }
+Write-Host "Ignorierte Pfade:"
+$IgnoredPaths | ForEach-Object { Write-Host " - $_" }
 
-# -------------------------------
 # Output vorbereiten
-# -------------------------------
-
 $OutputDirName = "Produktst" + [char]0x00E4 + "nde"
 $OutputDir = Join-Path $ScriptDir $OutputDirName
 
@@ -50,20 +45,18 @@ if (Test-Path $OutputFile) {
     Remove-Item $OutputFile
 }
 
-# -------------------------------
-# IGNORE CHECK (JETZT RICHTIG)
-# -------------------------------
-
 function Is-Ignored($relativePath) {
+    $rel = ($relativePath -replace "/", "\").TrimStart("\")
+    $firstPart = ($rel -split "\\")[0]
 
-    $rel = $relativePath -replace "/", "\"
+    foreach ($ignored in $IgnoredPaths) {
+        $ign = ($ignored -replace "/", "\").Trim("\")
 
-    foreach ($ignored in $IgnoredFolders) {
+        if ($rel -eq $ign) {
+            return $true
+        }
 
-        $ign = $ignored -replace "/", "\"
-
-        # enthält Ordner irgendwo im Pfad
-        if ($rel -like "*$ign*") {
+        if ($firstPart -eq $ign) {
             return $true
         }
     }
@@ -71,24 +64,19 @@ function Is-Ignored($relativePath) {
     return $false
 }
 
-# -------------------------------
 # Dateien sammeln
-# -------------------------------
-
 $Content = @()
 
 Get-ChildItem -Path $ProjectRoot -Recurse -File -Force |
 Where-Object {
-
-    $relative = $_.FullName.Replace($ProjectRoot, "").TrimStart("\\")
+    $relative = $_.FullName.Replace($ProjectRoot, "").TrimStart("\")
 
     (-not (Is-Ignored $relative)) -and
-    ($_.Extension -match "\.(py|json|md|txt|iss)$")
+    ($_.Extension -match "\.(py|json|md|txt|iss|spec)$")
 } |
 Sort-Object FullName |
 ForEach-Object {
-
-    $relative = $_.FullName.Replace($ProjectRoot, "").TrimStart("\\")
+    $relative = $_.FullName.Replace($ProjectRoot, "").TrimStart("\")
 
     $Content += "===== $relative ====="
     $Content += ""
@@ -103,19 +91,11 @@ ForEach-Object {
     $Content += ""
 }
 
-# -------------------------------
-# Ignorierte Ordner anhängen
-# -------------------------------
-
 $Content += ""
-$Content += "===== Ignorierte Ordner ====="
+$Content += "===== Ignorierte Pfade ====="
 $Content += ""
 
-$IgnoredFolders | ForEach-Object { $Content += $_ }
-
-# -------------------------------
-# Schreiben
-# -------------------------------
+$IgnoredPaths | ForEach-Object { $Content += $_ }
 
 $Content | Out-File $OutputFile -Encoding utf8
 

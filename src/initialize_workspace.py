@@ -5,6 +5,20 @@ import json
 import sys
 import os
 
+def hidden_subprocess_kwargs():
+    if os.name != "nt":
+        return {}
+
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = subprocess.SW_HIDE
+
+    return {
+        "startupinfo": startupinfo,
+        "creationflags": subprocess.CREATE_NO_WINDOW,
+    }
+
+
 def get_base_path():
     if getattr(sys, "frozen", False):
         exe_root = Path(sys.executable).parent
@@ -99,15 +113,15 @@ def initialize_workspace(config):
                 except Exception:
                     print("[INIT] Symlink nicht erlaubt → nutze Junction")
 
-                command = f'cmd /c mklink /J "{link_path}" "{target}"'
+                command = ["cmd", "/c", "mklink", "/J", str(link_path), str(target)]
 
                 result = subprocess.run(
                     command,
-                    shell=True,
                     capture_output=True,
                     text=True,
                     encoding="utf-8",
-                    errors="ignore"
+                    errors="ignore",
+                    **hidden_subprocess_kwargs()
                 )
 
                 if result.returncode == 0:

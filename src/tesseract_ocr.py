@@ -1,13 +1,54 @@
 import os
+import subprocess
+from contextlib import contextmanager
 from typing import List
 from pathlib import Path
 
 import pytesseract
 from pdf2image import convert_from_path
+import pdf2image.pdf2image as pdf2image_backend
 from PIL import Image, ImageFile
 
 Image.MAX_IMAGE_PIXELS = None
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+
+def _hidden_windows_popen(original_popen):
+    def popen(*args, **kwargs):
+        if os.name == "nt":
+            startupinfo = kwargs.get("startupinfo")
+            if startupinfo is None:
+                startupinfo = subprocess.STARTUPINFO()
+
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = subprocess.SW_HIDE
+            kwargs["startupinfo"] = startupinfo
+            kwargs["creationflags"] = (
+                kwargs.get("creationflags", 0) | subprocess.CREATE_NO_WINDOW
+            )
+
+        return original_popen(*args, **kwargs)
+
+    return popen
+
+
+@contextmanager
+def _suppress_windows_console_popups():
+    if os.name != "nt":
+        yield
+        return
+
+    original_subprocess_popen = subprocess.Popen
+    original_pdf2image_popen = pdf2image_backend.Popen
+
+    subprocess.Popen = _hidden_windows_popen(original_subprocess_popen)
+    pdf2image_backend.Popen = _hidden_windows_popen(original_pdf2image_popen)
+
+    try:
+        yield
+    finally:
+        subprocess.Popen = original_subprocess_popen
+        pdf2image_backend.Popen = original_pdf2image_popen
 
 
 class TesseractOCR:
@@ -72,10 +113,11 @@ class TesseractOCR:
             return None
 
         try:
-            if file_path_str.lower().endswith(".pdf"):
-                return self._extract_from_pdf(file_path_str)
-            else:
-                return self._extract_from_image(file_path_str)
+            with _suppress_windows_console_popups():
+                if file_path_str.lower().endswith(".pdf"):
+                    return self._extract_from_pdf(file_path_str)
+                else:
+                    return self._extract_from_image(file_path_str)
 
         except Exception as e:
             self.logger.error(f"OCR Fehler bei {file_path_str} {e}")
