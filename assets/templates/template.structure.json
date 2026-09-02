@@ -1,15 +1,325 @@
 {
+  "schema_version": 16,
+  "default_template": "family",
   "Buchhaltung": {
-    "Eingangsrechnungen": {
-      "{year}": {
-        "{month_number} {month_name}": {}
-      }
-    },
-    "Ausgangsrechnungen": {
-      "{year}": {
-        "{month_number} {month_name}": {}
-      }
-    },
+    "Eingangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
+    "Ausgangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
     "Unsortiert": {}
+  },
+  "templates": {
+    "family": {
+      "Buchhaltung": {
+        "Eingangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
+        "Ausgangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
+        "Belege und Quittungen": {"{year}": {"{month_number} {month_name}": {}}},
+        "Jahresunterlagen": {"{year}": {}},
+        "Unsortiert": {}
+      },
+      "Wohnen": {
+        "Mietverträge": {},
+        "Kündigungen": {"{year}": {}},
+        "Immobilienunterlagen": {},
+        "Nebenkostenabrechnungen": {"{year}": {}},
+        "Energieverträge": {"{year}": {}},
+        "Energieabrechnungen": {"{year}": {}},
+        "Internet und Telefon": {"{year}": {}},
+        "Instandhaltung": {"{year}": {}}
+      },
+      "Finanzen": {
+        "Banken und Konten": {"{year}": {}},
+        "Kontoauszüge": {"{year}": {"{month_number} {month_name}": {}}},
+        "Darlehensverträge": {},
+        "Gemeinsame Rechnungen": {"{year}": {"{month_number} {month_name}": {}}},
+        "Sparen und Vermögen": {"{year}": {}}
+      },
+      "Versicherungen": {
+        "Versicherungspolicen": {},
+        "Versicherungsschreiben": {"{year}": {}},
+        "Kündigungen": {"{year}": {}},
+        "Schäden und Leistungen": {"{year}": {}}
+      },
+      "Verträge und Abonnements": {
+        "Telekommunikation": {"{year}": {}},
+        "Allgemeine Verträge": {},
+        "Kündigungen": {"{year}": {}}
+      },
+      "Finanzamt und Steuern": {
+        "Einkommensteuer": {"{year}": {
+          "01 Steuererklärung": {},
+          "02 Belege": {
+            "Arbeit und Werbungskosten": {},
+            "Versicherungen und Vorsorge": {},
+            "Gesundheit": {},
+            "Haushalt und Handwerker": {},
+            "Kinder und Betreuung": {},
+            "Spenden": {},
+            "Sonstige Belege": {}
+          },
+          "03 Nachforderungen": {},
+          "04 ELSTER-Nachweise": {},
+          "05 Steuerbescheide": {},
+          "06 Einsprüche und Schriftverkehr": {}
+        }}
+      },
+      "Behörden und Leistungen": {
+        "Familienleistungen": {"{year}": {}},
+        "Führungszeugnisse": {"{year}": {}},
+        "Sonstige Bescheide": {"{year}": {}}
+      },
+      "Identität und Urkunden": {
+        "Ausweise und Pässe": {},
+        "Geburtsurkunden": {},
+        "Eheurkunde": {},
+        "Meldeunterlagen": {}
+      },
+      "Familie und Partnerschaft": {
+        "Ehe und Lebenspartnerschaft": {},
+        "Kinder und Betreuung": {"{year}": {}},
+        "Unterhalt und Sorgerecht": {}
+      },
+      "Fahrzeuge und Mobilität": {
+        "Fahrzeugdokumente": {"{year}": {}},
+        "Wartung und Reparaturen": {"{year}": {}}
+      },
+      "Anschaffungen und Garantien": {
+        "Kaufbelege": {"{year}": {}},
+        "Kassenbons": {"{year}": {}},
+        "Retouren und Erstattungen": {"{year}": {}},
+        "Garantien und Reklamationen": {"{year}": {}}
+      },
+      "Gesundheit": {
+        "Krankenkassenschreiben": {"{year}": {}},
+        "Arztberichte und Befunde": {"{year}": {}},
+        "Medikamente und Verordnungen": {"{year}": {}},
+        "Rechnungen und Erstattungen": {"{year}": {}},
+        "Pflege": {"{year}": {}},
+        "Kurse und Therapien": {"{year}": {}}
+      },
+      "Rentenversicherung": {
+        "Renteninformationen": {"{year}": {}},
+        "Bescheide und Schriftverkehr": {"{year}": {}}
+      },
+      "Reisen": {"{year}": {}},
+      "Haustiere": {"{year}": {}},
+      "Rechtliches und Vorsorge": {
+        "Vollmachten und Verfügungen": {},
+        "Nachlass und Bestattung": {},
+        "Rechtliche Korrespondenz": {"{year}": {}}
+      },
+      "Digitale Unterlagen": {
+        "Konten und Zugänge": {},
+        "Lizenzen und digitale Käufe": {"{year}": {}}
+      },
+      "Korrespondenz": {"{year}": {}},
+      "Sonstiges": {"{year}": {}}
+    },
+    "adult": {
+      "Buchhaltung": {
+        "Eingangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
+        "Ausgangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
+        "Unsortiert": {}
+      },
+      "Identität und Urkunden": {
+        "Identitätsdokumente": {},
+        "Geburtsurkunden": {},
+        "Eheurkunde": {}
+      },
+      "Finanzamt und Steuern": {
+        "Einkommensteuer": {"{year}": {
+          "01 Steuererklärung": {},
+          "02 Belege": {
+            "Arbeit und Werbungskosten": {},
+            "Versicherungen und Vorsorge": {},
+            "Gesundheit": {},
+            "Haushalt und Handwerker": {},
+            "Kinder und Betreuung": {},
+            "Spenden": {},
+            "Sonstige Belege": {}
+          },
+          "03 Nachforderungen": {},
+          "04 ELSTER-Nachweise": {},
+          "05 Steuerbescheide": {},
+          "06 Einsprüche und Schriftverkehr": {}
+        }}
+      },
+      "Behörden und Leistungen": {
+        "Führungszeugnisse": {"{year}": {}},
+        "Sonstige Bescheide": {"{year}": {}}
+      },
+      "Finanzen": {
+        "Banken und Konten": {"{year}": {}},
+        "Kontoauszüge": {"{year}": {"{month_number} {month_name}": {}}},
+        "Rechnungen": {"{year}": {"{month_number} {month_name}": {}}},
+        "Sparen und Vermögen": {"{year}": {}},
+        "Kredite und Darlehen": {},
+        "Darlehensverträge": {}
+      },
+      "Arbeit und Karriere": {
+        "Arbeitsverträge": {},
+        "Kündigungen": {"{year}": {}},
+        "Einsatzunterlagen": {"{year}": {}},
+        "Gehaltsabrechnungen": {"{year}": {}},
+        "Bescheinigungen": {"{year}": {}},
+        "Bewerbungen": {"{year}": {}},
+        "Arbeitszeugnisse": {}
+      },
+      "Bildung und Qualifikationen": {},
+      "Gesundheit": {
+        "Krankenkassenschreiben": {"{year}": {}},
+        "Arztberichte und Befunde": {"{year}": {}},
+        "Kurse und Therapien": {"{year}": {}}
+      },
+      "Rentenversicherung": {
+        "Renteninformationen": {"{year}": {}},
+        "Bescheide und Schriftverkehr": {"{year}": {}}
+      },
+      "Versicherungen": {
+        "Versicherungspolicen": {},
+        "Versicherungsschreiben": {"{year}": {}},
+        "Kündigungen": {"{year}": {}}
+      },
+      "Verträge und Abonnements": {
+        "Telekommunikation": {"{year}": {}},
+        "Allgemeine Verträge": {},
+        "Kündigungen": {"{year}": {}}
+      },
+      "Wohnen": {
+        "Mietverträge": {},
+        "Kündigungen": {"{year}": {}},
+        "Nebenkostenabrechnungen": {"{year}": {}},
+        "Energieverträge": {"{year}": {}},
+        "Energieabrechnungen": {"{year}": {}},
+        "Instandhaltung": {"{year}": {}}
+      },
+      "Fahrzeuge und Mobilität": {"Fahrzeugdokumente": {"{year}": {}}},
+      "Anschaffungen und Garantien": {
+        "Kaufbelege": {"{year}": {}},
+        "Kassenbons": {"{year}": {}},
+        "Retouren und Erstattungen": {"{year}": {}},
+        "Garantien und Reklamationen": {"{year}": {}}
+      },
+      "Rechtliches und Vorsorge": {},
+      "Korrespondenz": {"{year}": {}},
+      "Sonstiges": {"{year}": {}}
+    },
+    "child": {
+      "Buchhaltung": {
+        "Eingangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
+        "Ausgangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
+        "Unsortiert": {}
+      },
+      "Identität und Urkunden": {
+        "Identitätsdokumente": {},
+        "Geburtsurkunden": {},
+        "Eheurkunde": {}
+      },
+      "Arbeit und Karriere": {
+        "Arbeitsverträge": {},
+        "Kündigungen": {"{year}": {}},
+        "Einsatzunterlagen": {"{year}": {}},
+        "Gehaltsabrechnungen": {"{year}": {}},
+        "Bescheinigungen": {"{year}": {}},
+        "Bewerbungen": {"{year}": {}},
+        "Arbeitszeugnisse": {}
+      },
+      "Gesundheit": {
+        "Krankenkasse": {},
+        "Krankenkassenschreiben": {"{year}": {}},
+        "Vorsorge und Impfungen": {},
+        "Arztberichte und Befunde": {"{year}": {}},
+        "Therapien und Hilfsmittel": {"{year}": {}}
+      },
+      "Kita Schule und Bildung": {
+        "Anmeldungen und Verträge": {},
+        "Bescheinigungen": {"{year}": {}},
+        "Zeugnisse": {"{year}": {}},
+        "Betreuung": {"{year}": {}},
+        "Schule und Betreuung": {"{year}": {}}
+      },
+      "Behörden und Leistungen": {
+        "Kindergeld": {"{year}": {}},
+        "Elterngeld": {"{year}": {}},
+        "Führungszeugnisse": {"{year}": {}},
+        "Sonstige Bescheide": {"{year}": {}}
+      },
+      "Versicherungen": {"Kündigungen": {"{year}": {}}},
+      "Verträge und Abonnements": {
+        "Telekommunikation": {"{year}": {}},
+        "Allgemeine Verträge": {},
+        "Kündigungen": {"{year}": {}}
+      },
+      "Finanzen": {
+        "Kontoauszüge": {"{year}": {"{month_number} {month_name}": {}}},
+        "Darlehensverträge": {},
+        "Sparen und Vermögen": {"{year}": {}}
+      },
+      "Freizeit Sport und Vereine": {"{year}": {}},
+      "Betreuung und Sorgerecht": {},
+      "Reisen": {"{year}": {}},
+      "Anschaffungen und Garantien": {
+        "Kaufbelege": {"{year}": {}},
+        "Garantien und Reklamationen": {"{year}": {}}
+      },
+      "Korrespondenz": {"{year}": {}},
+      "Sonstiges": {"{year}": {}}
+    },
+    "organization": {
+      "Unternehmensstammdaten": {
+        "Gründung und Register": {},
+        "Gesellschafter und Geschäftsführung": {},
+        "Genehmigungen und Mitgliedschaften": {}
+      },
+      "Buchhaltung": {
+        "Eingangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
+        "Ausgangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
+        "Kasse und Belege": {"{year}": {"{month_number} {month_name}": {}}},
+        "Jahresabschlüsse": {"{year}": {}}
+      },
+      "Arbeit und Karriere": {
+        "Arbeitsverträge": {},
+        "Kündigungen": {"{year}": {}},
+        "Einsatzunterlagen": {"{year}": {}},
+        "Gehaltsabrechnungen": {"{year}": {}},
+        "Bescheinigungen": {"{year}": {}},
+        "Arbeitszeugnisse": {}
+      },
+      "Behörden und Steuern": {"Steuerbescheide": {"{year}": {}}},
+      "Finanzen": {
+        "Kontoauszüge": {"{year}": {"{month_number} {month_name}": {}}},
+        "Darlehensverträge": {}
+      },
+      "Versicherungen": {
+        "Versicherungspolicen": {},
+        "Versicherungsschreiben": {"{year}": {}},
+        "Kündigungen": {"{year}": {}}
+      },
+      "Verträge und Abonnements": {
+        "Telekommunikation": {"{year}": {}},
+        "Allgemeine Verträge": {},
+        "Kündigungen": {"{year}": {}}
+      },
+      "Banken und Finanzierung": {"{year}": {}},
+      "Steuern": {
+        "Umsatzsteuer": {"{year}": {}},
+        "Ertragsteuern": {"{year}": {}},
+        "Lohnsteuer": {"{year}": {}},
+        "Bescheide und Korrespondenz": {"{year}": {}}
+      },
+      "Personal": {
+        "Personalakten": {"{person_name}": {}},
+        "Lohn und Gehalt": {"{year}": {"{person_name}": {}}},
+        "Bewerbungen": {"{year}": {}},
+        "Sozialversicherung": {"{year}": {}}
+      },
+      "Kunden": {},
+      "Lieferanten": {},
+      "Verträge": {},
+      "Fahrzeuge": {},
+      "Anlagevermögen und Inventar": {},
+      "Datenschutz und Compliance": {},
+      "Rechtliches": {},
+      "Korrespondenz": {"{year}": {}},
+      "Sonstiges": {"{year}": {}}
+    }
   }
 }

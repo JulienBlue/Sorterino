@@ -1,47 +1,20 @@
 {
+  "schema_version": 3,
+  "appearance_mode": "system",
+  "user_path": "",
+  "incoming_path": "",
+  "incoming_path_custom": false,
   "auto_mode": false,
   "autostart": false,
   "daily_report_time": "18:00",
-
-  "email": {
+  "window_geometry": {},
+  "hide_close_to_tray_notice": false,
+  "profile_system": {
     "enabled": false,
-    "imap_server": ""
+    "minimum_assignment_confidence": 0.8
   },
-
-  "company_profile": {
-    "name": "",
-
-    "person": {
-      "first_name": "",
-      "last_name": ""
-    },
-
-    "keywords": [],
-
-    "address": {
-      "street": "",
-      "zip": "",
-      "city": ""
-    },
-
-    "contact": {
-      "email": "",
-      "phone": ""
-    },
-
-    "financial": {
-      "iban": "",
-      "tax_id": ""
-    }
-  },
-
   "ocr": {
     "tesseract_path": "third_party/tesseract/tesseract.exe",
     "poppler_path": "third_party/poppler/Library/bin"
-  },
-
-  "targets": {
-    "manual": "manual_sort",
-    "error": "error"
   }
 }

@@ -1,0 +1,2 @@
+class ProfileValidationError(ValueError):
+    pass

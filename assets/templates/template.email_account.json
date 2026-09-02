@@ -1,0 +1,17 @@
+{
+  "id": "",
+  "profile_id": "",
+  "label": "",
+  "enabled": true,
+  "provider": "custom",
+  "auth_method": "app_password",
+  "imap_server": "",
+  "imap_port": 993,
+  "username": "",
+  "mailbox": "INBOX",
+  "initial_lookback_days": 30,
+  "allowed_extensions": [
+    ".pdf", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".webp", ".heic", ".heif",
+    ".docx", ".docm", ".doc", ".odt", ".rtf", ".txt", ".pages", ".eml", ".msg"
+  ]
+}

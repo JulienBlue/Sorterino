@@ -1,0 +1,20 @@
+{
+  "id": "",
+  "type": "individual",
+  "status": "active",
+  "display_name": "",
+  "person_id": "",
+  "matching": {
+    "name_variants": [],
+    "customer_numbers": [],
+    "contract_numbers": [],
+    "keywords": [],
+    "negative_keywords": []
+  },
+  "routing": {
+    "use_global_storage": true,
+    "storage_root": "",
+    "archive_folder": "",
+    "structure_template": "adult"
+  }
+}

@@ -1,9 +1,18 @@
 import re
 from pathlib import Path
+from src.date_utils import extract_document_date
+from src.document_domain_extractors import DomainDocumentExtractors
+from src.document_classification_support import DocumentClassificationSupport
+from src.document_transaction_extractors import (
+    extract_cash_receipt,
+    extract_energy_contract_confirmation,
+    extract_energy_order_confirmation,
+    extract_return_confirmation,
+)
 from src.models import Classification, DocumentMetadata
 
 
-class DocumentAnalyzer:
+class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
     def __init__(self, rules, company_profile, logger):
         if isinstance(rules, dict):
             self.rules = rules.get("rules", [])
@@ -159,16 +168,116 @@ class DocumentAnalyzer:
 
         extracted = self._extract(text)
 
+        energy_order = self._extract_energy_order_confirmation(text)
+        energy_contract = self._extract_energy_contract_confirmation(text)
+        return_confirmation = self._extract_return_confirmation(text)
+        cash_receipt = self._extract_cash_receipt(text)
+
         for key, value in filename_info.items():
             if value:
                 extracted[key] = value
 
-        if filename_info.get("force_outgoing"):
+        if energy_contract:
+            classification = Classification(
+                "Wohnen", 0.99, "Energieverträge",
+                reason="Vertragsbestätigung Energie",
+            )
+            extracted.update(energy_contract)
+        elif energy_order:
+            classification = Classification(
+                "Wohnen", 0.99, "Energieverträge",
+                reason="Auftragseingangsbestätigung Energie",
+            )
+            extracted.update(energy_order)
+        elif return_confirmation:
+            classification = Classification(
+                "Anschaffungen und Garantien", 0.99,
+                "Retouren und Erstattungen",
+                reason="Retourenbestätigung",
+            )
+            extracted.update(return_confirmation)
+        elif cash_receipt:
+            classification = Classification(
+                "Anschaffungen und Garantien", 0.99, "Kassenbons",
+                reason="Kassenbon",
+            )
+            extracted.update(cash_receipt)
+        elif filename_info.get("force_outgoing"):
             classification = Classification("Buchhaltung", 1.0, "Ausgangsrechnungen")
         elif filename_info.get("force_incoming"):
             classification = Classification("Buchhaltung", 0.5, "Eingangsrechnungen")
         else:
-            classification = self._classify(text_lower)
+            classification = self._classify(text_lower, document.filename)
+
+        if classification.document_type == "Bescheinigungen":
+            if classification.reason == "Arbeitsbescheinigung":
+                extracted.update(
+                    self._extract_employment_certificate(text, document.filename)
+                )
+            else:
+                extracted.update(self._extract_income_certificate(text))
+
+        if classification.document_type == "Gehaltsabrechnungen":
+            extracted.update(self._extract_payroll_statement(text, document.filename))
+
+        if classification.document_type == "Einkommensteuer":
+            extracted.update(self._extract_tax_document(text, classification.reason))
+
+        if classification.document_type == "Eingangsrechnungen":
+            extracted.update(self._extract_supplier_invoice_fields(text))
+
+        if classification.document_type == "Einsatzunterlagen":
+            extracted.update(self._extract_assignment_sheet(text, document.filename))
+
+        if classification.document_type == "Versicherungspolicen":
+            extracted.update(self._extract_insurance_document(text, document.filename))
+
+        if classification.document_type == "Kündigungen":
+            extracted.update(self._extract_termination(text, document.filename))
+
+        if classification.document_type == "Allgemeine Verträge" and (
+            "beratungsvertrag" in text_lower or "beratungsvertrag" in document.filename.casefold()
+        ):
+            extracted.update({"document_kind": "Beratungsvertrag"})
+
+        if classification.document_type == "Kurse und Therapien":
+            extracted.update({
+                "amount": None,
+                "currency": None,
+                "document_kind": "Teilnahmebescheinigung",
+            })
+
+        if classification.document_type == "Renteninformationen":
+            extracted.update(self._extract_pension_information(text, document.filename))
+
+        if classification.document_type == "Instandhaltung" and (
+            "dokumentation des mangels" in text_lower or "mängeldokumentation" in text_lower
+        ):
+            extracted.update(self._extract_housing_defect(text))
+
+        if classification.document_type == "Immobilienunterlagen":
+            extracted.update(
+                self._extract_property_document(
+                    text,
+                    document.filename,
+                    classification.reason,
+                )
+            )
+
+        if classification.document_type == "Führungszeugnisse":
+            extracted.update(self._extract_certificate_of_conduct(text))
+
+        if classification.document_type == "Sparen und Vermögen":
+            extracted.update(self._extract_home_savings_contract(text))
+
+        if classification.document_type == "Bewerbungen":
+            extracted.update(self._extract_job_application(text))
+
+        if classification.document_type == "Eheurkunde":
+            extracted.update(self._extract_marriage_certificate(text))
+
+        if classification.document_type == "Identitätsdokumente":
+            extracted.update(self._extract_identity_document(text))
 
         if classification.document_type == "Kontoauszuege":
             vendor = self._extract_statement_vendor(text_lower)
@@ -182,6 +291,11 @@ class DocumentAnalyzer:
         )
 
         return classification, metadata, extracted
+
+    _extract_energy_order_confirmation = staticmethod(extract_energy_order_confirmation)
+    _extract_energy_contract_confirmation = staticmethod(extract_energy_contract_confirmation)
+    _extract_return_confirmation = staticmethod(extract_return_confirmation)
+    _extract_cash_receipt = staticmethod(extract_cash_receipt)
 
     def _extract_from_filename(self, filename: str) -> dict:
         name = Path(filename).stem
@@ -239,7 +353,139 @@ class DocumentAnalyzer:
 
         return {"force_outgoing": False, "force_incoming": False}
 
-    def _classify(self, text_lower):
+    def _classify(self, text_lower, filename=""):
+        special = self._classify_special_document(text_lower, filename)
+        if special:
+            return special
+
+        home_savings_strong = sum(
+            term in text_lower
+            for term in (
+                "ihr neuer bausparvertrag",
+                "bausparurkunde",
+                "bausparvertrag nr",
+            )
+        )
+        home_savings_support = sum(
+            term in text_lower
+            for term in (
+                "bausparsumme",
+                "bausparnummer",
+                "regelsparbeitrag",
+                "bausparkasse",
+                "guthabenzins",
+                "wahlzuteilung",
+            )
+        )
+        if home_savings_strong >= 1 and home_savings_support >= 3:
+            return Classification(
+                category="Finanzen",
+                document_type="Sparen und Vermögen",
+                confidence=min(1.0, 0.82 + home_savings_support * 0.03),
+                reason="Bausparvertrag",
+            )
+
+        elster_confirmation = (
+            "versandbestätigung" in text_lower
+            and "formular wurde versendet" in text_lower
+            and ("elster" in text_lower or "transferticket" in text_lower)
+        )
+        if elster_confirmation:
+            return Classification(
+                category="Finanzamt und Steuern",
+                document_type="Einkommensteuer",
+                confidence=0.99,
+                reason="ELSTER-Versandbestätigung",
+            )
+
+        tax_return_support = sum(
+            term in text_lower
+            for term in (
+                "hauptvordruck est 1 a",
+                "einkommensteuererklärung für das jahr",
+                "zusammenveranlagung",
+                "identifikationsnummer",
+                "steuernummer",
+            )
+        )
+        if "einkommensteuererklärung" in text_lower and tax_return_support >= 3:
+            return Classification(
+                category="Finanzamt und Steuern",
+                document_type="Einkommensteuer",
+                confidence=min(0.99, 0.82 + tax_return_support * 0.03),
+                reason="Einkommensteuererklärung",
+            )
+
+        payroll_terms = (
+            "abrechnung der brutto/netto-bez",
+            "entgeltabrechnung",
+            "gehaltsabrechnung",
+            "lohnabrechnung",
+            "lohn- und gehaltsabrechnung",
+        )
+        payroll_support = sum(
+            term in text_lower
+            for term in (
+                "gesamt-brutto",
+                "gesamtbrutto",
+                "netto-verdienst",
+                "auszahlungsbetrag",
+                "steuer-brutto",
+                "sv-brutto",
+                "steuerbrutto",
+                "nettoverdienst",
+                "lohnsteuer",
+                "elstam verfahren",
+            )
+        )
+        if any(term in text_lower for term in payroll_terms) and payroll_support >= 2:
+            return Classification(
+                category="Arbeit und Karriere",
+                document_type="Gehaltsabrechnungen",
+                confidence=min(1.0, 0.8 + payroll_support * 0.04),
+            )
+
+        employment_certificate_support = sum(
+            term in text_lower
+            for term in (
+                "bundesagentur für arbeit",
+                "bundesagentur fur arbeit",
+                "angaben zum arbeitgeber",
+                "angaben zur arbeitnehmerin",
+                "angaben zum beschäftigungsverhältnis",
+                "angaben zum beschaftigungsverhaltnis",
+            )
+        )
+        if "arbeitsbescheinigung" in text_lower and employment_certificate_support >= 2:
+            return Classification(
+                category="Arbeit und Karriere",
+                document_type="Bescheinigungen",
+                confidence=min(1.0, 0.85 + employment_certificate_support * 0.03),
+                reason="Arbeitsbescheinigung",
+            )
+
+        certificate_terms = {
+            "einkommensbescheinigung",
+            "verdienstbescheinigung",
+            "nachweis über die höhe des arbeitsentgelts",
+            "nachweis ueber die hoehe des arbeitsentgelts",
+        }
+        strong_certificate_matches = sum(term in text_lower for term in certificate_terms)
+        supporting_terms = sum(
+            term in text_lower
+            for term in ("bruttoarbeitsentgelt", "nettoarbeitsentgelt", "arbeitnehmer", "beschäftigungsverhältnis")
+        )
+        if strong_certificate_matches and supporting_terms >= 1:
+            return Classification(
+                category="Arbeit und Karriere",
+                document_type="Bescheinigungen",
+                confidence=min(1.0, 0.8 + supporting_terms * 0.05),
+            )
+
+        rule_classification = self._classify_by_weighted_rules(text_lower)
+        if rule_classification:
+            return rule_classification
+
         invoice_rule = next(
             (
                 r for r in self.rules
@@ -273,6 +519,48 @@ class DocumentAnalyzer:
             confidence=round(score, 2)
         )
 
+
+    def _classify_by_weighted_rules(self, text_lower):
+        """Classify conservatively using strong anchors and supporting terms."""
+        candidates = []
+        for rule in self.rules:
+            if rule.get("document_type") == "Rechnung":
+                continue
+            negative = [str(value).casefold() for value in rule.get("negative_keywords", []) if value]
+            if any(value in text_lower for value in negative):
+                continue
+            strong = [str(value).casefold() for value in rule.get("strong_keywords", []) if value]
+            support = [str(value).casefold() for value in rule.get("keywords", []) if value]
+            strong_hits = sum(value in text_lower for value in strong)
+            support_hits = sum(value in text_lower for value in support)
+            minimum_support = int(rule.get("minimum_support", 2))
+            if strong_hits < int(rule.get("minimum_strong", 1)):
+                if not rule.get("allow_support_only") or support_hits < minimum_support:
+                    continue
+            elif support_hits < int(rule.get("support_with_strong", 0)):
+                continue
+            confidence = min(0.99, 0.72 + strong_hits * 0.12 + support_hits * 0.035)
+            if not strong_hits:
+                confidence = min(0.88, 0.58 + support_hits * 0.075)
+            candidates.append((confidence, strong_hits, support_hits, rule))
+        if not candidates:
+            return None
+        candidates.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
+        if len(candidates) > 1 and candidates[1][0] >= candidates[0][0] - 0.05:
+            self.logger.debug(
+                "[CLASSIFY] Mehrdeutig: "
+                f"{candidates[0][3].get('id')} / {candidates[1][3].get('id')}"
+            )
+            return None
+        confidence, _strong_hits, _support_hits, rule = candidates[0]
+        return Classification(
+            category=rule["category"],
+            document_type=rule["document_type"],
+            confidence=round(confidence, 2),
+            reason=rule.get("label") or rule.get("id"),
+        )
+
+
     def _extract(self, text):
 
         return {
@@ -281,8 +569,22 @@ class DocumentAnalyzer:
             "currency": self._extract_currency(text),
             "vendor": self._extract_vendor(text),
             "invoice_number": self._extract_invoice_number(text),
+            "contract_number": self._extract_contract_number(text),
             "description": self._extract_description(text)
         }
+
+    @staticmethod
+    def _extract_contract_number(text):
+        match = re.search(
+            r"(?:vertrags(?:nummer|nr\.)|policen(?:nummer|nr\.)|darlehens(?:nummer|nr\.))"
+            r"\s*[:#-]?\s*([A-Z0-9][A-Z0-9./-]{2,30})",
+            text,
+            flags=re.IGNORECASE,
+        )
+        if not match:
+            return None
+        value = match.group(1).strip(" .-")
+        return value if any(char.isdigit() for char in value) else None
 
     def _extract_currency(self, text):
         text_lower = text.lower()
@@ -315,47 +617,7 @@ class DocumentAnalyzer:
         return value if isinstance(value, dict) else fallback
 
     def _extract_date(self, text):
-        match = re.search(r"\b(\d{2}\.\d{2}\.\d{4})\b", text)
-        if match:
-            return match.group(1)
-
-        match = re.search(r"\b(\d{2})\.(\d{2})\.(\d{2})\b", text)
-        if match:
-            day, month, year = match.groups()
-            return f"{day}.{month}.20{year}"
-
-        month_map = {
-            "january": "01", "januar": "01",
-            "february": "02", "februar": "02",
-            "march": "03", "märz": "03", "maerz": "03",
-            "april": "04",
-            "may": "05", "mai": "05",
-            "june": "06", "juni": "06",
-            "july": "07", "juli": "07",
-            "august": "08",
-            "september": "09",
-            "october": "10", "oktober": "10",
-            "november": "11",
-            "december": "12", "dezember": "12"
-        }
-
-        text_lower = text.lower()
-
-        match = re.search(r"\b([a-zäöü]+)\s+(\d{1,2}),\s*(\d{4})\b", text_lower, flags=re.IGNORECASE)
-        if match:
-            month_name, day, year = match.groups()
-            month = month_map.get(month_name.lower())
-            if month:
-                return f"{int(day):02d}.{month}.{year}"
-
-        match = re.search(r"\b(\d{1,2})\.\s*([a-zäöü]+)\s+(\d{4})\b", text_lower, flags=re.IGNORECASE)
-        if match:
-            day, month_name, year = match.groups()
-            month = month_map.get(month_name.lower())
-            if month:
-                return f"{int(day):02d}.{month}.{year}"
-
-        return None
+        return extract_document_date(text)
 
     def _extract_amount(self, text):
         def normalize_amount(raw: str):
@@ -425,8 +687,12 @@ class DocumentAnalyzer:
         ])
 
         matches = []
-        for pattern in patterns:
-            matches.extend(re.findall(pattern, text))
+        for line in text.splitlines():
+            lower = line.casefold()
+            if any(unit in lower for unit in ("kwh", "mwh", "kilowattstunde", "jahresverbrauch")):
+                continue
+            for pattern in patterns:
+                matches.extend(re.findall(pattern, line))
 
         if not matches:
             return None

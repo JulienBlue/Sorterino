@@ -66,12 +66,17 @@ def bring_to_front(app):
 def run_settings():
     try:
         import customtkinter as ctk
-        from src.gui.config_window import ConfigWindow
+        from src.config import Config
+        from src.gui.main_window import MainWindow
+        from src.gui.appearance import apply_appearance
 
+        config = Config()
+        apply_appearance(config.get("appearance_mode", "system"))
         root = ctk.CTk()
         root.withdraw()
 
-        app = ConfigWindow(master=root)
+        app = MainWindow(master=root, config=config)
+        app.show_page("settings")
         app.after(100, lambda: bring_to_front(app))
 
         root.mainloop()
@@ -85,12 +90,18 @@ def run_settings():
 def run_logs():
     try:
         import customtkinter as ctk
+        from src.config import Config
         from src.gui.log_window import LogWindow
+        from src.gui.main_window import MainWindow
+        from src.gui.appearance import apply_appearance
 
+        config = Config()
+        apply_appearance(config.get("appearance_mode", "system"))
         root = ctk.CTk()
         root.withdraw()
 
-        app = LogWindow(master=root)
+        app = MainWindow(master=root, config=config)
+        app.open_view(lambda parent: LogWindow(parent), "settings")
         app.after(100, lambda: bring_to_front(app))
 
         root.mainloop()

@@ -15,6 +15,7 @@ class Classification:
     category: str
     confidence: float
     document_type: Optional[str] = None
+    reason: Optional[str] = None
 
 
 @dataclass

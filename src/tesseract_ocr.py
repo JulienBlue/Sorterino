@@ -7,7 +7,7 @@ from pathlib import Path
 import pytesseract
 from pdf2image import convert_from_path
 import pdf2image.pdf2image as pdf2image_backend
-from PIL import Image, ImageFile
+from PIL import Image, ImageFile, ImageOps, ImageSequence
 
 Image.MAX_IMAGE_PIXELS = None
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -177,20 +177,28 @@ class TesseractOCR:
         self.logger.debug(f"OCR Image Verarbeitung: {file_path}")
 
         try:
+            if str(file_path).lower().endswith((".heic", ".heif")):
+                try:
+                    from pillow_heif import register_heif_opener
+                    register_heif_opener()
+                except ImportError as exc:
+                    self.logger.error("HEIC-Unterstützung fehlt: pillow-heif ist nicht installiert")
+                    return None
             with Image.open(file_path) as img:
-
-                img.thumbnail((3500, 3500))
-
-                text = pytesseract.image_to_string(
-                    img,
-                    lang=self.language
-                )
-
-                if not text or not text.strip():
+                text_output = []
+                for index, frame in enumerate(ImageSequence.Iterator(img)):
+                    if index >= 100:
+                        self.logger.warning("Bild enthält mehr als 100 Seiten/Frames; Rest wird übersprungen")
+                        break
+                    page = ImageOps.exif_transpose(frame.copy())
+                    page.thumbnail((3500, 3500))
+                    text = pytesseract.image_to_string(page, lang=self.language)
+                    if text and text.strip():
+                        text_output.append(text)
+                if not text_output:
                     self.logger.warning("Kein OCR Text aus Bild extrahiert")
                     return ""
-
-                return text
+                return "\n".join(text_output)
 
         except Exception as e:
             self.logger.error(f"OCR Bildfehler bei {file_path} {e}")

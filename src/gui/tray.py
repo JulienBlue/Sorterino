@@ -1,10 +1,10 @@
 import threading
+import os
 
 import pystray
 from PIL import Image, ImageDraw
 from pathlib import Path
 import customtkinter as ctk
-import sys
 import ctypes
 from datetime import datetime, time as dt_time
 
@@ -12,6 +12,7 @@ from src.config import Config
 from src.gui.main_window import MainWindow
 from src.initialize_workspace import get_base_path
 from src.reporting import DailyReportManager
+from src.gui.appearance import apply_appearance
 
 BASE_DIR = get_base_path()
 
@@ -29,35 +30,74 @@ class TrayApp:
 
         menu = pystray.Menu(
             pystray.MenuItem("Öffnen", self.open_main_window, default=True),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("Jetzt verarbeiten", self.process_documents),
+            pystray.MenuItem("Dokumente hinzufügen", self.add_documents),
+            pystray.MenuItem("Eingangsordner öffnen", self.open_incoming_folder),
+            pystray.Menu.SEPARATOR,
             pystray.MenuItem("Beenden", self.exit_app),
         )
         self.icon = pystray.Icon("Sorterino", self.create_icon(), "Sorterino", menu)
 
     def open_main_window(self, icon=None, item=None):
+        if self._root:
+            self._root.after(0, self._open_main_window_now)
 
-        def _open():
-            try:
-                self.config = Config()
-
-                if self.window and self.window.winfo_exists():
-                    self.window.config = self.config
-                    self._bring_to_front(self.window)
-                    self.window.protocol("WM_DELETE_WINDOW", self._on_window_close)
-                    return
-
-                self.window = MainWindow(
-                    master=self._root,
-                    config=self.config
-                )
-
+    def _open_main_window_now(self):
+        try:
+            self.config = Config()
+            if self.window and self.window.winfo_exists():
+                self.window.config = self.config
                 self._bring_to_front(self.window)
                 self.window.protocol("WM_DELETE_WINDOW", self._on_window_close)
+                return self.window
+            self.window = MainWindow(master=self._root, config=self.config)
+            if not self.config.get("user_path"):
+                self.window.show_page("settings")
+            self._bring_to_front(self.window)
+            self.window.protocol("WM_DELETE_WINDOW", self._on_window_close)
+            return self.window
+        except Exception as e:
+            print(f"[ERROR] MainWindow konnte nicht geöffnet werden: {e}")
+            return None
 
-            except Exception as e:
-                print(f"[ERROR] MainWindow konnte nicht geöffnet werden: {e}")
+    def process_documents(self, icon=None, item=None):
+        if not self._root:
+            return
 
+        def _start():
+            window = self.window if self.window and self.window.winfo_exists() else None
+            if window:
+                window._run_pipeline()
+                return
+            from main import run_pipeline
+            threading.Thread(target=run_pipeline, daemon=True).start()
+
+        self._root.after(0, _start)
+
+    def add_documents(self, icon=None, item=None):
         if self._root:
-            self._root.after(0, _open)
+            def _add():
+                window = self._open_main_window_now()
+                if window:
+                    window._add_documents()
+            self._root.after(0, _add)
+
+    def open_incoming_folder(self, icon=None, item=None):
+        if not self._root:
+            return
+
+        def _open():
+            config = Config()
+            path = config.incoming_root
+            if path and Path(path).exists():
+                os.startfile(path)
+            else:
+                window = self._open_main_window_now()
+                if window:
+                    window.show_page("settings")
+
+        self._root.after(0, _open)
 
     def create_icon(self):
         if ICON_PATH.exists():
@@ -88,34 +128,21 @@ class TrayApp:
 
     def _on_window_close(self):
         if self.window:
-            self.window.destroy()
-            self.window = None
+            window = self.window
 
-    def _on_storage_set(self):
-        self.config = Config()
+            def close_to_tray():
+                if self.window is window:
+                    self.window = None
+                window.close_safely()
 
-        if self.window and self.window.winfo_exists():
-            self.window.config = self.config
-            self._bring_to_front(self.window)
+            window.request_close_to_tray(close_to_tray)
 
     def run(self):
+        apply_appearance(self.config.get("appearance_mode", "system"))
         self._root = ctk.CTk()
         self._root.withdraw()
 
         self._root.after(0, self.open_main_window)
-
-        if not self.config.get("user_path"):
-
-            from src.gui.storage_window import StorageWindow
-
-            def _open_setup():
-                StorageWindow(
-                    master=self._root,
-                    config=self.config,
-                    on_change=self._on_storage_set
-                )
-
-            self._root.after(200, _open_setup)
 
         threading.Thread(target=self._monitor_auto_mode, daemon=True).start()
         threading.Thread(target=self._monitor_daily_report, daemon=True).start()
@@ -205,14 +232,31 @@ class TrayApp:
 
     def exit_app(self, icon=None, item=None):
         try:
-            self.icon.stop()
+            if self.window and self.window.winfo_exists():
+                self.window.save_window_state()
         except Exception:
             pass
 
         try:
-            if self._root:
-                self._root.destroy()
+            self.icon.stop()
         except Exception:
             pass
 
-        sys.exit(0)
+        # pystray invokes menu callbacks on its own thread. Tk widgets must
+        # only be destroyed by the Tk main thread, otherwise pending redraws
+        # can address canvases that no longer exist.
+        try:
+            if self._root:
+                self._root.after(0, self._shutdown_tk)
+        except Exception:
+            pass
+
+    def _shutdown_tk(self):
+        try:
+            if self.window and self.window.winfo_exists():
+                self.window.save_window_state()
+            self.window = None
+            self._root.quit()
+            self._root.destroy()
+        except Exception:
+            pass

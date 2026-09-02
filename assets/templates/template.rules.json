@@ -1,75 +1,274 @@
 {
+  "schema_version": 14,
   "extraction": {
     "invoice_number_patterns": [
       "(rechnung\\s*(nr\\.?|nummer)?[:\\s\\-]*re[\\s\\-]*)([0-9][a-z0-9/\\-]{2,})",
       "(rechnung\\s*(nr\\.?|nummer)?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
       "(rechn\\.\\s*nr\\.?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
       "(rg[\\.\\-\\s]*nr\\.?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
-      "(rgnr[:\\s\\-]*)([a-z0-9/\\-]{3,})",
       "(beleg\\s*(nr\\.?|nummer)?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
-      "(invoice\\s*(no\\.?|number)?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
-      "(inv[\\.\\s]*no\\.?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
-      "(facture\\s*(n°|no\\.?|numero|numéro)?[:\\s\\-]*)([a-z0-9/\\-]{3,})",
-      "(n°\\s*facture[:\\s\\-]*)([a-z0-9/\\-]{3,})",
-      "(rechnung[_\\s\\-]*)(\\d{3,})"
+      "(invoice\\s*(no\\.?|number)?[:\\s\\-]*)([a-z0-9/\\-]{3,})"
     ],
-    "invoice_number_blacklist": [
-      "re", "ref", "re:", "nr", "awb", "pos", "summe", "seite"
-    ],
+    "invoice_number_blacklist": ["re", "ref", "nr", "awb", "pos", "summe", "seite"],
     "amount_patterns": [
       "\\b\\d{1,3}(?:\\.\\d{3})*,\\d{2}\\b",
       "\\b\\d{1,3}(?:,\\d{3})*\\.\\d{2}\\b",
       "\\b\\d+[.,]\\d{2}\\b"
     ],
-    "description_keywords": [
-      "installation", "lizenz", "abo", "vertrag", "leistung", "service",
-      "support", "wartung", "maintenance", "subscription"
-    ],
-    "description_blacklist": [
-      "datum", "rechnung", "betrag", "mwst", "gesamt", "kunde",
-      "invoice", "facture", "total", "tax", "vat"
-    ],
+    "description_keywords": ["installation", "lizenz", "abo", "vertrag", "leistung", "service", "support", "wartung"],
+    "description_blacklist": ["datum", "rechnung", "betrag", "mwst", "gesamt", "kunde", "invoice", "total", "tax"],
     "description_max_length": 80,
     "description_max_words": 5,
-    "vendor_blacklist": [
-      "betrag", "summe", "rechnung", "datum", "seite", "total", "mwst",
-      "bank", "verbindung", "bankverbindung", "iban", "bic", "konto",
-      "guten tag", "vielen dank", "leistung", "zahlungsbedingungen",
-      "rechnungsbetrag", "übersicht", "service", "team", "kunde",
-      "invoice", "facture", "amount", "tax", "vat", "subtotal",
-      "customer", "kundennummer", "client"
-    ],
-    "vendor_company_suffixes": [
-      "gmbh", "ag", "ug", "kg", "ohg", "gbr", "ev",
-      "ltd", "limited", "inc", "llc", "plc",
-      "sarl", "sas", "sa", "bv", "nv"
-    ],
-    "vendor_address_terms": [
-      "straße", "str.", "weg", "gasse", "platz", "allee", "ring",
-      "street", "road", "avenue", "rue", "boulevard"
-    ],
+    "vendor_blacklist": ["betrag", "summe", "rechnung", "datum", "seite", "total", "mwst", "bankverbindung", "iban", "bic", "konto", "guten tag", "vielen dank", "zahlungsbedingungen", "kunde", "kundennummer"],
+    "vendor_company_suffixes": ["gmbh", "ag", "ug", "kg", "ohg", "gbr", "ev", "ltd", "limited", "inc", "llc", "plc", "sarl", "sas", "sa", "bv", "nv"],
+    "vendor_address_terms": ["straße", "str.", "weg", "gasse", "platz", "allee", "ring", "street", "road", "avenue", "rue"],
     "vendor_max_words": 5,
     "vendor_max_digits": 2,
     "vendor_scan_window": 10
   },
   "rules": [
     {
-      "category": "Buchhaltung",
-      "document_type": "Rechnung",
-      "keywords": [
-        "rechnung",
-        "rechnungsnummer",
-        "rg nr",
-        "invoice",
-        "invoice number",
-        "facture",
-        "zahlbar bis",
-        "fällig",
-        "zahlungsbedingungen",
-        "gesamtbetrag",
-        "amount due",
-        "total ttc"
-      ]
+      "id": "income_certificate", "label": "Einkommensbescheinigung",
+      "category": "Arbeit und Karriere", "document_type": "Bescheinigungen",
+      "strong_keywords": ["einkommensbescheinigung", "verdienstbescheinigung", "nachweis über die höhe des arbeitsentgelts"],
+      "keywords": ["bruttoarbeitsentgelt", "nettoarbeitsentgelt", "arbeitnehmer"]
+    },
+    {
+      "id": "employment_contract", "label": "Arbeitsvertrag",
+      "category": "Arbeit und Karriere", "document_type": "Arbeitsverträge",
+      "strong_keywords": ["arbeitsvertrag", "dienstvertrag"],
+      "keywords": ["arbeitgeber", "arbeitnehmer", "arbeitszeit", "probezeit", "vergütung", "urlaubstage"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "assignment_sheet", "label": "Einsatzbegleitschein",
+      "category": "Arbeit und Karriere", "document_type": "Einsatzunterlagen",
+      "strong_keywords": ["einsatzbegleitschein", "einsatz als leiharbeitnehmer"],
+      "keywords": ["entleiher", "verleiher", "einsatzort", "auftrag nr", "persönliche schutzausrüstung"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "employment_reference", "label": "Arbeitszeugnis",
+      "category": "Arbeit und Karriere", "document_type": "Arbeitszeugnisse",
+      "strong_keywords": ["arbeitszeugnis", "zwischenzeugnis", "zeugnis"],
+      "keywords": ["beschäftigt", "aufgabenbereich", "stets zu unserer", "verlässt unser unternehmen"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "job_application", "label": "Bewerbungsanschreiben",
+      "category": "Arbeit und Karriere", "document_type": "Bewerbungen",
+      "strong_keywords": ["bewerbung als", "hiermit bewerbe ich mich", "meine bewerbung", "ausgeschriebene stelle", "meine unterlagen für die ausgeschriebene stelle"],
+      "keywords": ["auf die stelle als", "zum nächstmöglichen zeitpunkt", "einstieg ins berufsleben", "als berufseinsteiger", "sehr geehrte damen und herren", "mit freundlichen grüßen", "persönlichen gespräch"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "elster_submission_confirmation", "label": "ELSTER-Versandbestätigung",
+      "category": "Finanzamt und Steuern", "document_type": "Einkommensteuer",
+      "strong_keywords": ["versandbestätigung", "formular wurde versendet"],
+      "keywords": ["elster", "transferticket", "abgabezeit", "belegnachreichung zur steuererklärung"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "income_tax_return", "label": "Einkommensteuererklärung",
+      "category": "Finanzamt und Steuern", "document_type": "Einkommensteuer",
+      "strong_keywords": ["einkommensteuererklärung", "hauptvordruck est 1 a"],
+      "keywords": ["steuernummer", "identifikationsnummer", "zusammenveranlagung", "finanzamt"],
+      "support_with_strong": 2,
+      "negative_keywords": ["einkommensteuerbescheid", "rechtsbehelfsbelehrung"]
+    },
+    {
+      "id": "tax_notice", "label": "Steuerbescheid",
+      "category": "Finanzamt und Steuern", "document_type": "Einkommensteuer",
+      "strong_keywords": ["einkommensteuerbescheid", "steuerbescheid", "bescheid für", "festsetzung der einkommensteuer"],
+      "keywords": ["finanzamt", "steuernummer", "einkommensteuer", "solidaritätszuschlag", "rechtsbehelfsbelehrung"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "tax_document_request", "label": "Nachforderung von Steuerbelegen",
+      "category": "Finanzamt und Steuern", "document_type": "Einkommensteuer",
+      "strong_keywords": ["aufforderung zur vorlage von belegen", "belege nachreichen", "nachreichung von belegen"],
+      "keywords": ["finanzamt", "steuernummer", "einkommensteuererklärung", "frist"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "wage_tax_certificate", "label": "Lohnsteuerbescheinigung",
+      "category": "Finanzamt und Steuern", "document_type": "Einkommensteuer",
+      "strong_keywords": ["lohnsteuerbescheinigung", "elektronische lohnsteuerbescheinigung"],
+      "keywords": ["bruttoarbeitslohn", "einbehaltene lohnsteuer", "steuer-identifikationsnummer", "arbeitgeber"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "donation_receipt", "label": "Spendenbescheinigung",
+      "category": "Finanzamt und Steuern", "document_type": "Einkommensteuer",
+      "strong_keywords": ["zuwendungsbestätigung", "spendenbescheinigung"],
+      "keywords": ["zuwendung", "spende", "steuerbegünstigten zwecken", "finanzamt"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "bank_statement", "label": "Kontoauszug",
+      "category": "Finanzen", "document_type": "Kontoauszüge",
+      "strong_keywords": ["kontoauszug", "kontoumsätze", "umsatzübersicht"],
+      "keywords": ["iban", "buchungstag", "wertstellung", "alter kontostand", "neuer kontostand"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "loan_contract", "label": "Darlehensvertrag",
+      "category": "Finanzen", "document_type": "Darlehensverträge",
+      "strong_keywords": ["darlehensvertrag", "kreditvertrag", "verbraucherdarlehen"],
+      "keywords": ["darlehensnehmer", "nettodarlehensbetrag", "sollzinssatz", "tilgungsrate", "laufzeit"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "insurance_policy", "label": "Versicherungspolice",
+      "category": "Versicherungen", "document_type": "Versicherungspolicen",
+      "strong_keywords": ["versicherungsschein", "versicherungspolice", "nachtrag zum versicherungsschein"],
+      "keywords": ["versicherungsnummer", "versicherungsnehmer", "versicherungsbeginn", "versicherungsbeitrag"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "insurance_letter", "label": "Versicherungsschreiben",
+      "category": "Versicherungen", "document_type": "Versicherungsschreiben",
+      "strong_keywords": ["schadenmeldung", "leistungsabrechnung", "beitragsanpassung"],
+      "keywords": ["versicherung", "vertragsnummer", "schadennummer", "versicherungsnehmer"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "health_insurance", "label": "Krankenkassenschreiben",
+      "category": "Gesundheit", "document_type": "Krankenkassenschreiben",
+      "strong_keywords": ["krankenversichertennummer", "mitgliedsbescheinigung", "versicherungsbescheinigung"],
+      "keywords": ["krankenkasse", "versichertennummer", "mitgliedschaft", "pflegeversicherung"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "medical_report", "label": "Arztbericht oder Befund",
+      "category": "Gesundheit", "document_type": "Arztberichte und Befunde",
+      "strong_keywords": ["arztbrief", "befundbericht", "entlassungsbericht", "laborbefund"],
+      "keywords": ["patient", "diagnose", "anamnese", "therapie", "befund"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "rental_contract", "label": "Mietvertrag",
+      "category": "Wohnen", "document_type": "Mietverträge",
+      "strong_keywords": ["mietvertrag", "wohnraummietvertrag"],
+      "keywords": ["vermieter", "mieter", "mietbeginn", "kaltmiete", "mietsache"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "housing_defect_documentation", "label": "Mängeldokumentation",
+      "category": "Wohnen", "document_type": "Instandhaltung",
+      "strong_keywords": ["mängeldokumentation", "mängelanzeige", "dokumentation des mangels", "dokumentation der mängel"],
+      "keywords": ["hausverwaltung", "vermieter", "wohnung", "warmwasserversorgung", "mangel besteht", "instandsetzung", "reparatur"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "service_charge", "label": "Nebenkostenabrechnung",
+      "category": "Wohnen", "document_type": "Nebenkostenabrechnungen",
+      "strong_keywords": ["betriebskostenabrechnung", "nebenkostenabrechnung", "hausgeldabrechnung"],
+      "keywords": ["abrechnungszeitraum", "heizkosten", "betriebskosten", "vorauszahlungen"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "energy_order_confirmation", "label": "Auftragseingangsbestätigung Energie",
+      "category": "Wohnen", "document_type": "Energieverträge",
+      "strong_keywords": ["auftragseingangsbestätigung strombelieferung", "auftragseingangsbestätigung gasbelieferung"],
+      "keywords": ["auftragsnummer", "voraussichtlicher liefertermin", "abnahmestelle", "zählernummer", "tarif"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "energy_bill", "label": "Energieabrechnung",
+      "category": "Wohnen", "document_type": "Energieabrechnungen",
+      "strong_keywords": ["stromabrechnung", "gasabrechnung", "jahresverbrauchsabrechnung"],
+      "keywords": ["zählernummer", "zählerstand", "verbrauchsstelle", "kilowattstunden", "abschlagszahlung"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "telecommunication", "label": "Telekommunikationsvertrag oder -abrechnung",
+      "category": "Verträge und Abonnements", "document_type": "Telekommunikation",
+      "strong_keywords": ["mobilfunkvertrag", "internetvertrag", "festnetzvertrag"],
+      "keywords": ["rufnummer", "tarif", "vertragslaufzeit", "datenvolumen", "anschlussinhaber"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "marriage_certificate", "label": "Eheurkunde",
+      "category": "Identität und Urkunden", "document_type": "Eheurkunde",
+      "strong_keywords": ["eheurkunde", "heiratsurkunde", "niederschrift über die eheschließung"],
+      "keywords": ["standesamt", "registernummer", "ehemann", "ehefrau", "ehegatte"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "birth_certificate", "label": "Geburtsurkunde",
+      "category": "Identität und Urkunden", "document_type": "Geburtsurkunden",
+      "strong_keywords": ["geburtsurkunde", "beglaubigter ausdruck aus dem geburtenregister", "auszug aus dem geburtenregister"],
+      "keywords": ["standesamt", "geburtenregister", "tag der geburt", "ort der geburt", "eltern"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "identity_document", "label": "Identitätsdokument",
+      "category": "Identität und Urkunden", "document_type": "Identitätsdokumente",
+      "strong_keywords": ["personalausweis", "reisepass", "meldebescheinigung", "identity card", "date of expiry", "idd<<"],
+      "keywords": ["staatsangehörigkeit", "nationality", "geburtsort", "place of birth", "ausstellungsbehörde", "gültig bis", "given names"],
+      "negative_keywords": ["renteninformation"]
+    },
+    {
+      "id": "pension_information", "label": "Renteninformation",
+      "category": "Rentenversicherung", "document_type": "Renteninformationen",
+      "strong_keywords": ["renteninformation"],
+      "keywords": ["deutsche rentenversicherung", "rentenversicherungsnummer", "regelaltersrente", "rentenanpassung"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "advisory_contract", "label": "Beratungsvertrag",
+      "category": "Verträge und Abonnements", "document_type": "Allgemeine Verträge",
+      "strong_keywords": ["beratungsvertrag"],
+      "keywords": ["auftraggeber", "berater", "beratung", "honorar"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "postnatal_course_certificate", "label": "Teilnahmebescheinigung Rückbildungskurs",
+      "category": "Gesundheit", "document_type": "Kurse und Therapien",
+      "strong_keywords": ["rückbildungskurs"],
+      "keywords": ["teilnahmebescheinigung", "kurs", "hebamme", "krankenkasse"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "certificate_of_conduct", "label": "Führungszeugnis",
+      "category": "Behörden und Leistungen", "document_type": "Führungszeugnisse",
+      "strong_keywords": ["führungszeugnis", "certificate of conduct", "extrait du casier judiciaire"],
+      "keywords": ["bundesamt für justiz", "keine eintragung", "no record", "néant", "verarbeitungsdaten"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "child_benefit", "label": "Kindergeld",
+      "category": "Behörden und Leistungen", "document_type": "Kindergeld",
+      "strong_keywords": ["kindergeldbescheid", "festsetzung von kindergeld", "familienkasse"],
+      "keywords": ["kindergeldnummer", "kindergeld", "berechtigter", "kind"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "school_childcare", "label": "Schule oder Betreuung",
+      "category": "Kita Schule und Bildung", "document_type": "Schule und Betreuung",
+      "strong_keywords": ["schulzeugnis", "schulanmeldung", "betreuungsvertrag", "kitavertrag"],
+      "keywords": ["schüler", "klasse", "kindertagesstätte", "erziehungsberechtigte", "schuljahr"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "vehicle_document", "label": "Fahrzeugdokument",
+      "category": "Fahrzeuge und Mobilität", "document_type": "Fahrzeugdokumente",
+      "strong_keywords": ["zulassungsbescheinigung", "kfz-steuerbescheid", "hauptuntersuchung"],
+      "keywords": ["kennzeichen", "fahrzeug-identifizierungsnummer", "halter", "erstzulassung"],
+      "support_with_strong": 1
+    },
+    {
+      "id": "general_contract", "label": "Vertrag",
+      "category": "Verträge und Abonnements", "document_type": "Allgemeine Verträge",
+      "strong_keywords": ["vertragsurkunde", "vertragsbestätigung", "kündigungsbestätigung"],
+      "keywords": ["vertragspartner", "vertragsnummer", "vertragsbeginn", "laufzeit", "kündigungsfrist"],
+      "support_with_strong": 2
+    },
+    {
+      "id": "invoice", "label": "Rechnung",
+      "category": "Buchhaltung", "document_type": "Rechnung",
+      "keywords": ["rechnung", "rechnungsnummer", "invoice", "zahlbar bis", "fällig", "zahlungsbedingungen", "gesamtbetrag", "amount due"]
     }
   ]
 }

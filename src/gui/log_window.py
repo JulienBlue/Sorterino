@@ -2,21 +2,15 @@ import customtkinter as ctk
 from tkinter import messagebox
 
 from src.config import Config
+from src.gui.embedded import EmbeddedPage
 
 
-class LogWindow(ctk.CTkToplevel):
+class LogWindow(EmbeddedPage):
+    help_context = "logs"
 
     # CONFIG / INIT
     def __init__(self, master=None):
         super().__init__(master)
-
-        self.lift()
-        self.focus_force()
-        self.attributes("-topmost", True)
-        self.after(200, lambda: self.attributes("-topmost", False))
-
-        self.title("Logs")
-        self.geometry("1400x450")
 
         config = Config()
 
@@ -25,15 +19,13 @@ class LogWindow(ctk.CTkToplevel):
                 "Fehler",
                 "Kein Speicherort konfiguriert.\nBitte zuerst einen Speicherort setzen."
             )
-            self.destroy()
             return
 
         self.log_dir = config.runtime_root / "logs"
 
         self._after_id = None
 
-        self.protocol("WM_DELETE_WINDOW", self._on_close)
-
+        ctk.CTkLabel(self, text="Protokoll", font=("Arial", 22, "bold")).pack(anchor="w", padx=20, pady=(18, 4))
         self.create_ui()
         self.update_logs()
 
@@ -78,3 +70,12 @@ class LogWindow(ctk.CTkToplevel):
             self._after_id = None
 
         self.destroy()
+
+    def destroy(self):
+        if self._after_id is not None:
+            try:
+                self.after_cancel(self._after_id)
+            except Exception:
+                pass
+            self._after_id = None
+        super().destroy()

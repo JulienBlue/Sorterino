@@ -15,11 +15,20 @@ __pycache__/
 dist/
 build/
 installer_output/
+installer/*.exe
+output/
+
+# Lokale Hilfsskripte außerhalb von Sorterino
+tools/create_floorplan_expose_v2.py
+
+# Lokale OAuth-Registrierung für offizielle Release-Builds
+src/oauth_release_config.py
 
 # -------------------------
 # IDE
 # -------------------------
 .vscode/
+.agents/
 
 # -------------------------
 # OS
@@ -31,9 +40,3 @@ Thumbs.db
 # Third-Party / External
 # -------------------------
 third_party/
-
-# -------------------------
-# Dev Zeug
-# -------------------------
-.agents/
-docs/

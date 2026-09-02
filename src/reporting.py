@@ -82,6 +82,8 @@ class DailyReportManager:
                     "original_name": e.get("original_name"),
                     "final_name": e.get("final_name"),
                     "target_folder": e.get("target_folder"),
+                    "profile_id": e.get("profile_id"),
+                    "person_ids": e.get("person_ids", []),
                 }
                 for e in events
             ],

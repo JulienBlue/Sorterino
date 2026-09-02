@@ -2,17 +2,23 @@ import sys
 import tempfile
 import os
 import json
+import threading
+from pathlib import Path
 
 from src.config import Config
 from src.initialize_workspace import initialize_workspace
 
-from src.storage_utils import FolderDocumentSource, FilesystemStorage
+from src.storage_utils import FileDocumentSource, FolderDocumentSource, FilesystemStorage
 from src.tesseract_ocr import TesseractOCR
+from src.document_text_extractor import DocumentTextExtractor
 from src.logger import FileLogger
 from src.document_pipeline import DocumentPipeline
 from src.mail_fetcher import fetch_attachments
+from src.profile_service import ProfileService, ProfileValidationError
 
 _pipeline_running = False
+_pipeline_lock = threading.Lock()
+_pipeline_stop_requested = threading.Event()
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), "sorterino.lock")
 
@@ -45,16 +51,45 @@ def load_json_safe(path, fallback):
         return fallback
 
 
+def _load_profile_service(config, logger):
+    settings = config.get("profile_system") or {}
+    try:
+        service = ProfileService(config)
+        if not service.list_profiles():
+            return None
+
+        # Existing profiles are the source of truth.  Older or partially
+        # written settings may still say that the profile system is disabled;
+        # silently honoring that flag would archive documents without their
+        # profile/person prefix.
+        if not settings.get("enabled"):
+            repaired_settings = dict(settings)
+            repaired_settings["enabled"] = True
+            try:
+                config.set("profile_system", repaired_settings)
+                logger.info("Profilverwaltung automatisch aktiviert")
+            except OSError as exc:
+                logger.warning(
+                    "Profilverwaltung konnte nicht dauerhaft aktiviert werden: "
+                    f"{exc}"
+                )
+        return service
+    except ProfileValidationError as exc:
+        logger.warning(f"Profilverwaltung deaktiviert: {exc}")
+        return None
+
+
 
 # PIPELINE / RUN
-def run_pipeline() -> None:
+def run_pipeline(document_path=None) -> None:
     global _pipeline_running
 
-    if _pipeline_running:
+    if not _pipeline_lock.acquire(blocking=False):
         print("[INFO] Pipeline läuft bereits")
         return
 
     _pipeline_running = True
+    _pipeline_stop_requested.clear()
 
     try:
         config = load_config_safe()
@@ -71,14 +106,16 @@ def run_pipeline() -> None:
         rules_data = load_json_safe(config.rules_path, {})
 
         logger = FileLogger(config.logs_root)
+        profile_service = _load_profile_service(config, logger)
 
         
         # MAIL (IMMER ZUERST, GENAU 1x)
         
-        try:
-            fetch_attachments(config)
-        except Exception as e:
-            print(f"[MAIL ERROR] {e}")
+        if document_path is None:
+            try:
+                fetch_attachments(config, profile_service)
+            except Exception as e:
+                print(f"[MAIL ERROR] {e}")
 
         
         # OCR (OPTIONAL)
@@ -95,22 +132,36 @@ def run_pipeline() -> None:
         except Exception as e:
             print(f"[OCR WARNING] OCR deaktiviert: {e}")
 
+        document_extractor = DocumentTextExtractor(ocr_service, logger)
+
         
         # PIPELINE SETUP
         runtime_storage = FilesystemStorage(config.runtime_root)
         archive_storage = FilesystemStorage(config.user_path)
 
-        source = FolderDocumentSource(config.incoming_root)
+        if document_path is None:
+            source = FolderDocumentSource(config.incoming_root)
+        else:
+            selected = Path(document_path).resolve()
+            incoming_root = Path(config.incoming_root).resolve()
+            try:
+                selected.relative_to(incoming_root)
+            except ValueError:
+                logger.warning("Einzeldokument liegt nicht im Eingangsordner")
+                return
+            source = FileDocumentSource(selected)
 
         pipeline = DocumentPipeline(
             config=config,
             sources=[source],
-            ocr_service=ocr_service,
+            ocr_service=document_extractor,
             runtime_storage=runtime_storage,
             archive_storage=archive_storage,
             logger=logger,
             rules=rules_data,
-            structure=load_json_safe(config.structure_path, {})
+            structure=load_json_safe(config.structure_path, {}),
+            profile_service=profile_service,
+            stop_requested=_pipeline_stop_requested.is_set,
         )
 
         # RUN
@@ -124,6 +175,19 @@ def run_pipeline() -> None:
 
     finally:
         _pipeline_running = False
+        _pipeline_lock.release()
+
+
+def is_pipeline_running() -> bool:
+    return _pipeline_running
+
+
+def request_pipeline_stop() -> bool:
+    """Request a cooperative stop at the next safe pipeline checkpoint."""
+    if not _pipeline_running:
+        return False
+    _pipeline_stop_requested.set()
+    return True
 
 
 
