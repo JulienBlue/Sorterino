@@ -1,10 +1,38 @@
 import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from src.gui.main_window import MainWindow
 
 
 class ProfileNavigationTests(unittest.TestCase):
+    def test_profile_detail_replacement_uses_stable_body_container(self):
+        host = object()
+        previous = Mock()
+        replacement = Mock()
+        window = Mock()
+        window.detail_host = host
+        window.detail = previous
+        window._render_profile_detail = Mock()
+
+        profile_module = __import__(
+            "src.gui.profile_window", fromlist=["ProfileWindow"]
+        )
+        with patch.object(
+            profile_module.ctk,
+            "CTkScrollableFrame",
+            return_value=replacement,
+        ) as scrollable_frame:
+            profile_module.ProfileWindow.show_profile(window, "family_123")
+
+        scrollable_frame.assert_called_once_with(host, label_text="Details")
+        window._render_profile_detail.assert_called_once_with("family_123")
+        replacement.pack.assert_called_once_with(
+            side="left", fill="both", expand=True, padx=(0, 10), pady=10
+        )
+        replacement.lift.assert_called_once_with()
+        previous.destroy.assert_called_once_with()
+
     def test_profiles_menu_opens_profile_manager_directly(self):
         calls = []
 

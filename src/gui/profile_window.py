@@ -313,6 +313,7 @@ class ProfileWindow(EmbeddedPage):
 
         body = ctk.CTkFrame(self)
         body.pack(fill="both", expand=True, padx=30, pady=(0, 24))
+        self.detail_host = body
         sidebar_column = ctk.CTkFrame(body, width=300, fg_color="transparent")
         sidebar_column.pack(side="left", fill="y", padx=10, pady=10)
         sidebar_column.pack_propagate(False)
@@ -371,7 +372,7 @@ class ProfileWindow(EmbeddedPage):
 
     def show_profile(self, profile_id):
         previous_detail = self.detail
-        next_detail = ctk.CTkScrollableFrame(previous_detail.master, label_text='Details')
+        next_detail = ctk.CTkScrollableFrame(self.detail_host, label_text="Details")
         self.detail = next_detail
         try:
             self._render_profile_detail(profile_id)
@@ -379,7 +380,7 @@ class ProfileWindow(EmbeddedPage):
             next_detail.destroy()
             self.detail = previous_detail
             raise
-        next_detail.pack(side='left', fill='both', expand=True, padx=(0, 10), pady=10)
+        next_detail.pack(side="left", fill="both", expand=True, padx=(0, 10), pady=10)
         next_detail.lift()
         previous_detail.destroy()
 

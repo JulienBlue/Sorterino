@@ -1123,28 +1123,22 @@ class MainWindow(ctk.CTkToplevel):
         self._settings_section(scroll, "Texterkennung")
         tess_ready = bool(getattr(self.config, "tesseract_path", None) and self.config.tesseract_path.exists())
         poppler_ready = bool(getattr(self.config, "poppler_path", None) and self.config.poppler_path.exists())
-        ctk.CTkLabel(scroll, text=f"Texterkennung: {'Bereit' if tess_ready else 'Nicht verfügbar'}").pack(anchor="w", padx=16, pady=3)
-        ctk.CTkLabel(scroll, text=f"PDF-Unterstützung: {'Bereit' if poppler_ready else 'Nicht verfügbar'}").pack(anchor="w", padx=16, pady=3)
-        ctk.CTkLabel(scroll, text="Word, ODT, RTF, TXT und E-Mail-Dateien: Bereit").pack(anchor="w", padx=16, pady=3)
         try:
             from pillow_heif import register_heif_opener as _heif_opener
             heic_ready = bool(_heif_opener)
         except ImportError:
             heic_ready = False
-        ctk.CTkLabel(
-            scroll,
-            text=f"HEIC/HEIF-Unterstützung: {'Bereit' if heic_ready else 'Nicht verfügbar'}",
-        ).pack(anchor="w", padx=16, pady=3)
-        from src.document_text_extractor import DocumentTextExtractor
-        legacy_word_ready = bool(DocumentTextExtractor._find_soffice())
-        ctk.CTkLabel(
-            scroll,
-            text=(
-                "Alte Word-Dateien (.doc): Bereit"
-                if legacy_word_ready
-                else "Alte Word-Dateien (.doc): LibreOffice fehlt – DOCX empfohlen"
-            ),
-        ).pack(anchor="w", padx=16, pady=3)
+        format_states = (
+            ("PDF-Dateien (PDF und Scans)", tess_ready and poppler_ready),
+            ("Textdokumente (Word, ODT, RTF, TXT und Pages)", True),
+            ("Bilddateien (JPG, PNG, TIFF, WebP, HEIC und HEIF)", tess_ready and heic_ready),
+            ("E-Mail-Dateien (EML und MSG)", True),
+        )
+        for label, ready in format_states:
+            ctk.CTkLabel(
+                scroll,
+                text=f"{label}: {'Bereit' if ready else 'Nicht vollständig verfügbar'}",
+            ).pack(anchor="w", padx=16, pady=3)
 
         self._settings_section(scroll, "Erweitert")
         ctk.CTkButton(scroll, text="Technische Konfiguration", command=self._open_advanced_settings).pack(anchor="w", padx=16, pady=6)

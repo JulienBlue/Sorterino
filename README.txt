@@ -137,9 +137,9 @@ DOKUMENTENABLAUF
 
 Die Originaldatei und ihre Dateiendung bleiben bei jeder Verarbeitung erhalten.
 Temporäre Vorschauen oder Konvertierungen dienen ausschließlich der lokalen
-Analyse. Makros werden nicht ausgeführt. Eine Pages-Datei ohne Vorschau sowie
-eine alte `.doc`-Datei ohne lokale LibreOffice-Installation landen unter
-„Zu prüfen“, statt unsicher verarbeitet zu werden.
+Analyse. Makros werden nicht ausgeführt. Eine Pages-Datei ohne Vorschau landet
+unter „Zu prüfen“. Alte `.doc`-Dateien werden bevorzugt über LibreOffice und
+ansonsten über die integrierte lokale Textwiederherstellung gelesen.
 
 Während einer Verarbeitung erscheint oben rechts „Verarbeitung stoppen“.
 Dieser kooperative Stopp wartet einen laufenden sicheren Lese- oder OCR-Schritt

@@ -260,9 +260,7 @@ class DocumentTextExtractor:
     def _extract_legacy_doc(self, path):
         soffice = self._find_soffice()
         if not soffice:
-            raise DocumentNeedsReview(
-                "Alte Word-Dateien (.doc) benötigen LibreOffice. Speichere die Datei alternativ als .docx."
-            )
+            return self._extract_legacy_doc_fallback(path)
         with tempfile.TemporaryDirectory(prefix="sorterino-doc-") as temp_dir:
             libreoffice_profile = (Path(temp_dir) / "libreoffice-profile").resolve().as_uri()
             command = [
@@ -288,9 +286,81 @@ class DocumentTextExtractor:
             )
             converted = Path(temp_dir) / f"{path.stem}.docx"
             if result.returncode or not converted.exists():
-                details = (result.stderr or result.stdout or "Konvertierung fehlgeschlagen").strip()
-                raise DocumentNeedsReview(f"Die alte Word-Datei konnte nicht konvertiert werden: {details}")
+                return self._extract_legacy_doc_fallback(path)
             return self._extract_docx(converted)
+
+    @classmethod
+    def _extract_legacy_doc_fallback(cls, path):
+        """Recover readable text from a classic Word OLE container.
+
+        The fallback deliberately reads streams only. It does not start Word,
+        execute macros or interpret embedded objects. LibreOffice remains the
+        preferred path because it understands the complete binary Word format.
+        """
+        try:
+            import olefile
+        except ImportError as exc:
+            raise DocumentNeedsReview(
+                "Die alte Word-Datei kann auf diesem System nicht gelesen werden."
+            ) from exc
+        try:
+            archive = olefile.OleFileIO(str(path))
+        except Exception as exc:
+            raise DocumentNeedsReview(
+                "Die alte Word-Datei ist beschädigt, verschlüsselt oder kein gültiges DOC-Dokument."
+            ) from exc
+        try:
+            preferred = {"worddocument", "0table", "1table"}
+            streams = [
+                parts for parts in archive.listdir(streams=True, storages=False)
+                if parts and parts[-1].casefold() in preferred
+            ]
+            streams.sort(key=lambda parts: parts[-1].casefold() != "worddocument")
+            payloads = []
+            total = 0
+            for parts in streams:
+                payload = archive.openstream(parts).read(MAX_ARCHIVE_ENTRY_BYTES + 1)
+                if len(payload) > MAX_ARCHIVE_ENTRY_BYTES:
+                    raise DocumentExtractionError("Das alte Word-Dokument ist ungewöhnlich groß.")
+                total += len(payload)
+                if total > MAX_ARCHIVE_TOTAL_BYTES:
+                    raise DocumentExtractionError("Das alte Word-Dokument ist ungewöhnlich groß.")
+                payloads.append(payload)
+        finally:
+            archive.close()
+
+        text = cls._recover_legacy_doc_strings(payloads)
+        letter_count = sum(character.isalpha() for character in text)
+        if letter_count < 20:
+            raise DocumentNeedsReview(
+                "Aus der alten Word-Datei konnte kein verlässlicher Text gelesen werden."
+            )
+        return text
+
+    @staticmethod
+    def _recover_legacy_doc_strings(payloads):
+        candidates = []
+        seen = set()
+        unicode_pattern = re.compile(rb"(?:[\x20-\xff]\x00){4,}")
+        ansi_pattern = re.compile(rb"[\x20-\x7e\x80-\xff]{4,}")
+
+        for stream_index, payload in enumerate(payloads):
+            matches = []
+            for match in unicode_pattern.finditer(payload):
+                matches.append((match.start(), match.group().decode("utf-16-le", errors="ignore")))
+            for match in ansi_pattern.finditer(payload):
+                matches.append((match.start(), match.group().decode("cp1252", errors="ignore")))
+            for offset, value in sorted(matches):
+                value = _normalized_text(value)
+                if len(value) < 4 or sum(char.isalpha() for char in value) < 3:
+                    continue
+                folded = value.casefold()
+                if folded in seen:
+                    continue
+                seen.add(folded)
+                candidates.append((stream_index, offset, value))
+        candidates.sort(key=lambda item: (item[0], item[1]))
+        return _normalized_text("\n".join(value for _stream, _offset, value in candidates))
 
     @staticmethod
     def _find_soffice():

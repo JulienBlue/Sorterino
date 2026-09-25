@@ -321,9 +321,10 @@ Scans erhalten bei wenig Dokumenttext einen OCR-Fallback. TXT unterstützt BOM,
 UTF-8, UTF-16 und Windows-1252, RTF wird ohne aktive Inhalte gelesen. EML und
 MSG liefern Kopfzeilen, Nachrichtentext, Anhangsnamen und begrenzt den Text
 unterstützter Anhänge. Pages verwendet ausschließlich eine enthaltene PDF- oder
-Bildvorschau. Alte DOC-Dateien werden nur über LibreOffice im Headless-/Safe-
-Mode temporär in DOCX konvertiert. Originale werden nie verändert und Makros
-nie ausgeführt.
+Bildvorschau. Alte DOC-Dateien werden bevorzugt über LibreOffice im Headless-/
+Safe-Mode temporär in DOCX konvertiert. Ohne LibreOffice gewinnt ein passiver
+OLE-Fallback ANSI- und Unicode-Text aus dem Dokument zurück. Originale werden
+nie verändert und Makros nie ausgeführt.
 
 
 MANUELLE PRÜFUNG

@@ -32,7 +32,7 @@ HELP_CONTENT = {
             "Auftragseingangsbestätigungen für Strom oder Gas sind Energieverträge und keine Rechnungen; Verbrauchswerte in kWh werden nicht als Geldbetrag behandelt.",
             "Fehler: Textextraktion, Dateiformat oder Speicherung ist technisch fehlgeschlagen.",
             "Unterstützt werden PDF, Word, ODT, RTF, TXT, Pages, EML, MSG sowie gängige Bild- und Scanformate einschließlich TIFF, WebP und HEIC.",
-            "Pages ohne eingebettete Vorschau und alte DOC-Dateien ohne LibreOffice werden sicher unter „Zu prüfen“ abgelegt.",
+            "Alte DOC-Dateien werden bevorzugt über LibreOffice und ansonsten mit der integrierten lokalen Texterkennung gelesen.",
             "Die Originaldatei bleibt bei ungeklärten Fällen erhalten.",
             "Verarbeitung, Dateiimport und Eingangsordner erreichst du dauerhaft unten links oder über das Tray-Menü.",
         ],

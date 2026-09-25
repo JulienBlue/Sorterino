@@ -50,8 +50,9 @@ class DocumentTextExtractorTests(unittest.TestCase):
 
     def test_priority_one_extensions_are_centralized(self):
         self.assertTrue({
-            ".docx", ".docm", ".doc", ".odt", ".rtf", ".txt", ".pages",
-            ".eml", ".msg", ".tif", ".tiff", ".webp", ".heic", ".heif",
+            ".pdf", ".docx", ".docm", ".doc", ".odt", ".rtf", ".txt",
+            ".pages", ".eml", ".msg", ".jpg", ".jpeg", ".png", ".tif",
+            ".tiff", ".webp", ".heic", ".heif",
         }.issubset(SUPPORTED_EXTENSIONS))
 
     def test_extracts_docx_body_headers_and_core_properties(self):
@@ -137,13 +138,30 @@ class DocumentTextExtractorTests(unittest.TestCase):
         with self.assertRaisesRegex(DocumentNeedsReview, "passwortgeschützt"):
             self.extractor.extract_text(path)
 
-    def test_old_doc_without_libreoffice_goes_to_manual_review(self):
+    def test_old_doc_without_libreoffice_uses_integrated_fallback(self):
         path = self.root / "Alt.doc"
         path.write_bytes(bytes.fromhex("D0CF11E0A1B11AE1") + b"old-word")
 
-        with patch.object(DocumentTextExtractor, "_find_soffice", return_value=None):
-            with self.assertRaisesRegex(DocumentNeedsReview, "LibreOffice"):
-                self.extractor.extract_text(path)
+        with patch.object(DocumentTextExtractor, "_find_soffice", return_value=None), patch.object(
+            DocumentTextExtractor,
+            "_extract_legacy_doc_fallback",
+            return_value="Kündigung des Versicherungsvertrags",
+        ) as fallback:
+            text = self.extractor.extract_text(path)
+
+        self.assertEqual(text, "Kündigung des Versicherungsvertrags")
+        fallback.assert_called_once_with(path)
+
+    def test_old_doc_recovers_ansi_and_unicode_text_segments(self):
+        payloads = [
+            b"binary\x00" + "Arbeitsvertrag Beispiel GmbH".encode("utf-16-le"),
+            b"\x01\x02Kundennummer 4711 und Beginn 01.02.2026\x00",
+        ]
+
+        text = DocumentTextExtractor._recover_legacy_doc_strings(payloads)
+
+        self.assertIn("Arbeitsvertrag Beispiel GmbH", text)
+        self.assertIn("Kundennummer 4711", text)
 
     def test_eml_extracts_headers_html_and_supported_attachment(self):
         message = EmailMessage()
