@@ -419,11 +419,13 @@ class DomainDocumentExtractors:
             "document_kind": "Korrektur Gehaltsabrechnung" if correction else "Entgeltabrechnung",
         }
 
-    def _extract_tax_document(self, text, classification_reason=None):
+    def _extract_tax_document(self, text, classification_reason=None, filename=""):
         lower = text.casefold()
         confirmation = "versandbestätigung" in lower and "formular wurde versendet" in lower
         tax_year = None
         for pattern in (
+            r"bescheid\s+f(?:ü|u|ue)r\s+(20\d{2})\s+(?:ü|u|ue)ber\s+einkommensteuer",
+            r"f(?:ü|u|ue)r\s+(20\d{2})\s+(?:ü|u|ue)ber\s+einkommensteuer",
             r"einkommensteuererklärung\s+für\s+das\s+jahr\s+(20\d{2})",
             r"einkommensteuererkl.rung\s+für\s+das\s+jahr\s+(20\d{2})",
             r"hauptvordruck\s+est\s*1\s*a[\s\S]{0,80}\b(20\d{2})\b",
@@ -493,6 +495,12 @@ class DomainDocumentExtractors:
             section = "01 Steuererklärung"
 
         if not tax_year:
+            filename_years = re.findall(r"(?<!\d)(20\d{2})(?!\d)", filename)
+            tax_year = filename_years[-1] if filename_years else None
+        if not tax_year and kind != "Einkommensteuerbescheid":
+            # Steuerbescheide enthalten häufig ältere Vergleichsjahre,
+            # Aktenzeichen und Gesetzeszitate. Dort wäre das erste Jahr
+            # kein belastbarer Ersatz für das Veranlagungsjahr.
             years = re.findall(r"\b(20\d{2})\b", text)
             tax_year = years[0] if years else None
         return {

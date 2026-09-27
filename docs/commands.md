@@ -87,13 +87,13 @@ Windows-Installer erzeugen:
 
 Erforderliche SHA-256-Datei für den eingebauten Updater erzeugen:
 
-    python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2beta1.exe
+    python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2.2beta.exe
 
 Danach liegen die Ergebnisse hier:
 
     dist\Sorterino\Sorterino.exe
-    installer\Sorterino_Setup_v2.2beta1.exe
-    installer\Sorterino_Setup_v2.2beta1.exe.sha256
+    installer\Sorterino_Setup_v2.2.2beta.exe
+    installer\Sorterino_Setup_v2.2.2beta.exe.sha256
 
 Für einen vollständigen Build werden außerdem diese lokalen Laufzeiten benötigt:
 
@@ -116,6 +116,11 @@ Die Sorterino.spec gehört zum Projekt und bleibt bestehen.
 
 ## Release-Check
 
+Beta-Builds verwenden immer drei Ziffern im Format `Major.Minor.Patchbeta`.
+Jeder neu veröffentlichte Test-Build erhöht die Patch-Zahl, beispielsweise
+`2.2.1beta`, `2.2.2beta` und `2.2.3beta`. Das nächste stabile Ziel nach der
+2.2-Betareihe ist `2.3`.
+
 1. Version und Herausgeber in installer.iss kontrollieren.
 2. LICENSE, Programmsymbol, Tesseract und Poppler prüfen.
 3. Tests und Compile-Prüfung ausführen.
@@ -137,15 +142,15 @@ Die Deinstallation wird über `Sorterino_Uninstaller` gestartet. Die eigene
 Auswahlseite ersetzt die zusätzliche Standard-Rückfrage. Dokumentarchive,
 Eingang und Backups sind dort sichtbar als „bleiben erhalten“ gekennzeichnet.
 
-Beispiel für Version v2.2beta1:
+Beispiel für Version v2.2.2beta:
 
     git status --short
     git add -A
     git diff --cached
-    git commit -m "release: v2.2beta1"
-    git tag -a v2.2beta1 -m "Sorterino v2.2beta1"
+    git commit -m "release: v2.2.2beta"
+    git tag -a v2.2.2beta -m "Sorterino v2.2.2beta"
     git push origin main
-    git push origin v2.2beta1
+    git push origin v2.2.2beta
 
 Der zur Version gehörende Installer wird zusammen mit dem Release-Commit versioniert.
 

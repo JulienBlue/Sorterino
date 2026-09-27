@@ -221,7 +221,12 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
             extracted.update(self._extract_payroll_statement(text, document.filename))
 
         if classification.document_type == "Einkommensteuer":
-            extracted.update(self._extract_tax_document(text, classification.reason))
+            extracted.update(
+                self._extract_tax_document(text, classification.reason, document.filename)
+            )
+
+        if classification.reason == "Anzeigenbescheinigung":
+            extracted.update(self._extract_police_report(text))
 
         if classification.document_type == "Eingangsrechnungen":
             extracted.update(self._extract_supplier_invoice_fields(text))
@@ -272,6 +277,16 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
 
         if classification.document_type == "Bewerbungen":
             extracted.update(self._extract_job_application(text))
+            if classification.reason == "Bewerbungsunterlagen":
+                extracted.update({
+                    "amount": None,
+                    "currency": None,
+                    "vendor": "Bundesamt für Verfassungsschutz"
+                    if "bundesamt für verfassungsschutz" in text_lower else None,
+                    "prospective_employer": "Bundesamt für Verfassungsschutz"
+                    if "bundesamt für verfassungsschutz" in text_lower else None,
+                    "document_kind": "Bewerbungsunterlagen",
+                })
 
         if classification.document_type == "Eheurkunde":
             extracted.update(self._extract_marriage_certificate(text))

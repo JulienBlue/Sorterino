@@ -226,6 +226,62 @@ Die monatliche Arbeitszeit im Rahmen des Auftrags beträgt 120,00 Stunden.
         self.assertEqual(target.parts[:5], ("Finanzamt und Steuern", "Einkommensteuer", "2026", "05 Steuerbescheide", "2026-08-09 - Einkommensteuerbescheid.pdf"))
         self.assertIn("Einkommensteuerbescheid", target.name)
 
+    def test_tax_notice_prefers_labeled_tax_year_over_earlier_reference_year(self):
+        text = """
+17 3C5D AF70 BB 2003 AE72
+Bescheid für 2024 über Einkommensteuer, Solidaritätszuschlag
+Steuernummer 216/2232/4020
+vom 09.02.2026
+Rechtsbehelfsbelehrung
+"""
+        document, classification = self.analyze(
+            text, "Hirte - Einkommenssteuerbescheid 2024.pdf"
+        )
+        self.assertEqual(classification.document_type, "Einkommensteuer")
+        self.assertEqual(document.extracted_data["tax_year"], "2024")
+        target = StoragePathBuilder(self.structures["family"]).build(document)
+        self.assertEqual(target.parts[2:4], ("2024", "05 Steuerbescheide"))
+
+    def test_classifies_police_report_as_legal_correspondence(self):
+        text = """
+Polizeipräsidium Köln
+Aktenzeichen (Vorgangskennung des Hauptvorgangs)
+260915-1851-IP6033
+Bescheinigung über die Erstattung einer Anzeige
+Anzeigenerstattung durch
+Straftat(en)/Verletzte Bestimmung(en), kriminologische Bezeichnung
+Einfacher Diebstahl an Kraftfahrzeugen (§ 242 StGB)
+Ereignisort/ -zeit
+Dienstag, 15.09.2026, 14:00 Uhr
+Köln, 15.09.2026
+"""
+        document, classification = self.analyze(text, "Anzeigenbescheinigung_Haerlin.pdf")
+        self.assertEqual(classification.category, "Rechtliches und Vorsorge")
+        self.assertEqual(classification.document_type, "Rechtliche Korrespondenz")
+        self.assertEqual(document.extracted_data["date"], "15.09.2026")
+        self.assertEqual(document.extracted_data["document_kind"], "Anzeigenbescheinigung")
+        self.assertIsNone(document.extracted_data["amount"])
+        target = StoragePathBuilder(self.structures["family"]).build(document)
+        self.assertIn("Anzeigenbescheinigung - Polizeipräsidium Köln", target.name)
+
+    def test_classifies_recruitment_forms_as_application_documents(self):
+        text = """
+Bundesamt für Verfassungsschutz
+Antrag auf Reisekostenzuschuss für Vorstellungsreisen
+Einladende Organisationseinheit gemäß Einladungsschreiben
+Beginn der Vorstellung
+Bitte alle Arbeitgeber im öffentlichen Dienst angeben
+"""
+        document, classification = self.analyze(
+            text, "2. Anlage InTelligenecDay 2026 Köln.pdf"
+        )
+        self.assertEqual(classification.category, "Arbeit und Karriere")
+        self.assertEqual(classification.document_type, "Bewerbungen")
+        self.assertEqual(document.extracted_data["document_kind"], "Bewerbungsunterlagen")
+        self.assertIsNone(document.extracted_data["amount"])
+        target = StoragePathBuilder(self.structures["adult"]).build(document)
+        self.assertIn("Bewerbungsunterlagen - Bundesamt für Verfassungsschutz", target.name)
+
     def test_extracts_labeled_contract_reference(self):
         document, classification = self.analyze(
             "Vertragsbestätigung Vertragsnummer: AB-2026-4711 Vertragsbeginn Laufzeit Kündigungsfrist"

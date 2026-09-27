@@ -495,6 +495,10 @@ git diff --check
 BUILD UND RELEASE
 -----------------
 
+Beta-Releases verwenden das Format `Major.Minor.Patchbeta`. Bei jedem neuen
+Beta-Build wird die Patch-Zahl erhöht; auf `2.2.2beta` folgt also
+`2.2.3beta`. Das geplante stabile Release dieser Reihe ist `2.3`.
+
 PyInstaller:
 
 pyinstaller Sorterino.spec --noconfirm
@@ -505,7 +509,7 @@ iscc installer.iss
 
 Prüfsumme für den Updater:
 
-python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2beta1.exe
+python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2.2beta.exe
 
 Der sichtbare Einstieg für die Deinstallation heißt `Sorterino_Uninstaller`.
 Er startet Inno Setup ohne dessen zusätzliche Standard-Rückfrage und zeigt
@@ -516,8 +520,8 @@ dem zugehörigen Deinstallationsprotokoll verwaltet.
 Ergebnisse:
 
 - `dist\Sorterino\`
-- `installer\Sorterino_Setup_v2.2beta1.exe`
-- `installer\Sorterino_Setup_v2.2beta1.exe.sha256`
+- `installer\Sorterino_Setup_v2.2.2beta.exe`
+- `installer\Sorterino_Setup_v2.2.2beta.exe.sha256`
 
 Der Updater fragt ausschließlich die GitHub-Releases von
 `JulienBlue/Sorterino` ab. Für ein installierbares Release müssen der Installer

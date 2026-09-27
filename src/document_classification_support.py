@@ -27,6 +27,39 @@ class DocumentClassificationSupport:
                 reason="Grundriss",
             )
 
+        police_report_signals = sum(
+            value in text_lower
+            for value in (
+                "bescheinigung über die erstattung einer anzeige",
+                "anzeigenerstattung durch",
+                "straftat(en)",
+                "ereignisort/ -zeit",
+                "polizeipräsidium",
+            )
+        )
+        if police_report_signals >= 2:
+            return Classification(
+                "Rechtliches und Vorsorge", 0.99, "Rechtliche Korrespondenz",
+                reason="Anzeigenbescheinigung",
+            )
+
+        application_attachment_signals = sum(
+            value in text_lower
+            for value in (
+                "vorstellungsreisen",
+                "beginn der vorstellung",
+                "einstellungshindernis",
+                "personalakte/n",
+                "einladende organisationseinheit",
+                "arbeitgeber im öffentlichen dienst",
+            )
+        )
+        if application_attachment_signals >= 2:
+            return Classification(
+                "Arbeit und Karriere", 0.96, "Bewerbungen",
+                reason="Bewerbungsunterlagen",
+            )
+
         pension_signals = sum(
             value in text_lower
             for value in ("deutsche rentenversicherung", "renteninformation", "rentenversicherungsnummer")
@@ -312,4 +345,36 @@ class DocumentClassificationSupport:
             "document_kind": "Führungszeugnis",
             "record_status": "Keine Eintragung" if no_record else None,
             "processing_reference": reference.group(1) if reference else None,
+        }
+
+    @staticmethod
+    def _extract_police_report(text):
+        event = re.search(
+            r"(?:Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)?,?\s*"
+            r"(\d{2}\.\d{2}\.\d{4})",
+            text,
+            flags=re.IGNORECASE,
+        )
+        issued = re.search(r"Köln,\s*(\d{2}\.\d{2}\.\d{4})", text, re.IGNORECASE)
+        reference = re.search(
+            r"Aktenzeichen[^\r\n]*\r?\n\s*([A-Z0-9-]{8,})",
+            text,
+            flags=re.IGNORECASE,
+        )
+        offence = re.search(
+            r"Straftat\(en\)[^\r\n]*\r?\n\s*([^\r\n]+)",
+            text,
+            flags=re.IGNORECASE,
+        )
+        return {
+            "date": (issued or event).group(1) if (issued or event) else None,
+            "amount": None,
+            "currency": None,
+            "vendor": "Polizeipräsidium Köln"
+            if "polizeipräsidium köln" in text.casefold() else "Polizei",
+            "invoice_number": None,
+            "contract_number": None,
+            "description": offence.group(1).strip() if offence else None,
+            "document_kind": "Anzeigenbescheinigung",
+            "reference_number": reference.group(1) if reference else None,
         }

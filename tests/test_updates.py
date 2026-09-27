@@ -55,7 +55,8 @@ class UpdateTests(unittest.TestCase):
         self.assertLess(parse_version("2.1beta"), parse_version("2.1rc1"))
         self.assertLess(parse_version("2.1rc1"), parse_version("2.1"))
         self.assertLess(parse_version("2.1"), parse_version("2.2beta"))
-        self.assertLess(parse_version("2.2beta"), parse_version("2.2beta1"))
+        self.assertLess(parse_version("2.2.1beta"), parse_version("2.2.2beta"))
+        self.assertLess(parse_version("2.2.2beta"), parse_version("2.3"))
 
     def test_beta_channel_finds_newest_release(self):
         payload = json.dumps([
@@ -68,12 +69,12 @@ class UpdateTests(unittest.TestCase):
 
     def test_stable_channel_ignores_prerelease(self):
         payload = json.dumps([
-            release_payload("2.3beta", digest="sha256:" + "a" * 64),
-            release_payload("2.2", prerelease=False, digest="sha256:" + "b" * 64),
+            release_payload("2.4beta", digest="sha256:" + "a" * 64),
+            release_payload("2.3", prerelease=False, digest="sha256:" + "b" * 64),
         ]).encode()
         service = UpdateService(urlopen=lambda *_args, **_kwargs: FakeResponse(payload))
         result = service.check("stable")
-        self.assertEqual(result.release.version, "2.2")
+        self.assertEqual(result.release.version, "2.3")
 
     def test_release_without_checksum_is_visible_but_not_installable(self):
         payload = json.dumps([release_payload("2.3beta")]).encode()

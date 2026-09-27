@@ -77,7 +77,7 @@ FUNKTIONEN
 SCHNELLSTART – INSTALLIERTE VERSION
 ----------------------------------
 
-1. `Sorterino_Setup_v2.2beta1.exe` starten und die Installation abschließen.
+1. `Sorterino_Setup_v2.2.2beta.exe` starten und die Installation abschließen.
 2. Sorterino öffnen.
 3. Im Willkommensdialog „Standardspeicherort auswählen“ anklicken und den
    gewünschten Ordner im Explorer wählen.

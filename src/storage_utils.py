@@ -553,11 +553,26 @@ class StoragePathBuilder:
                     parts.append(f"{year}-{month}-{day}")
                 except ValueError:
                     parts.append(sanitize(date))
-            parts.append("Bewerbungsanschreiben")
+            parts.append(data.get("document_kind") or "Bewerbungsanschreiben")
             if data.get("job_title"):
                 parts.append(sanitize(data["job_title"]))
             if data.get("prospective_employer"):
                 parts.append(sanitize(data["prospective_employer"]))
+            return " - ".join(parts) + ext
+
+        if doc_type == "Rechtliche Korrespondenz" and data.get("document_kind"):
+            parts = []
+            if date:
+                try:
+                    day, month, year = date.split(".")
+                    parts.append(f"{year}-{month}-{day}")
+                except ValueError:
+                    parts.append(sanitize(date))
+            parts.append(sanitize(data["document_kind"]))
+            if data.get("vendor"):
+                parts.append(sanitize(data["vendor"]))
+            if data.get("reference_number"):
+                parts.append(sanitize(data["reference_number"]))
             return " - ".join(parts) + ext
 
         if doc_type == "Kündigungen":
