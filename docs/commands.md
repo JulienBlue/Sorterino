@@ -85,10 +85,15 @@ Windows-Installer erzeugen:
 
     iscc installer.iss
 
+Erforderliche SHA-256-Datei für den eingebauten Updater erzeugen:
+
+    python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2beta.exe
+
 Danach liegen die Ergebnisse hier:
 
     dist\Sorterino\Sorterino.exe
-    installer\Sorterino_Setup_v2.0beta.exe
+    installer\Sorterino_Setup_v2.2beta.exe
+    installer\Sorterino_Setup_v2.2beta.exe.sha256
 
 Für einen vollständigen Build werden außerdem diese lokalen Laufzeiten benötigt:
 
@@ -120,19 +125,29 @@ Die Sorterino.spec gehört zum Projekt und bleibt bestehen.
 7. Ein Update über eine vorhandene Installation testen.
 8. Profilerstellung, Dokumentregister, Tray, Verarbeitungsstopp und Hilfe prüfen.
 9. Deinstallation testen. Archive, Eingang und Sorterino - Backups müssen erhalten bleiben.
-10. Den fertigen Installer als GitHub-Release veröffentlichen.
+10. Mit `tools\create_release_checksum.py` die zum Installer gehörende
+    `.sha256`-Datei erzeugen.
+11. Installer und gleichnamige `.sha256`-Datei gemeinsam als Assets des
+    GitHub-Releases veröffentlichen. Ohne GitHub-Digest oder Prüfsummendatei
+    zeigt Sorterino das Release an, installiert es aber nicht.
+12. Das veröffentlichte Update aus einer älteren Installation über
+    Einstellungen, Über Sorterino testen.
 
-Beispiel für Version v2.0beta:
+Die Deinstallation wird über `Sorterino_Uninstaller` gestartet. Die eigene
+Auswahlseite ersetzt die zusätzliche Standard-Rückfrage. Dokumentarchive,
+Eingang und Backups sind dort sichtbar als „bleiben erhalten“ gekennzeichnet.
+
+Beispiel für Version v2.2beta:
 
     git status --short
-    git add GEPRÜFTE_DATEIEN
+    git add -A
     git diff --cached
-    git commit -m "release: v2.0beta"
-    git tag -a v2.0beta -m "Sorterino v2.0beta"
+    git commit -m "release: v2.2beta"
+    git tag -a v2.2beta -m "Sorterino v2.2beta"
     git push origin main
-    git push origin v2.0beta
+    git push origin v2.2beta
 
-Die Installer-EXE ist ein Release-Artefakt und gehört nicht in einen normalen Quellcode-Commit.
+Der zur Version gehörende Installer wird zusammen mit dem Release-Commit versioniert.
 
 ## Normaler Git-Ablauf
 

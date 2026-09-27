@@ -6,12 +6,15 @@ from PIL import Image, ImageDraw
 from pathlib import Path
 import customtkinter as ctk
 import ctypes
+import subprocess
+import sys
 from datetime import datetime, time as dt_time
 
 from src.config import Config
 from src.gui.main_window import MainWindow
 from src.initialize_workspace import get_base_path
 from src.reporting import DailyReportManager
+from src.report_mailer import deliver_daily_report
 from src.gui.appearance import apply_appearance
 
 BASE_DIR = get_base_path()
@@ -51,7 +54,11 @@ class TrayApp:
                 self._bring_to_front(self.window)
                 self.window.protocol("WM_DELETE_WINDOW", self._on_window_close)
                 return self.window
-            self.window = MainWindow(master=self._root, config=self.config)
+            self.window = MainWindow(
+                master=self._root,
+                config=self.config,
+                shutdown_callback=self.exit_app,
+            )
             if not self.config.get("user_path"):
                 self.window.show_page("settings")
             self._bring_to_front(self.window)
@@ -143,12 +150,32 @@ class TrayApp:
         self._root.withdraw()
 
         self._root.after(0, self.open_main_window)
+        self._root.after(1800, self._check_for_updates_once)
+        if (
+            self.config.get("developer_mode", False)
+            and self.config.get("developer_console_autostart", True)
+        ):
+            self._root.after(900, self.open_developer_console)
 
         threading.Thread(target=self._monitor_auto_mode, daemon=True).start()
         threading.Thread(target=self._monitor_daily_report, daemon=True).start()
         threading.Thread(target=self.icon.run, daemon=True).start()
 
         self._root.mainloop()
+
+    def open_developer_console(self):
+        try:
+            if getattr(sys, "frozen", False):
+                command = [sys.executable, "--developer-console"]
+            else:
+                command = [sys.executable, "-m", "src.gui.app", "--developer-console"]
+            subprocess.Popen(command, cwd=str(BASE_DIR))
+        except OSError as exc:
+            print(f"[DEVELOPER CONSOLE ERROR] {exc}")
+
+    def _check_for_updates_once(self):
+        if self.window and self.window.winfo_exists():
+            self.window._check_for_updates_at_startup()
 
     def _auto_loop(self):
         import time
@@ -206,6 +233,9 @@ class TrayApp:
                 if not config.logs_root:
                     time.sleep(60)
                     continue
+                if not config.get("daily_report_enabled", True):
+                    time.sleep(60)
+                    continue
 
                 reporter = DailyReportManager(config.logs_root)
 
@@ -223,7 +253,17 @@ class TrayApp:
 
                     if last_date != today.isoformat():
                         reporter.generate_daily_report(today)
-                        reporter.set_last_report_date(today)
+                        if config.get("daily_report_email_enabled", False):
+                            result = deliver_daily_report(config, today)
+                            if result.get("failed"):
+                                print(
+                                    f"[REPORT WARNING] Versand teilweise fehlgeschlagen: "
+                                    f"{result.get('failed')} Empfänger"
+                                )
+                            else:
+                                reporter.set_last_report_date(today)
+                        else:
+                            reporter.set_last_report_date(today)
 
             except Exception as e:
                 print(f"[REPORT ERROR] {e}")

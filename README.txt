@@ -77,7 +77,7 @@ FUNKTIONEN
 SCHNELLSTART – INSTALLIERTE VERSION
 ----------------------------------
 
-1. `Sorterino_Setup_v2.0beta.exe` starten und die Installation abschließen.
+1. `Sorterino_Setup_v2.2beta.exe` starten und die Installation abschließen.
 2. Sorterino öffnen.
 3. Im Willkommensdialog „Standardspeicherort auswählen“ anklicken und den
    gewünschten Ordner im Explorer wählen.
@@ -94,6 +94,16 @@ Bereich, was zu tun ist. Ist alles in Ordnung, steht dort:
 Sorterino ist einsatzbereit
 
 
+DEINSTALLATION
+--------------
+
+Über `Sorterino_Uninstaller` im Installations- oder Startmenü öffnet sich eine
+einzige übersichtliche Auswahlseite. Programmdateien werden entfernt; lokale
+Einstellungen und geschützte E-Mail-Anmeldungen können zusätzlich ausgewählt
+werden. Dokumentarchive, `Sorterino - Eingang` und `Sorterino - Backups`
+bleiben immer erhalten.
+
+
 OBERFLÄCHE
 ----------
 
@@ -104,7 +114,10 @@ einem eigenen Fenster.
 - Übersicht: Zustand prüfen und Verarbeitung starten
 - Dokumente: Eingang, manuelle Prüfung und technische Fehler
 - Profile: Privatpersonen, Familien, Firmen und zugehörige Personen
-- Einstellungen: globale Programmeinstellungen und Dokumentenquellen
+- Einstellungen: getrennte Bereiche für Automatisierung und Berichte sowie Allgemeines, Speicherorte, Erkennung, E-Mail-Import, Sicherheit und Diagnose
+- Tagesberichte können über ein ausdrücklich ausgewähltes Postfach einzeln an mehrere Empfänger gesendet werden; ein separates SMTP-Berichtskonto ist ebenfalls möglich
+- Der optionale Entwicklermodus öffnet eine getrennte Live-Konsole mit Verarbeitungsschritten, ohne das Sortierverhalten zu verändern
+- Unter „Erweitert“ können reproduzierbare Laufzeitdaten bereinigt werden. Profile, Personen, Einstellungen, OAuth-Clients, Zugangsdaten, E-Mail-Importstand und Dokumente bleiben dabei erhalten
 - Erweiterte Einstellungen: Regeln und Strukturen als JSON bearbeiten
 - Dokumentregister: SQLite-Integrität prüfen, bekannte Ordner erfassen oder ausschließlich die technische Historie zurücksetzen
 - Logs: Verarbeitung nachvollziehen
@@ -321,6 +334,20 @@ stabilen Ordnern abgelegt sein:
 
 Weitere technische Informationen stehen in `README_DEV.txt`; eine kompakte
 Befehlsübersicht für Tests, Build und Release in `docs/commands.md`.
+
+
+AKTUALISIERUNGEN
+----------------
+
+Unter Einstellungen, Über Sorterino kann nach offiziellen Updates gesucht
+werden. Der Beta-Kanal berücksichtigt Vorabversionen, der stabile Kanal nur
+fertige Releases. Automatische Prüfungen beim Programmstart können dort
+abgeschaltet werden.
+
+Sorterino lädt Updates ausschließlich aus den offiziellen GitHub-Releases und
+installiert nur vollständige Installer mit überprüfter SHA-256-Prüfsumme.
+Tesseract und Poppler werden nicht einzeln aktualisiert, sondern ausschließlich
+als Bestandteil eines zuvor getesteten Sorterino-Releases.
 
 
 GRENZEN

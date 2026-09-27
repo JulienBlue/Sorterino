@@ -9,10 +9,11 @@ import urllib.parse
 import urllib.error
 import urllib.request
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from src.mail_auth import (
     MailAuthenticationError,
+    PROVIDERS,
     _post_form,
     authorize_interactively,
     load_microsoft_token_cache,
@@ -22,6 +23,7 @@ from src.mail_auth import (
     secure_ssl_context,
     store_microsoft_token_cache,
     validate_imap_settings,
+    delete_all_mail_credentials,
 )
 from src.mail_fetcher import fetch_account
 
@@ -60,6 +62,31 @@ class _OAuthImap:
 
 
 class MailAuthenticationTests(unittest.TestCase):
+    def test_microsoft_consent_covers_import_and_report_delivery(self):
+        scopes = PROVIDERS["microsoft"].scopes
+        self.assertIn("https://outlook.office.com/IMAP.AccessAsUser.All", scopes)
+        self.assertIn("https://outlook.office.com/SMTP.Send", scopes)
+
+    def test_uninstall_cleanup_removes_known_and_orphaned_mail_secrets(self):
+        with tempfile.TemporaryDirectory() as temp:
+            config = _Config(temp)
+            credentials = config.app_root / "credentials"
+            credentials.mkdir()
+            orphaned_cache = credentials / "microsoft_orphaned.bin"
+            orphaned_cache.write_bytes(b"protected")
+            service = Mock()
+            service.list_email_accounts.return_value = [{"id": "mail_1"}]
+            with (
+                patch("src.profile_service.ProfileService", return_value=service),
+                patch("src.mail_auth.delete_account_credentials") as delete_account,
+                patch("src.mail_auth._require_secure_keyring"),
+                patch("src.mail_auth.keyring.delete_password") as delete_password,
+            ):
+                delete_all_mail_credentials(config)
+            delete_account.assert_called_once_with("mail_1", config)
+            self.assertGreaterEqual(delete_password.call_count, 1)
+            self.assertFalse(orphaned_cache.exists())
+
     def test_google_http_error_is_reported_as_configuration_problem(self):
         error = urllib.error.HTTPError(
             "https://oauth2.googleapis.com/token",

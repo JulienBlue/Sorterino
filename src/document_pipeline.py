@@ -1,5 +1,6 @@
 import os
 import re
+import uuid
 from pathlib import Path
 
 from src.storage_utils import FilesystemStorage, SourceFileBusyError, StoragePathBuilder
@@ -264,9 +265,16 @@ class DocumentPipeline:
     def _process(self, document: Document):
         filename = os.path.basename(document.source_path)
         ext = os.path.splitext(filename)[1].lower()
+        operation_id = uuid.uuid4().hex[:8].upper()
+
+        def step(name, message, **details):
+            recorder = getattr(self.logger, "processing_step", None)
+            if callable(recorder):
+                recorder(operation_id, name, message, **details)
 
         self.logger.log(f"IN: {filename}")
         self.logger.info(f"Verarbeite {document.source_path}")
+        step("EINGANG", "Dokument erkannt", filename=filename, extension=ext)
 
         if self._cancelled(document):
             return
@@ -296,6 +304,7 @@ class DocumentPipeline:
         except OSError as exc:
             source_digest, duplicate_match = None, None
             self.logger.warning(f"Duplikatprüfung fehlgeschlagen: {exc}")
+        step("DUPLIKAT", "Prüfung abgeschlossen", duplicate=bool(duplicate_match))
         if self._cancelled(document):
             return
         if duplicate_match:
@@ -329,6 +338,7 @@ class DocumentPipeline:
             return
 
         self.logger.debug("Dokumentinhalt wird gelesen")
+        step("EXTRAKTION", "Dokumentinhalt wird gelesen")
         if not self.ocr:
             self.logger.warning("Dokumentextraktion deaktiviert → direkt manuell")
             text = ""
@@ -372,6 +382,7 @@ class DocumentPipeline:
             return
 
         self.logger.debug(f"Extrahierter Text {len(text)} Zeichen")
+        step("EXTRAKTION", "Texterkennung abgeschlossen", characters=len(text))
 
         document.mark_analyzed(text)
         assignment = None
@@ -424,6 +435,12 @@ class DocumentPipeline:
                 document.status = DocumentStatus.STORED
                 return
             active_profile = self.profile_service.get_profile(assignment.profile_id)
+            step(
+                "PROFIL",
+                "Profilzuordnung abgeschlossen",
+                profile_id=assignment.profile_id,
+                confidence=assignment.confidence,
+            )
             active_rules = (
                 self.policy_resolver.rules_for(active_profile, assignment.person_ids)
                 if self.policy_resolver else self.rules
@@ -446,6 +463,12 @@ class DocumentPipeline:
         self.logger.info(
             f"Klassifikation {classification.category} "
             f"{classification.confidence:.2f}"
+        )
+        step(
+            "KLASSIFIKATION",
+            "Dokument klassifiziert",
+            category=classification.category,
+            confidence=classification.confidence,
         )
 
         self.logger.debug(f"Extrahiert {extracted}")
@@ -526,6 +549,7 @@ class DocumentPipeline:
             return
 
         self.logger.debug(f"Zielpfad {target_path}")
+        step("ZIELPFAD", "Ablageziel ermittelt", target=str(target_path))
 
         if self._cancelled(document):
             return
@@ -550,6 +574,7 @@ class DocumentPipeline:
                         document.source_path, BACKUP_DIRECTORY_NAME, filename
                     )
                 self.logger.debug(f"Backup erstellt: {filename}")
+                step("BACKUP", "Original gesichert", backup=str(backup_path))
             except Exception as backup_error:
                 self.logger.warning(f"Backup fehlgeschlagen: {backup_error}")
             final = archive.store(
@@ -584,6 +609,7 @@ class DocumentPipeline:
                 )
 
             self.logger.log(f"OUT: {filename} {final}")
+            step("ABSCHLUSS", "Dokument erfolgreich abgelegt", final=str(final))
             self.logger.debug(f"________________________________")
 
             self.reporter.record_event({

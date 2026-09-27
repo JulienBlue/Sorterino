@@ -124,11 +124,27 @@ def main():
         print(traceback.format_exc())
 
 
+def remove_mail_credentials_for_uninstall():
+    """Non-interactive cleanup entry point used by the signed uninstaller."""
+    from src.config import Config
+    from src.mail_auth import delete_all_mail_credentials
+
+    delete_all_mail_credentials(Config())
+
+
 # ENTRY / START
 if __name__ == "__main__":
-    _mutex = _check_singleton()
-
     try:
+        if "--developer-console" in sys.argv:
+            from src.gui.developer_console import run_developer_console
+            run_developer_console()
+            sys.exit(0)
+
+        if "--remove-mail-credentials" in sys.argv:
+            remove_mail_credentials_for_uninstall()
+            sys.exit(0)
+
+        _mutex = _check_singleton()
         if "--settings" in sys.argv:
             run_settings()
         elif "--logs" in sys.argv:

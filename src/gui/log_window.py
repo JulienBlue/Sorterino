@@ -38,10 +38,9 @@ class LogWindow(EmbeddedPage):
     def update_logs(self):
         latest_file = None
 
-        if self.log_dir.exists():
-            logs = sorted(self.log_dir.glob("*.log"), reverse=True)
-            if logs:
-                latest_file = logs[0]
+        current_log = self.log_dir / "sorterino.log"
+        if current_log.exists():
+            latest_file = current_log
 
         if latest_file:
             try:

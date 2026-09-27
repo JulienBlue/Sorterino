@@ -132,13 +132,15 @@ HELP_CONTENT = {
     ),
     "settings": (
         "Einstellungen",
-        "Diese Seite enthält ausschließlich globale Programmeinstellungen.",
+        "Diese Seite bündelt die globalen Programmeinstellungen in durchsuchbaren Bereichen.",
         [
+            "Nutze die Suche oben oder wähle links einen Bereich aus. Persönliche Kennungen und Zugangsdaten werden nicht durchsucht.",
+            "Unter „Berichte“ kannst du den Tagesbericht aktivieren, seine Uhrzeit festlegen, ihn anzeigen und den sicheren E-Mail-Versand an ausgewählte Empfänger einrichten.",
             "Der Standard-Dokumentenspeicher wird von Profilen ohne eigenen Speicherort verwendet.",
             "Der gemeinsame Eingang wird zunächst im Standard-Dokumentenspeicher angelegt und kann danach separat geändert werden.",
             "Prüfung, Fehler und Logs liegen weiterhin unter AppData und sind unabhängig vom Dokumentenspeicher.",
             "Darstellung und Autostart gelten für Sorterino insgesamt, nicht für einzelne Profile.",
-            "Unter „Texterkennung“ siehst du, ob PDF/OCR, HEIC und alte Word-Dateien auf diesem Computer vollständig verarbeitet werden können.",
+            "Unter „Dokumente und Erkennung“ siehst du, ob PDF/OCR, Bilder und Textdokumente auf diesem Computer vollständig verarbeitet werden können.",
         ],
     ),
     "advanced": (

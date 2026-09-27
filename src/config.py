@@ -18,9 +18,16 @@ class Config:
 
     SETTINGS_KEYS = {
         "schema_version", "appearance_mode", "user_path", "auto_mode", "autostart",
-        "daily_report_time", "profile_system", "company_profile", "ocr", "targets",
+        "daily_report_time", "daily_report_enabled", "profile_system", "company_profile", "ocr", "targets",
+        "daily_report_email_enabled", "daily_report_recipients",
+        "daily_report_sender_mode", "daily_report_sender_account_id",
+        "daily_report_sender", "daily_report_content_level",
+        "daily_report_only_with_activity", "daily_report_only_with_attention",
+        "developer_mode", "developer_console_autostart", "developer_log_level",
         "incoming_path", "incoming_path_custom", "storage_layout_version",
         "window_geometry", "hide_close_to_tray_notice",
+        "automatic_update_checks", "update_channel", "last_update_check",
+        "last_update_notified_version",
     }
 
     def __init__(self, app_data_root=None, legacy_home=None):
@@ -77,6 +84,22 @@ class Config:
         settings.setdefault("incoming_path", "")
         settings.setdefault("incoming_path_custom", False)
         settings.setdefault("hide_close_to_tray_notice", False)
+        settings.setdefault("daily_report_enabled", True)
+        settings.setdefault("daily_report_email_enabled", False)
+        settings.setdefault("daily_report_recipients", [])
+        settings.setdefault("daily_report_sender_mode", "existing")
+        settings.setdefault("daily_report_sender_account_id", "")
+        settings.setdefault("daily_report_sender", {})
+        settings.setdefault("daily_report_content_level", "compact")
+        settings.setdefault("daily_report_only_with_activity", True)
+        settings.setdefault("daily_report_only_with_attention", False)
+        settings.setdefault("developer_mode", False)
+        settings.setdefault("developer_console_autostart", True)
+        settings.setdefault("developer_log_level", "debug")
+        settings.setdefault("automatic_update_checks", True)
+        settings.setdefault("update_channel", "beta")
+        settings.setdefault("last_update_check", "")
+        settings.setdefault("last_update_notified_version", "")
         self._write_json(self.settings_path, settings)
 
     def _ensure_oauth_clients(self):

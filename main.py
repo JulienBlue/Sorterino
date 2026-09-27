@@ -105,7 +105,10 @@ def run_pipeline(document_path=None) -> None:
 
         rules_data = load_json_safe(config.rules_path, {})
 
-        logger = FileLogger(config.logs_root)
+        logger = FileLogger(
+            config.logs_root,
+            developer_mode=config.get("developer_mode", False),
+        )
         profile_service = _load_profile_service(config, logger)
 
         

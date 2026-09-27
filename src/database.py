@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 class SorterinoDatabase:
@@ -109,6 +109,28 @@ class SorterinoDatabase:
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
 
+                CREATE TABLE IF NOT EXISTS report_runs (
+                    id INTEGER PRIMARY KEY,
+                    report_date TEXT NOT NULL UNIQUE,
+                    scheduled_for TEXT,
+                    generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    report_path TEXT,
+                    summary_json TEXT NOT NULL DEFAULT '{}'
+                );
+
+                CREATE TABLE IF NOT EXISTS report_deliveries (
+                    id INTEGER PRIMARY KEY,
+                    report_run_id INTEGER NOT NULL REFERENCES report_runs(id) ON DELETE CASCADE,
+                    recipient TEXT NOT NULL COLLATE NOCASE,
+                    sender_account_id TEXT,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    attempt_count INTEGER NOT NULL DEFAULT 0,
+                    attempted_at TEXT,
+                    delivered_at TEXT,
+                    error_message TEXT,
+                    UNIQUE(report_run_id, recipient)
+                );
+
                 CREATE TABLE IF NOT EXISTS registry_state (
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL,
@@ -124,6 +146,8 @@ class SorterinoDatabase:
                     ON document_locations(path);
                 CREATE INDEX IF NOT EXISTS idx_processing_events_document
                     ON processing_events(document_id, created_at);
+                CREATE INDEX IF NOT EXISTS idx_report_deliveries_status
+                    ON report_deliveries(status, attempted_at);
                 """
             )
             connection.execute(

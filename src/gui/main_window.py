@@ -26,7 +26,6 @@ from src.gui.appearance import (
     PRIMARY_TEXT,
     SECONDARY_TEXT,
     apply_appearance,
-    appearance_label,
 )
 from src.document_import import import_documents
 from src.document_formats import is_ignored_source_name
@@ -191,9 +190,10 @@ class MainWindow(ctk.CTkToplevel):
         ("settings", "Einstellungen"),
     ]
 
-    def __init__(self, master, config):
+    def __init__(self, master, config, shutdown_callback=None):
         super().__init__(master)
         self.config = config
+        self._shutdown_callback = shutdown_callback
         apply_appearance(self.config.get("appearance_mode", "system"))
         self._thread_running = False
         self._single_document_queue = []
@@ -222,6 +222,7 @@ class MainWindow(ctk.CTkToplevel):
         self._last_normal_geometry = None
         self._restoring_geometry = True
         self._close_pending = False
+        self._settings_page = None
         self.title("Sorterino")
         self.minsize(1080, 700)
         saved_geometry = self.config.get("window_geometry") or {}
@@ -253,6 +254,59 @@ class MainWindow(ctk.CTkToplevel):
         self.after(300, self._finish_geometry_restore)
         self.after(200, self._ensure_initial_storage)
         self.after(750, self._poll_document_folders)
+
+    def exit_application(self):
+        if self._shutdown_callback:
+            self._shutdown_callback()
+            return
+        try:
+            self.save_window_state()
+            self.master.quit()
+            self.master.destroy()
+        except Exception:
+            self.destroy()
+
+    def _check_for_updates_at_startup(self):
+        if not self.config.get("automatic_update_checks", True):
+            return
+        from datetime import datetime
+        from src.updates import UpdateService
+
+        channel = self.config.get("update_channel", "beta")
+
+        def worker():
+            try:
+                result = UpdateService().check(channel)
+            except Exception:
+                return
+
+            def notify():
+                checked_at = datetime.now().strftime("%d.%m.%Y %H:%M")
+                self.config.set("last_update_check", checked_at)
+                if not result.update_available:
+                    return
+                release = result.release
+                if not release.has_integrity_information:
+                    return
+                if self.config.get("last_update_notified_version") == release.version:
+                    return
+                self.config.set("last_update_notified_version", release.version)
+                if messagebox.askyesno(
+                    "Sorterino-Update verfügbar",
+                    f"Sorterino {release.version} ist verfügbar. Jetzt die Updateeinstellungen öffnen?",
+                    parent=self,
+                ):
+                    self.show_page("settings")
+                    page = getattr(self, "_settings_page", None)
+                    if hasattr(page, "show_category"):
+                        page.show_category("about")
+
+            try:
+                self.after(0, notify)
+            except Exception:
+                pass
+
+        threading.Thread(target=worker, name="SorterinoStartupUpdateCheck", daemon=True).start()
 
     def _virtual_screen_bounds(self):
         if os.name == "nt":
@@ -1070,83 +1124,11 @@ class MainWindow(ctk.CTkToplevel):
                 return
 
     def _build_settings(self):
-        self._page_header("Einstellungen", "Nur Einstellungen, die Sorterino als Programm betreffen")
-        scroll = ctk.CTkScrollableFrame(self.content)
-        scroll.pack(fill="both", expand=True, padx=30, pady=(0, 24))
-        self._settings_section(scroll, "Allgemein")
-        appearance_row = ctk.CTkFrame(scroll, fg_color="transparent")
-        appearance_row.pack(fill="x", padx=16, pady=(2, 10))
-        ctk.CTkLabel(appearance_row, text="Darstellung").pack(side="left", padx=(0, 12))
-        self.appearance_menu = ctk.CTkOptionMenu(
-            appearance_row,
-            values=list(APPEARANCE_LABELS),
-            command=self._change_appearance,
-        )
-        self.appearance_menu.set(appearance_label(self.config.get("appearance_mode", "system")))
-        self.appearance_menu.pack(side="left")
-        self.auto_switch = ctk.CTkSwitch(scroll, text="Dokumente automatisch verarbeiten", command=self._toggle_auto)
-        self.auto_switch.pack(anchor="w", padx=16, pady=6)
-        if self.config.get("auto_mode"):
-            self.auto_switch.select()
-        self.autostart_switch = ctk.CTkSwitch(scroll, text="Sorterino mit Windows starten", command=self._toggle_autostart)
-        self.autostart_switch.pack(anchor="w", padx=16, pady=6)
-        if self.config.get("autostart"):
-            self.autostart_switch.select()
+        from src.gui.settings_page import SettingsPage
 
-        self._settings_section(scroll, "Dokumentquellen")
-        ctk.CTkLabel(scroll, text=f"Standard-Dokumentenspeicher: {self.config.get('user_path') or 'nicht eingerichtet'}", wraplength=650, justify="left").pack(anchor="w", padx=16, pady=4)
-        ctk.CTkButton(
-            scroll,
-            text="Standard-Speicherort auswählen",
-            command=self._choose_global_storage,
-        ).pack(anchor="w", padx=16, pady=6)
-        ctk.CTkLabel(
-            scroll,
-            text=f"Gemeinsamer Eingangsordner für alle Profile: {self.config.incoming_root}",
-            wraplength=650,
-            justify="left",
-        ).pack(anchor="w", padx=16, pady=(10, 4))
-        incoming_actions = ctk.CTkFrame(scroll, fg_color="transparent")
-        incoming_actions.pack(fill="x", padx=16, pady=4)
-        ctk.CTkButton(incoming_actions, text="Eingangsordner öffnen", command=self._open_incoming).pack(side="left")
-        ctk.CTkButton(
-            incoming_actions,
-            text="Eingangsordner ändern",
-            command=self._choose_incoming_storage,
-        ).pack(side="left", padx=8)
-        ctk.CTkLabel(
-            scroll,
-            text="Neue E-Mail-Postfächer werden direkt im jeweiligen Profil eingerichtet.",
-        ).pack(anchor="w", padx=16, pady=(8, 3))
-        ctk.CTkButton(scroll, text="Zu den Profilen", command=lambda: self.show_page("profiles")).pack(anchor="w", padx=16, pady=4)
-
-        self._settings_section(scroll, "Texterkennung")
-        tess_ready = bool(getattr(self.config, "tesseract_path", None) and self.config.tesseract_path.exists())
-        poppler_ready = bool(getattr(self.config, "poppler_path", None) and self.config.poppler_path.exists())
-        try:
-            from pillow_heif import register_heif_opener as _heif_opener
-            heic_ready = bool(_heif_opener)
-        except ImportError:
-            heic_ready = False
-        format_states = (
-            ("PDF-Dateien (PDF und Scans)", tess_ready and poppler_ready),
-            ("Textdokumente (Word, ODT, RTF, TXT und Pages)", True),
-            ("Bilddateien (JPG, PNG, TIFF, WebP, HEIC und HEIF)", tess_ready and heic_ready),
-            ("E-Mail-Dateien (EML und MSG)", True),
-        )
-        for label, ready in format_states:
-            ctk.CTkLabel(
-                scroll,
-                text=f"{label}: {'Bereit' if ready else 'Nicht vollständig verfügbar'}",
-            ).pack(anchor="w", padx=16, pady=3)
-
-        self._settings_section(scroll, "Erweitert")
-        ctk.CTkButton(scroll, text="Technische Konfiguration", command=self._open_advanced_settings).pack(anchor="w", padx=16, pady=6)
-        ctk.CTkButton(scroll, text="Protokoll anzeigen", command=self._open_logs).pack(anchor="w", padx=16, pady=6)
-
-    @staticmethod
-    def _settings_section(parent, text):
-        ctk.CTkLabel(parent, text=text, font=("Arial", 17, "bold")).pack(anchor="w", padx=12, pady=(18, 6))
+        page = SettingsPage(self.content, self)
+        self._settings_page = page
+        page.pack(fill="both", expand=True)
 
     def _document_stats(self):
         stats = {

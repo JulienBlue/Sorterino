@@ -42,20 +42,27 @@ class DailyReportManager:
 
     def _format_txt(self, report: dict) -> str:
         lines = []
-        lines.append(f"Sorterino Daily Report - {report['date']}")
+        lines.append(f"Sorterino Tagesbericht – {report['date']}")
         lines.append("")
         lines.append("Zusammenfassung")
         lines.append(f"- Gesamt: {report['summary']['total']}")
         lines.append(f"- Erfolgreich: {report['summary']['success']}")
-        lines.append(f"- Manuell: {report['summary']['manual']}")
+        lines.append(f"- Prüfung erforderlich: {report['summary']['manual']}")
         lines.append(f"- Fehler: {report['summary']['error']}")
         lines.append("")
-        lines.append("Details")
+        lines.append("Aktivitäten")
         for item in report["items"]:
+            status = {
+                "success": "Abgelegt",
+                "manual": "Prüfen",
+                "error": "Fehler",
+                "discarded": "Verworfen",
+                "duplicate": "Duplikat",
+            }.get(item.get("status"), item.get("status") or "Unbekannt")
             lines.append(
-                f"{item['status'].upper():8} | "
-                f"{item['original_name']} -> {item['final_name']} | "
-                f"{item['target_folder']} | "
+                f"{status:18} | "
+                f"{item.get('original_name') or '-'} -> {item.get('final_name') or '-'} | "
+                f"{item.get('target_folder') or '-'} | "
                 f"{item.get('reason', '-')}"
             )
         return "\n".join(lines)
@@ -99,6 +106,14 @@ class DailyReportManager:
 
         return json_path
 
+    def load_report(self, day: Optional[date] = None) -> dict:
+        day = day or date.today()
+        path = self.reports_dir / f"{day.isoformat()}.json"
+        if not path.exists():
+            self.generate_daily_report(day)
+        with open(path, "r", encoding="utf-8") as handle:
+            return json.load(handle)
+
     def get_last_report_date(self) -> Optional[str]:
         if not self.state_path.exists():
             return None
@@ -108,6 +123,14 @@ class DailyReportManager:
             return data.get("last_report_date")
         except Exception:
             return None
+
+    def get_latest_report_date(self) -> Optional[str]:
+        """Return the newest generated report date, independent of scheduling state."""
+        try:
+            candidates = sorted(self.reports_dir.glob("????-??-??.json"), reverse=True)
+        except OSError:
+            return None
+        return candidates[0].stem if candidates else None
 
     def set_last_report_date(self, day: date) -> None:
         data = {"last_report_date": day.isoformat()}

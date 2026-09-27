@@ -124,12 +124,14 @@ Verarbeitung:
 - `src/mail_fetcher.py`: profilbezogener IMAP-Import
 - `src/mail_auth.py`: PKCE-OAuth, Provider-Pinning, TLS und Windows-Tresor
 - `src/reporting.py`: Verarbeitungsereignisse und Berichte
+- `src/report_mailer.py`: TLS-gesicherter Berichtsversand, Empfängertrennung und persistenter Zustellstatus
 - `src/logger.py`: technische Protokollierung
 - `src/models.py`: Dokumentmodell und Status
 
 GUI:
 
 - `src/gui/main_window.py`: persistente Navigation und Hauptbereiche
+- `src/gui/settings_page.py`: durchsuchbare, kartenbasierte Programmeinstellungen mit getrennten Bereichen für Automatisierung und Berichte
 - `src/gui/embedded.py`: eingebettete Seiten
 - `src/gui/profile_window.py`: Profile, Personen, Zuordnung und sichere Löschung
 - `src/gui/profile_deletion.py`: bestätigte Löschdialoge und sichere Archivpfade
@@ -139,6 +141,8 @@ GUI:
 - `src/gui/config_window.py`: technische JSON-Editoren
 - `src/gui/help_window.py`: kontextbezogene Hilfe und Diagnose
 - `src/gui/log_window.py`: Logs
+- `src/gui/developer_console.py`: getrennte, terminalartige Live-Diagnose
+- `src/gui/report_window.py`: verständliche Aktivitätsberichte ohne interne Profilkennungen
 - `src/gui/appearance.py`: Hell, Dunkel und Systemdarstellung
 - `src/gui/tray.py`: Tray-Anwendung
 
@@ -343,6 +347,19 @@ begrenzt, bestätigt und als `discarded` im Dokumentregister erfasst. Zugehörig
 JSON-Vorschläge unter `runtime/state/manual-review` werden mit entfernt.
 
 
+WARTUNG DER LOKALEN LAUFZEITDATEN
+---------------------------------
+
+`maintenance.cleanup_rebuildable_state` entfernt ausschließlich explizit
+aufgeführte, reproduzierbare Ziele innerhalb von AppData/Sorterino: Logs und
+Berichte, Update-Downloads, Prüfvorschläge sowie die SQLite-Verarbeitungs- und
+Duplikathistorie. Vor dem ersten Löschen werden sämtliche Ziele gegen den
+AppData-Stamm geprüft. Profile, Personen, Presets, Einstellungen, OAuth-Clients,
+geschützte Credentials, der E-Mail-Importstand und Dokumentordner bleiben
+unverändert. Die Oberfläche beendet Sorterino nach erfolgreicher Bereinigung,
+damit beim nächsten Start ein konsistenter technischer Zustand entsteht.
+
+
 DOKUMENTREGISTER UND DUPLIKATE
 ------------------------------
 
@@ -483,10 +500,32 @@ Inno Setup:
 
 iscc installer.iss
 
+Prüfsumme für den Updater:
+
+python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2beta.exe
+
+Der sichtbare Einstieg für die Deinstallation heißt `Sorterino_Uninstaller`.
+Er startet Inno Setup ohne dessen zusätzliche Standard-Rückfrage und zeigt
+stattdessen eine eigene Auswahl für lokale Programmdaten und Mail-Anmeldungen.
+Das interne `unins000.exe` bleibt unverändert, weil Inno Setup es zusammen mit
+dem zugehörigen Deinstallationsprotokoll verwaltet.
+
 Ergebnisse:
 
 - `dist\Sorterino\`
-- `installer\Sorterino_Setup_v2.0beta.exe`
+- `installer\Sorterino_Setup_v2.2beta.exe`
+- `installer\Sorterino_Setup_v2.2beta.exe.sha256`
+
+Der Updater fragt ausschließlich die GitHub-Releases von
+`JulienBlue/Sorterino` ab. Für ein installierbares Release müssen der Installer
+und seine gleichnamige `.sha256`-Datei als Release-Assets hochgeladen werden.
+Falls GitHub für das Asset bereits einen SHA-256-Digest liefert, wird dieser
+bevorzugt. Releases ohne überprüfbare Prüfsumme werden nicht installiert.
+
+Die kostenlose Beta hat noch keine vertrauenswürdige Authenticode-Signatur.
+Dieser Umstand wird vor der Installation ausdrücklich angezeigt. SHA-256
+schützt die Übertragung vor Beschädigung oder unbemerkter Veränderung, ersetzt
+aber keine unabhängige Herausgebersignatur.
 
 Buildverzeichnisse, lokale Third-Party-Binaries, AppData, echte Dokumente und
 Installer-EXEs sind keine Source-Dateien. Release-Artefakte gehören in einen

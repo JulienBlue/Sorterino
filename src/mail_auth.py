@@ -87,7 +87,11 @@ PROVIDERS = {
         "outlook.office365.com",
         "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
         "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-        ("offline_access", "https://outlook.office.com/IMAP.AccessAsUser.All"),
+        (
+            "offline_access",
+            "https://outlook.office.com/IMAP.AccessAsUser.All",
+            "https://outlook.office.com/SMTP.Send",
+        ),
     ),
     "apple": ProviderDefinition("apple", "Apple / iCloud", "imap.mail.me.com"),
     "gmx": ProviderDefinition("gmx", "GMX", "imap.gmx.net"),
@@ -276,6 +280,35 @@ def delete_account_credentials(account_id, config=None):
             pass
     if config is not None:
         delete_microsoft_token_cache(config, account_id)
+
+
+def delete_all_mail_credentials(config):
+    """Remove all known mailbox secrets without deleting mailbox settings."""
+    from src.profile_service import ProfileService
+
+    accounts = ProfileService(config).list_email_accounts()
+    for account in accounts:
+        account_id = str(account.get("id") or "").strip()
+        if account_id:
+            delete_account_credentials(account_id, config)
+
+    # Desktop OAuth client secrets may have been vaulted on older builds.
+    _require_secure_keyring()
+    for provider_id in PROVIDERS:
+        try:
+            keyring.delete_password(
+                KEYRING_SERVICE, oauth_client_secret_key(provider_id)
+            )
+        except keyring.errors.PasswordDeleteError:
+            pass
+
+    credentials_dir = Path(config.app_root) / "credentials"
+    if credentials_dir.exists():
+        for cache_path in credentials_dir.glob("microsoft_*.bin"):
+            try:
+                cache_path.unlink()
+            except FileNotFoundError:
+                pass
 
 
 def delete_password_credential(account_id):
