@@ -1,11 +1,18 @@
 import io
 import json
+import os
 import tempfile
 import unittest
 from hashlib import sha256
 from pathlib import Path
+from unittest.mock import patch
 
-from src.updates.service import UpdateError, UpdateService, parse_version
+from src.updates.service import (
+    UpdateError,
+    UpdateService,
+    launch_installer_after_exit,
+    parse_version,
+)
 from tools.create_release_checksum import create_checksum
 
 
@@ -135,6 +142,25 @@ class UpdateTests(unittest.TestCase):
             checksum = create_checksum(installer)
             self.assertEqual(checksum.name, f"{installer.name}.sha256")
             self.assertIn(sha256(b"installer").hexdigest(), checksum.read_text(encoding="ascii"))
+
+    def test_installer_launcher_uses_encoded_script_and_child_environment(self):
+        if os.name != "nt":
+            self.skipTest("Windows launcher")
+        with tempfile.TemporaryDirectory() as temp:
+            installer = Path(temp) / "Ordner mit Leerzeichen" / "Sorterino_Setup_v2.3beta.exe"
+            installer.parent.mkdir()
+            installer.write_bytes(b"installer")
+            with patch("src.updates.service.subprocess.Popen") as popen:
+                launch_installer_after_exit(installer, 1234)
+            args = popen.call_args.args[0]
+            kwargs = popen.call_args.kwargs
+            self.assertIn("-EncodedCommand", args)
+            self.assertNotIn(str(installer.resolve()), args)
+            self.assertEqual(kwargs["env"]["SORTERINO_UPDATE_PARENT_PID"], "1234")
+            self.assertEqual(
+                kwargs["env"]["SORTERINO_UPDATE_INSTALLER"], str(installer.resolve())
+            )
+            self.assertEqual(kwargs["cwd"], str(installer.parent.resolve()))
 
 
 if __name__ == "__main__":

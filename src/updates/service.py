@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 from dataclasses import dataclass
 from hashlib import sha256
 import json
@@ -330,14 +331,58 @@ def launch_installer_after_exit(installer: Path, parent_pid: int | None = None) 
     if not powershell.is_file():
         raise UpdateError("Windows PowerShell wurde nicht gefunden.")
     process_id = int(parent_pid or os.getpid())
-    command = (
-        "param([int]$ParentPid,[string]$Installer); "
-        "Wait-Process -Id $ParentPid -ErrorAction SilentlyContinue; "
-        "Start-Process -FilePath $Installer"
+    launch_log = installer.parent / "update-launch.log"
+    # Pass dynamic values through the child-only environment. Positional
+    # values following PowerShell's -Command are not bound consistently when
+    # paths contain spaces or non-ASCII characters. EncodedCommand avoids the
+    # command-line quoting and injection problem altogether.
+    script = (
+        "$ErrorActionPreference = 'Stop'\n"
+        "try {\n"
+        "  $parent = [int]$env:SORTERINO_UPDATE_PARENT_PID\n"
+        "  $installer = $env:SORTERINO_UPDATE_INSTALLER\n"
+        "  $log = $env:SORTERINO_UPDATE_LOG\n"
+        "  Wait-Process -Id $parent -ErrorAction SilentlyContinue\n"
+        "  if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {\n"
+        "    throw 'Der heruntergeladene Installer wurde nicht gefunden.'\n"
+        "  }\n"
+        "  Start-Process -FilePath $installer\n"
+        "} catch {\n"
+        "  $message = ('{0:u} {1}' -f [DateTime]::Now, $_.Exception.Message)\n"
+        "  [IO.File]::AppendAllText($log, $message + [Environment]::NewLine)\n"
+        "  exit 1\n"
+        "}\n"
     )
-    creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    encoded = base64.b64encode(script.encode("utf-16le")).decode("ascii")
+    child_environment = os.environ.copy()
+    child_environment.update(
+        {
+            "SORTERINO_UPDATE_PARENT_PID": str(process_id),
+            "SORTERINO_UPDATE_INSTALLER": str(installer),
+            "SORTERINO_UPDATE_LOG": str(launch_log),
+        }
+    )
+    creation_flags = (
+        getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+        | getattr(subprocess, "DETACHED_PROCESS", 0)
+    )
     subprocess.Popen(
-        [str(powershell), "-NoProfile", "-NonInteractive", "-Command", command, str(process_id), str(installer)],
+        [
+            str(powershell),
+            "-NoLogo",
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-EncodedCommand",
+            encoded,
+        ],
+        cwd=str(installer.parent),
+        env=child_environment,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
         close_fds=True,
         creationflags=creation_flags,
     )
