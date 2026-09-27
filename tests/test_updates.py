@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from hashlib import sha256
@@ -163,6 +164,9 @@ class UpdateTests(unittest.TestCase):
                 kwargs["env"]["SORTERINO_UPDATE_INSTALLER"], str(installer.resolve())
             )
             self.assertEqual(kwargs["cwd"], str(installer.parent.resolve()))
+            self.assertTrue(kwargs["creationflags"] & subprocess.CREATE_NO_WINDOW)
+            self.assertFalse(kwargs["creationflags"] & subprocess.DETACHED_PROCESS)
+            self.assertTrue((installer.parent / "update-launch.log").is_file())
 
 
 if __name__ == "__main__":

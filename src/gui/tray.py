@@ -166,9 +166,14 @@ class TrayApp:
     def open_developer_console(self):
         try:
             if getattr(sys, "frozen", False):
-                command = [sys.executable, "--developer-console"]
+                command = [
+                    sys.executable, "--developer-console", "--parent-pid", str(os.getpid())
+                ]
             else:
-                command = [sys.executable, "-m", "src.gui.app", "--developer-console"]
+                command = [
+                    sys.executable, "-m", "src.gui.app", "--developer-console",
+                    "--parent-pid", str(os.getpid()),
+                ]
             subprocess.Popen(command, cwd=str(BASE_DIR))
         except OSError as exc:
             print(f"[DEVELOPER CONSOLE ERROR] {exc}")

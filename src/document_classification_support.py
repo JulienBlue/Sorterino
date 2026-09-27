@@ -27,6 +27,22 @@ class DocumentClassificationSupport:
                 reason="Grundriss",
             )
 
+        invitation_signals = sum(
+            value in text_lower
+            for value in (
+                "deine teilnahme am intelligenceday",
+                "wir freuen uns darauf, dich",
+                "auswahlgespräch mit der personalgewinnung",
+                "fachgespräch an den fachständen",
+                "deine bewerbung weiter berücksichtigen",
+            )
+        )
+        if invitation_signals >= 2:
+            return Classification(
+                "Arbeit und Karriere", 0.99, "Einladungen und Auswahlverfahren",
+                reason="Einladung zum Auswahlverfahren",
+            )
+
         police_report_signals = sum(
             value in text_lower
             for value in (

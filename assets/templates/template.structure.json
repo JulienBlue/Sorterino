@@ -1,5 +1,5 @@
 {
-  "schema_version": 16,
+  "schema_version": 17,
   "default_template": "family",
   "Buchhaltung": {
     "Eingangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
@@ -45,8 +45,8 @@
       },
       "Finanzamt und Steuern": {
         "Einkommensteuer": {"{year}": {
-          "01 Steuererklärung": {},
-          "02 Belege": {
+          "Steuererklärung": {},
+          "Belege": {
             "Arbeit und Werbungskosten": {},
             "Versicherungen und Vorsorge": {},
             "Gesundheit": {},
@@ -55,10 +55,10 @@
             "Spenden": {},
             "Sonstige Belege": {}
           },
-          "03 Nachforderungen": {},
-          "04 ELSTER-Nachweise": {},
-          "05 Steuerbescheide": {},
-          "06 Einsprüche und Schriftverkehr": {}
+          "Nachforderungen": {},
+          "ELSTER-Nachweise": {},
+          "Steuerbescheide": {},
+          "Einsprüche und Schriftverkehr": {}
         }}
       },
       "Behörden und Leistungen": {
@@ -126,8 +126,8 @@
       },
       "Finanzamt und Steuern": {
         "Einkommensteuer": {"{year}": {
-          "01 Steuererklärung": {},
-          "02 Belege": {
+          "Steuererklärung": {},
+          "Belege": {
             "Arbeit und Werbungskosten": {},
             "Versicherungen und Vorsorge": {},
             "Gesundheit": {},
@@ -136,10 +136,10 @@
             "Spenden": {},
             "Sonstige Belege": {}
           },
-          "03 Nachforderungen": {},
-          "04 ELSTER-Nachweise": {},
-          "05 Steuerbescheide": {},
-          "06 Einsprüche und Schriftverkehr": {}
+          "Nachforderungen": {},
+          "ELSTER-Nachweise": {},
+          "Steuerbescheide": {},
+          "Einsprüche und Schriftverkehr": {}
         }}
       },
       "Behörden und Leistungen": {
@@ -161,6 +161,7 @@
         "Gehaltsabrechnungen": {"{year}": {}},
         "Bescheinigungen": {"{year}": {}},
         "Bewerbungen": {"{year}": {}},
+        "Einladungen und Auswahlverfahren": {"{year}": {}},
         "Arbeitszeugnisse": {}
       },
       "Bildung und Qualifikationen": {},
@@ -220,6 +221,7 @@
         "Gehaltsabrechnungen": {"{year}": {}},
         "Bescheinigungen": {"{year}": {}},
         "Bewerbungen": {"{year}": {}},
+        "Einladungen und Auswahlverfahren": {"{year}": {}},
         "Arbeitszeugnisse": {}
       },
       "Gesundheit": {
@@ -281,6 +283,7 @@
         "Einsatzunterlagen": {"{year}": {}},
         "Gehaltsabrechnungen": {"{year}": {}},
         "Bescheinigungen": {"{year}": {}},
+        "Einladungen und Auswahlverfahren": {"{year}": {}},
         "Arbeitszeugnisse": {}
       },
       "Behörden und Steuern": {"Steuerbescheide": {"{year}": {}}},

@@ -457,7 +457,7 @@ class DomainDocumentExtractors:
             return {
                 "date": date,
                 "tax_year": tax_year,
-                "tax_section": "04 ELSTER-Nachweise",
+                "tax_section": "ELSTER-Nachweise",
                 "document_kind": "ELSTER-Versandbestätigung",
                 "submission_type": task.group(1).strip() if task else None,
                 "transfer_ticket": ticket.group(1) if ticket else None,
@@ -476,23 +476,23 @@ class DomainDocumentExtractors:
         )
         if is_full_return:
             kind = "Einkommensteuererklärung"
-            section = "01 Steuererklärung"
+            section = "Steuererklärung"
         elif "lohnsteuerbescheinigung" in lower:
             kind = "Lohnsteuerbescheinigung"
-            section = "02 Belege/Arbeit und Werbungskosten"
+            section = "Belege/Arbeit und Werbungskosten"
         elif any(value in lower for value in (
             "aufforderung zur vorlage von belegen", "belege nachreichen", "nachreichung von belegen"
         )):
             kind = "Nachforderung von Steuerbelegen"
-            section = "03 Nachforderungen"
+            section = "Nachforderungen"
         elif any(value in lower for value in (
             "einkommensteuerbescheid", "festsetzung der einkommensteuer", "rechtsbehelfsbelehrung"
         )):
             kind = "Einkommensteuerbescheid"
-            section = "05 Steuerbescheide"
+            section = "Steuerbescheide"
         else:
             kind = "Einkommensteuererklärung"
-            section = "01 Steuererklärung"
+            section = "Steuererklärung"
 
         if not tax_year:
             filename_years = re.findall(r"(?<!\d)(20\d{2})(?!\d)", filename)

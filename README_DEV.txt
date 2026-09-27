@@ -496,8 +496,8 @@ BUILD UND RELEASE
 -----------------
 
 Beta-Releases verwenden das Format `Major.Minor.Patchbeta`. Bei jedem neuen
-Beta-Build wird die Patch-Zahl erhöht; auf `2.2.2beta` folgt also
-`2.2.3beta`. Das geplante stabile Release dieser Reihe ist `2.3`.
+Beta-Build wird die Patch-Zahl erhöht; auf `2.2.3beta` folgt also
+`2.2.4beta`. Das geplante stabile Release dieser Reihe ist `2.3`.
 
 PyInstaller:
 
@@ -509,7 +509,7 @@ iscc installer.iss
 
 Prüfsumme für den Updater:
 
-python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2.2beta.exe
+python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2.3beta.exe
 
 Der sichtbare Einstieg für die Deinstallation heißt `Sorterino_Uninstaller`.
 Er startet Inno Setup ohne dessen zusätzliche Standard-Rückfrage und zeigt
@@ -520,23 +520,26 @@ dem zugehörigen Deinstallationsprotokoll verwaltet.
 Ergebnisse:
 
 - `dist\Sorterino\`
-- `installer\Sorterino_Setup_v2.2.2beta.exe`
-- `installer\Sorterino_Setup_v2.2.2beta.exe.sha256`
+- `installer\Sorterino_Setup_v2.2.3beta.exe`
+- `installer\Sorterino_Setup_v2.2.3beta.exe.sha256`
 
 Der Updater fragt ausschließlich die GitHub-Releases von
 `JulienBlue/Sorterino` ab. Für ein installierbares Release müssen der Installer
 und seine gleichnamige `.sha256`-Datei als Release-Assets hochgeladen werden.
 Falls GitHub für das Asset bereits einen SHA-256-Digest liefert, wird dieser
 bevorzugt. Releases ohne überprüfbare Prüfsumme werden nicht installiert.
+Der lokale Update-Starter protokolliert seine Schritte als `update-launch.log`
+neben dem heruntergeladenen Installer. Eine geöffnete Entwicklerkonsole ist an
+den Hauptprozess gebunden und wird vor dem Start der Installation geschlossen.
 
 Die kostenlose Beta hat noch keine vertrauenswürdige Authenticode-Signatur.
 Dieser Umstand wird vor der Installation ausdrücklich angezeigt. SHA-256
 schützt die Übertragung vor Beschädigung oder unbemerkter Veränderung, ersetzt
 aber keine unabhängige Herausgebersignatur.
 
-Buildverzeichnisse, lokale Third-Party-Binaries, AppData, echte Dokumente und
-Installer-EXEs sind keine Source-Dateien. Release-Artefakte gehören in einen
-Release-Download.
+Buildverzeichnisse, lokale Third-Party-Binaries, AppData und echte Dokumente
+sind keine Source-Dateien. Fertige, versionierte Sorterino-Installer und ihre
+SHA-256-Dateien werden zusätzlich zum GitHub-Release im Repository geführt.
 
 
 BEKANNTE GRENZEN
@@ -561,7 +564,7 @@ GIT-HYGIENE
 Nicht versionieren:
 
 - `.venv`, IDE-Daten und Python-Caches
-- `build`, `dist` und Installer-Binärdateien
+- `build` und `dist`; versionierte Sorterino-Installer sind ausdrücklich erlaubt
 - lokale Tesseract-/Poppler-Binärdateien
 - `%APPDATA%\Sorterino`
 - Logs, echte Profile, Zugangsdaten und Nutzerdokumente

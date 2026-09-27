@@ -56,6 +56,20 @@ C. Angaben zum Beschäftigungsverhältnis
         )
         self.assertEqual(path.parent.name, "Bescheinigungen")
 
+    def test_omits_known_issue_date_from_employment_certificate_filename(self):
+        document, _classification, _data = self._analyze()
+        document.extracted_data["date"] = "13.04.2020"
+        structure = {
+            "Arbeit und Karriere": {"Bescheinigungen": {"{year}": {}}}
+        }
+
+        path = StoragePathBuilder(structure).build(document)
+
+        self.assertEqual(
+            path.name,
+            "Arbeitsbescheinigung - CP care Pflegeexperten GmbH.pdf",
+        )
+
     def test_prefers_labeled_employer_field_with_combined_legal_form(self):
         text = """
 Arbeitsbescheinigung

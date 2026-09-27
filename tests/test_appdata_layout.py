@@ -146,6 +146,9 @@ class AppDataLayoutTests(unittest.TestCase):
         structure["Gesundheit und Pflege"] = {"Alt": {}}
         structure["Finanzen"]["Kredite und Darlehen"] = {}
         structure["Identität und Urkunden"]["Geburts- und Heiratsurkunden"] = {}
+        tax_folders = structure["Finanzamt und Steuern"]["Einkommensteuer"]["{year}"]
+        tax_folders.pop("Steuerbescheide", None)
+        tax_folders["05 Steuerbescheide"] = {"Eigener Unterordner": {}}
         structure["Mein eigener Bereich"] = {"Unterlagen": {}}
         structure_path.write_text(json.dumps(structure), encoding="utf-8")
         (config.presets_root / "catalog.json").write_text(
@@ -160,6 +163,10 @@ class AppDataLayoutTests(unittest.TestCase):
         self.assertNotIn("Geburts- und Heiratsurkunden", result["Identität und Urkunden"])
         self.assertIn("Geburtsurkunden", result["Identität und Urkunden"])
         self.assertIn("Eheurkunde", result["Identität und Urkunden"])
+        upgraded_tax_folders = result["Finanzamt und Steuern"]["Einkommensteuer"]["{year}"]
+        self.assertNotIn("05 Steuerbescheide", upgraded_tax_folders)
+        self.assertIn("Steuerbescheide", upgraded_tax_folders)
+        self.assertIn("Eigener Unterordner", upgraded_tax_folders["Steuerbescheide"])
         self.assertIn("Mein eigener Bereich", result)
         self.assertIn("Identität und Urkunden", result)
 

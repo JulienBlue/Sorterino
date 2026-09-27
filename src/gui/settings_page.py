@@ -685,9 +685,14 @@ class SettingsPage(ctk.CTkFrame):
     def _open_developer_console(self):
         try:
             if getattr(sys, "frozen", False):
-                command = [sys.executable, "--developer-console"]
+                command = [
+                    sys.executable, "--developer-console", "--parent-pid", str(os.getpid())
+                ]
             else:
-                command = [sys.executable, "-m", "src.gui.app", "--developer-console"]
+                command = [
+                    sys.executable, "-m", "src.gui.app", "--developer-console",
+                    "--parent-pid", str(os.getpid()),
+                ]
             subprocess.Popen(command, cwd=os.getcwd())
         except OSError as exc:
             messagebox.showerror("Konsole nicht geöffnet", str(exc), parent=self.owner)

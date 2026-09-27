@@ -223,7 +223,7 @@ Die monatliche Arbeitszeit im Rahmen des Auftrags beträgt 120,00 Stunden.
         )
         self.assertEqual(classification.document_type, "Einkommensteuer")
         target = StoragePathBuilder(self.structures["adult"]).build(document)
-        self.assertEqual(target.parts[:5], ("Finanzamt und Steuern", "Einkommensteuer", "2026", "05 Steuerbescheide", "2026-08-09 - Einkommensteuerbescheid.pdf"))
+        self.assertEqual(target.parts[:5], ("Finanzamt und Steuern", "Einkommensteuer", "2026", "Steuerbescheide", "2026-08-09 - Einkommensteuerbescheid.pdf"))
         self.assertIn("Einkommensteuerbescheid", target.name)
 
     def test_tax_notice_prefers_labeled_tax_year_over_earlier_reference_year(self):
@@ -240,7 +240,7 @@ Rechtsbehelfsbelehrung
         self.assertEqual(classification.document_type, "Einkommensteuer")
         self.assertEqual(document.extracted_data["tax_year"], "2024")
         target = StoragePathBuilder(self.structures["family"]).build(document)
-        self.assertEqual(target.parts[2:4], ("2024", "05 Steuerbescheide"))
+        self.assertEqual(target.parts[2:4], ("2024", "Steuerbescheide"))
 
     def test_classifies_police_report_as_legal_correspondence(self):
         text = """
@@ -282,6 +282,31 @@ Bitte alle Arbeitgeber im öffentlichen Dienst angeben
         target = StoragePathBuilder(self.structures["adult"]).build(document)
         self.assertIn("Bewerbungsunterlagen - Bundesamt für Verfassungsschutz", target.name)
 
+    def test_invitation_to_selection_event_wins_over_mentioned_identity_document(self):
+        text = """
+Bundesamt für Verfassungsschutz, Köln, 25.09.2026
+Betreff: Deine Teilnahme am InTelligenceDay am 10. Oktober 2026
+Lieber Julien Blue, wir freuen uns darauf, Dich persönlich kennenzulernen.
+Auswahlgespräch mit der Personalgewinnung und Fachgespräch an den Fachständen.
+Bitte bringe einen gültigen Personalausweis oder Reisepass mit.
+Damit wir Deine Bewerbung weiter berücksichtigen können.
+"""
+        document, classification = self.analyze(text, "Hirte, Julien Blue.pdf")
+
+        self.assertEqual(classification.category, "Arbeit und Karriere")
+        self.assertEqual(
+            classification.document_type, "Einladungen und Auswahlverfahren"
+        )
+        self.assertEqual(
+            document.extracted_data["document_kind"],
+            "Einladung zum Auswahlverfahren",
+        )
+        target = StoragePathBuilder(self.structures["adult"]).build(document)
+        self.assertEqual(target.parts[0:2], (
+            "Arbeit und Karriere", "Einladungen und Auswahlverfahren"
+        ))
+        self.assertIn("Einladung zum Auswahlverfahren", target.name)
+
     def test_extracts_labeled_contract_reference(self):
         document, classification = self.analyze(
             "Vertragsbestätigung Vertragsnummer: AB-2026-4711 Vertragsbeginn Laufzeit Kündigungsfrist"
@@ -300,7 +325,7 @@ Identifikationsnummer Zusammenveranlagung
         self.assertEqual(classification.document_type, "Einkommensteuer")
         self.assertEqual(document.extracted_data["tax_year"], "2023")
         target = StoragePathBuilder(self.structures["family"]).build(document)
-        self.assertEqual(target.parts[:4], ("Finanzamt und Steuern", "Einkommensteuer", "2023", "01 Steuererklärung"))
+        self.assertEqual(target.parts[:4], ("Finanzamt und Steuern", "Einkommensteuer", "2023", "Steuererklärung"))
         self.assertEqual(target.name, "2023 - Einkommensteuererklärung.pdf")
 
     def test_tax_return_tolerates_ocr_accent_error(self):
@@ -324,7 +349,7 @@ Bruttoarbeitslohn 3.771,20 USD Einkommensersatzleistungen
         document, classification = self.analyze(text, "Steuer 2023.pdf")
         self.assertEqual(classification.document_type, "Einkommensteuer")
         self.assertEqual(document.extracted_data["document_kind"], "Einkommensteuererklärung")
-        self.assertEqual(document.extracted_data["tax_section"], "01 Steuererklärung")
+        self.assertEqual(document.extracted_data["tax_section"], "Steuererklärung")
         self.assertIsNone(document.extracted_data["amount"])
         self.assertIsNone(document.extracted_data["currency"])
         self.assertIsNone(document.extracted_data["description"])
@@ -350,7 +375,7 @@ https://www.elster.de/eportal/interpreter/versandbestaetigung/belegnachreichung-
         self.assertIsNone(document.extracted_data["invoice_number"])
         self.assertIsNone(document.extracted_data["contract_number"])
         target = StoragePathBuilder(self.structures["family"]).build(document)
-        self.assertEqual(target.parts[:4], ("Finanzamt und Steuern", "Einkommensteuer", "2024", "04 ELSTER-Nachweise"))
+        self.assertEqual(target.parts[:4], ("Finanzamt und Steuern", "Einkommensteuer", "2024", "ELSTER-Nachweise"))
         self.assertIn("Belegnachreichung zur Steuererklärung", target.name)
 
     def test_files_wage_tax_certificate_as_tax_receipt(self):
@@ -367,7 +392,7 @@ Bruttoarbeitslohn einbehaltene Lohnsteuer Steuer-Identifikationsnummer
             target.parts[:6],
             (
                 "Finanzamt und Steuern", "Einkommensteuer", "2023",
-                "02 Belege", "Arbeit und Werbungskosten",
+                "Belege", "Arbeit und Werbungskosten",
                 "2023 - Lohnsteuerbescheinigung.pdf",
             ),
         )
@@ -381,7 +406,7 @@ Bitte reichen Sie die bezeichneten Unterlagen innerhalb der Frist ein.
         document, classification = self.analyze(text, "Nachforderung.pdf")
         self.assertEqual(classification.document_type, "Einkommensteuer")
         target = StoragePathBuilder(self.structures["family"]).build(document)
-        self.assertEqual(target.parts[3], "03 Nachforderungen")
+        self.assertEqual(target.parts[3], "Nachforderungen")
 
     def test_supplier_outgoing_invoice_is_recipient_incoming_invoice(self):
         text = """
@@ -400,6 +425,15 @@ Zahlungskonditionen 10 Tage
         self.assertEqual(classification.document_type, "Eingangsrechnungen")
         self.assertGreaterEqual(classification.confidence, 0.9)
         self.assertEqual(document.extracted_data["invoice_number"], "115429")
+
+    def test_date_only_invoice_filename_does_not_invent_number_or_vendor(self):
+        data = DocumentAnalyzer(self.rules, {}, _Logger())._extract_from_filename(
+            "Rechnung_01-09-2026.pdf"
+        )
+
+        self.assertTrue(data["force_outgoing"])
+        self.assertNotIn("invoice_number", data)
+        self.assertNotIn("vendor", data)
 
 
 if __name__ == "__main__":

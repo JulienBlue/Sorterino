@@ -64,7 +64,7 @@ class ManualFilingService:
         node = self._template(profile, person_id)
         for part in (
             "Finanzamt und Steuern", "Einkommensteuer", "{year}",
-            "02 Belege", "Sonstige Belege",
+            "Belege", "Sonstige Belege",
         ):
             if not isinstance(node, dict) or part not in node:
                 return False
@@ -175,7 +175,7 @@ class ManualFilingService:
                 raise ProfileValidationError("Dieses Profil besitzt keine Ablage für private Steuerbelege.")
             destination = Path(
                 "Finanzamt und Steuern", "Einkommensteuer", selected_year,
-                "02 Belege", "Sonstige Belege",
+                "Belege", "Sonstige Belege",
             )
         else:
             allowed = {str(path) for path in self.destinations(profile_id, person_id)}

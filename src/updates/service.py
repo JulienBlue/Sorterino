@@ -332,6 +332,13 @@ def launch_installer_after_exit(installer: Path, parent_pid: int | None = None) 
         raise UpdateError("Windows PowerShell wurde nicht gefunden.")
     process_id = int(parent_pid or os.getpid())
     launch_log = installer.parent / "update-launch.log"
+    try:
+        with open(launch_log, "a", encoding="utf-8") as handle:
+            handle.write(
+                f"Update angefordert: PID {process_id}, Installer {installer.name}\n"
+            )
+    except OSError as exc:
+        raise UpdateError("Das Update-Protokoll konnte nicht angelegt werden.") from exc
     # Pass dynamic values through the child-only environment. Positional
     # values following PowerShell's -Command are not bound consistently when
     # paths contain spaces or non-ASCII characters. EncodedCommand avoids the
@@ -342,11 +349,19 @@ def launch_installer_after_exit(installer: Path, parent_pid: int | None = None) 
         "  $parent = [int]$env:SORTERINO_UPDATE_PARENT_PID\n"
         "  $installer = $env:SORTERINO_UPDATE_INSTALLER\n"
         "  $log = $env:SORTERINO_UPDATE_LOG\n"
-        "  Wait-Process -Id $parent -ErrorAction SilentlyContinue\n"
+        "  [IO.File]::AppendAllText($log, ('{0:u} Starter aktiv' -f [DateTime]::Now) + [Environment]::NewLine)\n"
+        "  $deadline = [DateTime]::UtcNow.AddSeconds(45)\n"
+        "  while ((Get-Process -Id $parent -ErrorAction SilentlyContinue) -and "
+        "         ([DateTime]::UtcNow -lt $deadline)) { Start-Sleep -Milliseconds 250 }\n"
+        "  if (Get-Process -Id $parent -ErrorAction SilentlyContinue) {\n"
+        "    throw 'Sorterino wurde nicht innerhalb von 45 Sekunden beendet.'\n"
+        "  }\n"
+        "  Start-Sleep -Milliseconds 1200\n"
         "  if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {\n"
         "    throw 'Der heruntergeladene Installer wurde nicht gefunden.'\n"
         "  }\n"
-        "  Start-Process -FilePath $installer\n"
+        "  $process = Start-Process -FilePath $installer -ArgumentList '/CLOSEAPPLICATIONS','/NORESTART' -PassThru\n"
+        "  [IO.File]::AppendAllText($log, ('{0:u} Installer gestartet, PID {1}' -f [DateTime]::Now, $process.Id) + [Environment]::NewLine)\n"
         "} catch {\n"
         "  $message = ('{0:u} {1}' -f [DateTime]::Now, $_.Exception.Message)\n"
         "  [IO.File]::AppendAllText($log, $message + [Environment]::NewLine)\n"
@@ -362,11 +377,17 @@ def launch_installer_after_exit(installer: Path, parent_pid: int | None = None) 
             "SORTERINO_UPDATE_LOG": str(launch_log),
         }
     )
+    # DETACHED_PROCESS prevented PowerShell from reaching the script on some
+    # Windows installations. CREATE_NO_WINDOW keeps the helper invisible;
+    # CREATE_NEW_PROCESS_GROUP lets it continue independently after Sorterino
+    # exits.
     creation_flags = (
-        getattr(subprocess, "CREATE_NO_WINDOW", 0)
-        | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-        | getattr(subprocess, "DETACHED_PROCESS", 0)
+        getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+        | getattr(subprocess, "CREATE_NO_WINDOW", 0)
     )
+    startup_info = subprocess.STARTUPINFO()
+    startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startup_info.wShowWindow = subprocess.SW_HIDE
     subprocess.Popen(
         [
             str(powershell),
@@ -385,4 +406,5 @@ def launch_installer_after_exit(installer: Path, parent_pid: int | None = None) 
         stderr=subprocess.DEVNULL,
         close_fds=True,
         creationflags=creation_flags,
+        startupinfo=startup_info,
     )

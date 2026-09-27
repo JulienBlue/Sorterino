@@ -424,7 +424,7 @@ class ManualReviewWindow(EmbeddedPage):
         self.tax_receipt.pack(anchor="w", padx=16, pady=(0, 4))
         ctk.CTkLabel(
             frame,
-            text="Der Beleg landet dann im gewählten Steuerjahr unter „02 Belege / Sonstige Belege“.",
+            text="Der Beleg landet dann im gewählten Steuerjahr unter „Belege / Sonstige Belege“.",
             text_color=SECONDARY_TEXT,
             justify="left",
             wraplength=620,

@@ -221,7 +221,6 @@ class DocumentPipeline:
             required = {
                 "date": data.get("date"),
                 "vendor": data.get("vendor"),
-                "invoice_number": data.get("invoice_number"),
             }
         elif doc_type == "Eingangsrechnungen":
             required = {
@@ -255,7 +254,7 @@ class DocumentPipeline:
             metadata
             and (
                 metadata.document_type == "Kassenbons"
-                or metadata.document_type in {"Eingangsrechnungen", "Ausgangsrechnungen"}
+                or metadata.document_type == "Eingangsrechnungen"
                 and active_profile
                 and active_profile.get("type") != "organization"
             )
@@ -485,6 +484,31 @@ class DocumentPipeline:
         document.mark_classified(classification)
         document.metadata = metadata
         document.extracted_data = extracted
+
+        # A mailbox or household address proves only where a document arrived,
+        # not that its legal subject belongs to the profile.  Police documents
+        # without a positively matched person therefore always need review.
+        if (
+            extracted.get("document_kind") == "Anzeigenbescheinigung"
+            and assignment
+            and not assignment.person_ids
+        ):
+            self.logger.info(
+                "Anzeigenbescheinigung ohne erkannte Profilperson manuell"
+            )
+            self._store_runtime(
+                document,
+                self.manual_sort_target,
+                filename,
+                "MANUAL",
+                "manual",
+                "profile_person_unresolved",
+                self._manual_suggestion(
+                    document, classification, metadata, extracted, assignment
+                ),
+            )
+            document.status = DocumentStatus.STORED
+            return
 
         if self._requires_invoice_context_review(metadata, active_profile):
             label = "Kassenbon" if metadata.document_type == "Kassenbons" else "Rechnung"

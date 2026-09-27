@@ -97,6 +97,14 @@ class ProfilePipelineTests(unittest.TestCase):
             self._pipeline()._requires_invoice_context_review(metadata, family)
         )
 
+    def test_family_outgoing_invoice_can_be_filed_automatically(self):
+        family = self.service.create_family("Familie Hirte")
+        metadata = DocumentMetadata("Buchhaltung", "Ausgangsrechnungen")
+
+        self.assertFalse(
+            self._pipeline()._requires_invoice_context_review(metadata, family)
+        )
+
     def test_company_invoice_does_not_require_context_review(self):
         company = self.service.create_organization("Hades IT")
         metadata = DocumentMetadata("Buchhaltung", "Eingangsrechnungen")

@@ -244,6 +244,22 @@ class Config:
             old_authorities.pop("Steuerbescheide", None)
             if not old_authorities:
                 migrated.pop("Behörden und Steuern", None)
+        taxes = migrated.get("Finanzamt und Steuern")
+        income_tax = taxes.get("Einkommensteuer") if isinstance(taxes, dict) else None
+        year_node = income_tax.get("{year}") if isinstance(income_tax, dict) else None
+        if isinstance(year_node, dict):
+            for old_name, new_name in (
+                ("01 Steuererklärung", "Steuererklärung"),
+                ("02 Belege", "Belege"),
+                ("03 Nachforderungen", "Nachforderungen"),
+                ("04 ELSTER-Nachweise", "ELSTER-Nachweise"),
+                ("05 Steuerbescheide", "Steuerbescheide"),
+                ("06 Einsprüche und Schriftverkehr", "Einsprüche und Schriftverkehr"),
+            ):
+                if old_name in year_node:
+                    old_value = year_node.pop(old_name)
+                    if new_name not in year_node:
+                        year_node[new_name] = old_value
         return migrated
 
     @classmethod

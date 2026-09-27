@@ -288,6 +288,16 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
                     "document_kind": "Bewerbungsunterlagen",
                 })
 
+        if classification.document_type == "Einladungen und Auswahlverfahren":
+            extracted.update({
+                "amount": None,
+                "currency": None,
+                "vendor": "Bundesamt für Verfassungsschutz"
+                if "bundesamt für verfassungsschutz" in text_lower
+                else extracted.get("vendor"),
+                "document_kind": "Einladung zum Auswahlverfahren",
+            })
+
         if classification.document_type == "Eheurkunde":
             extracted.update(self._extract_marriage_certificate(text))
 
@@ -314,6 +324,16 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
 
     def _extract_from_filename(self, filename: str) -> dict:
         name = Path(filename).stem
+
+        # "Rechnung_01-09-2026" contains a date, not invoice number 01 and
+        # vendor "-09-2026".  It is a common name for a self-created invoice;
+        # content extraction remains authoritative for all actual fields.
+        if re.fullmatch(
+            r"rechnung[_\s-]*(?:0[1-9]|[12]\d|3[01])[-_.](?:0[1-9]|1[0-2])[-_.](?:19|20)\d{2}",
+            name,
+            flags=re.IGNORECASE,
+        ):
+            return {"force_outgoing": True, "force_incoming": False}
 
         out_pattern = r"^rechnung[_\s-]*(\d+)\s*(?:vom\s*)?(\d{2}\.\d{2}\.\d{4})?\s*(.+)?$"
         m = re.match(out_pattern, name, flags=re.IGNORECASE)

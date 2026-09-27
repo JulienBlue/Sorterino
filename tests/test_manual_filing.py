@@ -304,7 +304,7 @@ class ManualFilingTests(unittest.TestCase):
             self.assertEqual(
                 final,
                 root / "documents" / "Sabine Hirte" / "Finanzamt und Steuern"
-                / "Einkommensteuer" / "2026" / "02 Belege" / "Sonstige Belege"
+                / "Einkommensteuer" / "2026" / "Belege" / "Sonstige Belege"
                 / "rechnung.pdf",
             )
 

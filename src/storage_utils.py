@@ -417,6 +417,12 @@ class StoragePathBuilder:
             return " - ".join(parts) + ext
 
         if doc_type == "Bescheinigungen" and data.get("document_kind") == "Arbeitsbescheinigung":
+            parts = ["Arbeitsbescheinigung"]
+            if data.get("employer"):
+                parts.append(sanitize(data["employer"]))
+            return " - ".join(parts) + ext
+
+        if doc_type == "Einladungen und Auswahlverfahren":
             parts = []
             if date:
                 try:
@@ -424,9 +430,9 @@ class StoragePathBuilder:
                     parts.append(f"{year}-{month}-{day}")
                 except ValueError:
                     parts.append(sanitize(date))
-            parts.append("Arbeitsbescheinigung")
-            if data.get("employer"):
-                parts.append(sanitize(data["employer"]))
+            parts.append(data.get("document_kind") or "Einladung zum Auswahlverfahren")
+            if vendor:
+                parts.append(sanitize(vendor))
             return " - ".join(parts) + ext
 
         if doc_type == "Gehaltsabrechnungen":

@@ -7,6 +7,14 @@ import traceback
 MUTEX_NAME = "SorterinoSingletonMutex"
 
 
+def _argument_value(name):
+    try:
+        index = sys.argv.index(name)
+        return sys.argv[index + 1]
+    except (ValueError, IndexError):
+        return None
+
+
 # SYSTEM / SINGLETON
 def _check_singleton():
     try:
@@ -137,7 +145,8 @@ if __name__ == "__main__":
     try:
         if "--developer-console" in sys.argv:
             from src.gui.developer_console import run_developer_console
-            run_developer_console()
+            parent_pid = _argument_value("--parent-pid")
+            run_developer_console(int(parent_pid) if parent_pid and parent_pid.isdigit() else None)
             sys.exit(0)
 
         if "--remove-mail-credentials" in sys.argv:
