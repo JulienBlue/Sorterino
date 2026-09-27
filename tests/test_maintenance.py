@@ -3,6 +3,8 @@ import unittest
 from pathlib import Path
 
 from src.config import Config
+from src.document_registry import DocumentRegistry
+from src.duplicate_index import ExactDuplicateIndex
 from src.maintenance import cleanup_rebuildable_state
 
 
@@ -16,7 +18,6 @@ class MaintenanceTests(unittest.TestCase):
                 config.oauth_clients_path: config.oauth_clients_path.read_bytes(),
                 config.profiles_root / "profile.json": b"profile",
                 config.persons_root / "person.json": b"person",
-                config.state_root / "mail_import_state.json": b"mail-state",
                 config.incoming_root / "pending.pdf": b"document",
                 config.app_root / "credentials" / "microsoft_mail.bin": b"credential",
             }
@@ -28,7 +29,8 @@ class MaintenanceTests(unittest.TestCase):
                 config.logs_root / "sorterino.log",
                 config.app_root / "updates" / "setup.exe",
                 config.state_root / "manual-review" / "suggestion.json",
-                config.database_path,
+                config.state_root / "mail_import_state.json",
+                config.state_root / "duplicate-index.json",
                 config.app_root / ".settings.json.old.tmp",
             )
             for path in removable:
@@ -41,6 +43,29 @@ class MaintenanceTests(unittest.TestCase):
                 self.assertEqual(path.read_bytes(), content)
             for path in removable:
                 self.assertFalse(path.exists())
+            self.assertTrue(config.database_path.exists())
+
+    def test_cleanup_does_not_rebuild_duplicate_history_from_existing_backups(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            config = Config(app_data_root=root / "appdata", legacy_home=root / "home")
+            backup_root = root / "Sorterino - Backups"
+            backup = backup_root / "profile" / "known.pdf"
+            backup.parent.mkdir(parents=True)
+            backup.write_bytes(b"same document")
+            incoming = config.incoming_root / "again.pdf"
+            incoming.write_bytes(b"same document")
+
+            index = ExactDuplicateIndex(config, backup_root)
+            _digest, match = index.find(incoming)
+            self.assertIsNotNone(match)
+
+            cleanup_rebuildable_state(config)
+
+            fresh_index = ExactDuplicateIndex(config, backup_root)
+            _digest, match = fresh_index.find(incoming)
+            self.assertIsNone(match)
+            self.assertEqual(DocumentRegistry(config).statistics()["documents"], 0)
 
     def test_cleanup_rejects_targets_outside_appdata_root(self):
         with tempfile.TemporaryDirectory() as temp:

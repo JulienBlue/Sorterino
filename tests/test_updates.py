@@ -55,6 +55,7 @@ class UpdateTests(unittest.TestCase):
         self.assertLess(parse_version("2.1beta"), parse_version("2.1rc1"))
         self.assertLess(parse_version("2.1rc1"), parse_version("2.1"))
         self.assertLess(parse_version("2.1"), parse_version("2.2beta"))
+        self.assertLess(parse_version("2.2beta"), parse_version("2.2beta1"))
 
     def test_beta_channel_finds_newest_release(self):
         payload = json.dumps([

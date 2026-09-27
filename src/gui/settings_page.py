@@ -658,9 +658,10 @@ class SettingsPage(ctk.CTkFrame):
             "Lokale Laufzeitdaten zurücksetzen",
             (
                 "Entfernt Protokolle, Tagesberichte, heruntergeladene Updates, "
-                "Prüfvorschläge sowie die technische Verarbeitungs- und Duplikathistorie. "
+                "Prüfvorschläge, den E-Mail-Importstand sowie die technische "
+                "Verarbeitungs- und Duplikathistorie. "
                 "Profile, Personen, Einstellungen, Postfach-Zugangsdaten, OAuth-Clients, "
-                "E-Mail-Importstand und Dokumente bleiben erhalten."
+                "und Dokumente bleiben erhalten."
             ),
         )
         actions = self._actions(card)
@@ -699,9 +700,11 @@ class SettingsPage(ctk.CTkFrame):
                 "• Protokolle und Tagesberichte\n"
                 "• heruntergeladene Update-Dateien\n"
                 "• automatisch erzeugte Prüfvorschläge\n"
+                "• den E-Mail-Importstand\n"
                 "• Verarbeitungs-, Berichts- und Duplikathistorie\n\n"
                 "Erhalten bleiben Profile, Personen, Einstellungen, OAuth-Clients, "
-                "geschützte Zugangsdaten, der E-Mail-Importstand und sämtliche Dokumente.\n\n"
+                "geschützte Zugangsdaten und sämtliche Dokumente. Beim nächsten Lauf "
+                "werden E-Mails innerhalb des je Postfach eingestellten Zeitraums erneut geprüft.\n\n"
                 "Sorterino wird danach beendet. Wirklich fortfahren?"
             ),
             parent=self.owner,

@@ -87,13 +87,13 @@ Windows-Installer erzeugen:
 
 Erforderliche SHA-256-Datei für den eingebauten Updater erzeugen:
 
-    python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2beta.exe
+    python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2beta1.exe
 
 Danach liegen die Ergebnisse hier:
 
     dist\Sorterino\Sorterino.exe
-    installer\Sorterino_Setup_v2.2beta.exe
-    installer\Sorterino_Setup_v2.2beta.exe.sha256
+    installer\Sorterino_Setup_v2.2beta1.exe
+    installer\Sorterino_Setup_v2.2beta1.exe.sha256
 
 Für einen vollständigen Build werden außerdem diese lokalen Laufzeiten benötigt:
 
@@ -137,15 +137,15 @@ Die Deinstallation wird über `Sorterino_Uninstaller` gestartet. Die eigene
 Auswahlseite ersetzt die zusätzliche Standard-Rückfrage. Dokumentarchive,
 Eingang und Backups sind dort sichtbar als „bleiben erhalten“ gekennzeichnet.
 
-Beispiel für Version v2.2beta:
+Beispiel für Version v2.2beta1:
 
     git status --short
     git add -A
     git diff --cached
-    git commit -m "release: v2.2beta"
-    git tag -a v2.2beta -m "Sorterino v2.2beta"
+    git commit -m "release: v2.2beta1"
+    git tag -a v2.2beta1 -m "Sorterino v2.2beta1"
     git push origin main
-    git push origin v2.2beta
+    git push origin v2.2beta1
 
 Der zur Version gehörende Installer wird zusammen mit dem Release-Commit versioniert.
 

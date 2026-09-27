@@ -77,7 +77,7 @@ FUNKTIONEN
 SCHNELLSTART – INSTALLIERTE VERSION
 ----------------------------------
 
-1. `Sorterino_Setup_v2.2beta.exe` starten und die Installation abschließen.
+1. `Sorterino_Setup_v2.2beta1.exe` starten und die Installation abschließen.
 2. Sorterino öffnen.
 3. Im Willkommensdialog „Standardspeicherort auswählen“ anklicken und den
    gewünschten Ordner im Explorer wählen.
@@ -117,7 +117,7 @@ einem eigenen Fenster.
 - Einstellungen: getrennte Bereiche für Automatisierung und Berichte sowie Allgemeines, Speicherorte, Erkennung, E-Mail-Import, Sicherheit und Diagnose
 - Tagesberichte können über ein ausdrücklich ausgewähltes Postfach einzeln an mehrere Empfänger gesendet werden; ein separates SMTP-Berichtskonto ist ebenfalls möglich
 - Der optionale Entwicklermodus öffnet eine getrennte Live-Konsole mit Verarbeitungsschritten, ohne das Sortierverhalten zu verändern
-- Unter „Erweitert“ können reproduzierbare Laufzeitdaten bereinigt werden. Profile, Personen, Einstellungen, OAuth-Clients, Zugangsdaten, E-Mail-Importstand und Dokumente bleiben dabei erhalten
+- Unter „Erweitert“ können reproduzierbare Laufzeitdaten einschließlich Duplikathistorie und E-Mail-Importstand bereinigt werden. Profile, Personen, Einstellungen, OAuth-Clients, Zugangsdaten und Dokumente bleiben dabei erhalten
 - Erweiterte Einstellungen: Regeln und Strukturen als JSON bearbeiten
 - Dokumentregister: SQLite-Integrität prüfen, bekannte Ordner erfassen oder ausschließlich die technische Historie zurücksetzen
 - Logs: Verarbeitung nachvollziehen

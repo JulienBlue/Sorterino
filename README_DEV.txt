@@ -352,12 +352,15 @@ WARTUNG DER LOKALEN LAUFZEITDATEN
 
 `maintenance.cleanup_rebuildable_state` entfernt ausschließlich explizit
 aufgeführte, reproduzierbare Ziele innerhalb von AppData/Sorterino: Logs und
-Berichte, Update-Downloads, Prüfvorschläge sowie die SQLite-Verarbeitungs- und
-Duplikathistorie. Vor dem ersten Löschen werden sämtliche Ziele gegen den
-AppData-Stamm geprüft. Profile, Personen, Presets, Einstellungen, OAuth-Clients,
-geschützte Credentials, der E-Mail-Importstand und Dokumentordner bleiben
-unverändert. Die Oberfläche beendet Sorterino nach erfolgreicher Bereinigung,
-damit beim nächsten Start ein konsistenter technischer Zustand entsteht.
+Berichte, Update-Downloads sowie den kompletten technischen State einschließlich
+Prüfvorschlägen, Legacy-Duplikatindex und E-Mail-Importcursor. Die SQLite-
+Verarbeitungs- und Duplikathistorie wird transaktional geleert; der Marker gegen
+einen erneuten Backup-Bootstrap bleibt dabei gesetzt. Vor dem ersten Löschen
+werden sämtliche Dateisystemziele gegen den AppData-Stamm geprüft. Profile,
+Personen, Presets, Einstellungen, OAuth-Clients, geschützte Credentials und
+Dokumentordner bleiben unverändert. Die Oberfläche beendet Sorterino nach
+erfolgreicher Bereinigung, damit beim nächsten Start ein konsistenter technischer
+Zustand entsteht.
 
 
 DOKUMENTREGISTER UND DUPLIKATE
@@ -502,7 +505,7 @@ iscc installer.iss
 
 Prüfsumme für den Updater:
 
-python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2beta.exe
+python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2beta1.exe
 
 Der sichtbare Einstieg für die Deinstallation heißt `Sorterino_Uninstaller`.
 Er startet Inno Setup ohne dessen zusätzliche Standard-Rückfrage und zeigt
@@ -513,8 +516,8 @@ dem zugehörigen Deinstallationsprotokoll verwaltet.
 Ergebnisse:
 
 - `dist\Sorterino\`
-- `installer\Sorterino_Setup_v2.2beta.exe`
-- `installer\Sorterino_Setup_v2.2beta.exe.sha256`
+- `installer\Sorterino_Setup_v2.2beta1.exe`
+- `installer\Sorterino_Setup_v2.2beta1.exe.sha256`
 
 Der Updater fragt ausschließlich die GitHub-Releases von
 `JulienBlue/Sorterino` ab. Für ein installierbares Release müssen der Installer
