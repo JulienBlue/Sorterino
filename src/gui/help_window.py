@@ -132,9 +132,9 @@ HELP_CONTENT = {
     ),
     "settings": (
         "Einstellungen",
-        "Diese Seite bündelt die globalen Programmeinstellungen in durchsuchbaren Bereichen.",
+        "Diese Seite bündelt die globalen Programmeinstellungen in übersichtlichen Bereichen.",
         [
-            "Nutze die Suche oben oder wähle links einen Bereich aus. Persönliche Kennungen und Zugangsdaten werden nicht durchsucht.",
+            "Wähle links den gewünschten Einstellungsbereich aus.",
             "Unter „Berichte“ kannst du den Tagesbericht aktivieren, seine Uhrzeit festlegen, ihn anzeigen und den sicheren E-Mail-Versand an ausgewählte Empfänger einrichten.",
             "Der Standard-Dokumentenspeicher wird von Profilen ohne eigenen Speicherort verwendet.",
             "Der gemeinsame Eingang wird zunächst im Standard-Dokumentenspeicher angelegt und kann danach separat geändert werden.",
@@ -176,6 +176,7 @@ HELP_CONTENT = {
 class HelpWindow(ctk.CTkToplevel):
     def __init__(self, master, config, context="overview"):
         super().__init__(master)
+        self.config_data = config
         self.title("Sorterino Hilfe")
         self.geometry("760x700")
         self.minsize(620, 520)
@@ -198,11 +199,35 @@ class HelpWindow(ctk.CTkToplevel):
         ctk.CTkLabel(status_card, text=status, font=("Arial", 17, "bold"), text_color=PRIMARY_TEXT).pack(anchor="w", padx=14, pady=(12, 5))
         for issue in issues:
             ctk.CTkLabel(status_card, text=f"• {issue}", wraplength=620, justify="left", text_color=PRIMARY_TEXT).pack(anchor="w", padx=14, pady=3)
+        for account in mail_accounts_requiring_attention(config):
+            label = account.get("label") or account.get("username") or "Postfach"
+            ctk.CTkButton(
+                status_card,
+                text=f"Postfach „{label}“ öffnen",
+                command=lambda selected=account: self._open_mail_account(selected),
+            ).pack(anchor="w", padx=14, pady=(7, 3))
         ctk.CTkLabel(status_card, text="").pack(pady=2)
         ctk.CTkLabel(scroll, text="Was du hier tun kannst", font=("Arial", 18, "bold")).pack(anchor="w", padx=10, pady=(0, 6))
         for step in steps:
             ctk.CTkLabel(scroll, text=f"• {step}", wraplength=670, justify="left").pack(anchor="w", padx=16, pady=4)
         ctk.CTkButton(scroll, text="Hilfe schließen", command=self.destroy).pack(anchor="e", padx=10, pady=22)
+
+    def _open_mail_account(self, account):
+        navigator = self.master
+        if not hasattr(navigator, "open_view"):
+            return
+        from src.gui.mail_window import ProfileMailAccountDialog
+
+        service = ProfileService(self.config_data)
+        profile_id = account.get("profile_id")
+        account_id = account.get("id")
+        self.destroy()
+        navigator.open_view(
+            lambda parent: ProfileMailAccountDialog(
+                parent, service, profile_id, account_id=account_id
+            ),
+            "profiles",
+        )
 
 
 def _existing_parent(path):
@@ -219,6 +244,33 @@ def _storage_is_available(path):
         return path.is_dir() and os.access(path, os.W_OK)
     parent = _existing_parent(path)
     return bool(parent and parent.is_dir() and os.access(parent, os.W_OK))
+
+
+def mail_accounts_requiring_attention(config):
+    """Return enabled mail accounts for which the user can take direct action."""
+    from src.mail_auth import (
+        MailAuthenticationError,
+        has_account_credentials,
+        oauth_client_config,
+        validate_imap_settings,
+    )
+    from src.mail_fetcher import MailImportState
+
+    service = ProfileService(config)
+    stored_issues = MailImportState(config).account_issues()
+    result = []
+    for account in service.list_email_accounts(enabled_only=True):
+        needs_attention = bool(stored_issues.get(account.get("id")))
+        try:
+            validate_imap_settings(account)
+            if account.get("auth_method") == "oauth2":
+                oauth_client_config(config, account.get("provider"))
+            needs_attention = needs_attention or not has_account_credentials(account, config)
+        except MailAuthenticationError:
+            needs_attention = True
+        if needs_attention:
+            result.append(account)
+    return result
 
 
 def diagnose(config, context):
@@ -251,23 +303,28 @@ def diagnose(config, context):
                     issues.append(f"Der Speicherort von Profil „{profile.get('display_name', 'Unbenannt')}“ ist nicht erreichbar. Schließe das Laufwerk an oder ändere den Speicherort im Profil.")
             except ProfileValidationError as exc:
                 issues.append(f"Profil „{profile.get('display_name', 'Unbenannt')}“: {exc} Öffne das Profil und korrigiere den Speicherort.")
-        if context in {"mail", "mail_edit"}:
-            from src.mail_auth import (
-                MailAuthenticationError,
-                has_account_credentials,
-                oauth_client_config,
-                validate_imap_settings,
-            )
-            for account in service.list_email_accounts():
-                label = account.get("label") or "Unbenannt"
-                try:
-                    validate_imap_settings(account)
-                    if account.get("auth_method") == "oauth2":
-                        oauth_client_config(config, account.get("provider"))
-                    if not has_account_credentials(account, config):
-                        issues.append(f"Postfach „{label}“ muss erneut verbunden werden.")
-                except MailAuthenticationError as exc:
-                    issues.append(f"Postfach „{label}“: {exc}")
+        from src.mail_auth import (
+            MailAuthenticationError,
+            has_account_credentials,
+            oauth_client_config,
+            validate_imap_settings,
+        )
+        from src.mail_fetcher import MailImportState
+        stored_mail_issues = MailImportState(config).account_issues()
+        for account in service.list_email_accounts(enabled_only=True):
+            label = account.get("label") or "Unbenannt"
+            try:
+                validate_imap_settings(account)
+                if account.get("auth_method") == "oauth2":
+                    oauth_client_config(config, account.get("provider"))
+                if not has_account_credentials(account, config):
+                    issues.append(f"Postfach „{label}“ muss erneut verbunden werden.")
+                    continue
+                stored_issue = stored_mail_issues.get(account.get("id"))
+                if stored_issue:
+                    issues.append(f"Postfach „{label}“: {stored_issue}")
+            except MailAuthenticationError as exc:
+                issues.append(f"Postfach „{label}“: {exc}")
     except ProfileValidationError as exc:
         issues.append(f"Die Profildaten sind ungültig: {exc} Öffne „Profile“ und korrigiere die betroffenen Angaben.")
     if context in {"overview", "documents", "settings"}:

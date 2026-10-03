@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from dataclasses import dataclass, field
 
 
@@ -17,7 +18,11 @@ class ProfileMatcher:
 
     @staticmethod
     def _normalize(value):
-        return re.sub(r"[^a-z0-9]", "", str(value or "").casefold())
+        folded = unicodedata.normalize("NFKD", str(value or "").casefold())
+        without_marks = "".join(
+            char for char in folded if not unicodedata.combining(char)
+        )
+        return re.sub(r"[^a-z0-9]", "", without_marks)
 
     def match(self, text):
         text_lower = str(text or "").casefold()
@@ -72,8 +77,18 @@ class ProfileMatcher:
 
     def match_document(self, text, filename):
         """Use an unambiguous filename only as fallback for ambiguous content."""
+        explicit_patient = self._match_explicit_patient(text)
+        if explicit_patient:
+            return explicit_patient
         combined = self.match(f"{text}\n{filename}")
         if combined:
+            patient_ids = self._explicit_patient_ids(combined.profile_id, text)
+            if len(patient_ids) == 1:
+                combined.person_ids = patient_ids
+                combined.matched_by = list(dict.fromkeys([
+                    *combined.matched_by,
+                    "Ausdrücklich genannte Patientin oder genannter Patient",
+                ]))
             return combined
         filename_assignment = self.match(filename)
         if filename_assignment:
@@ -82,6 +97,69 @@ class ProfileMatcher:
                 "Eindeutiger Dateiname",
             ]))
         return filename_assignment
+
+    def _match_explicit_patient(self, text):
+        """Resolve one explicitly labelled patient across all known profiles."""
+        windows = re.findall(
+            r"\bPatient(?:in)?\b[^\r\n]{0,160}",
+            str(text or ""),
+            flags=re.IGNORECASE,
+        )
+        if not windows:
+            return None
+        patient_text = "\n".join(windows).casefold()
+        matches = []
+        for profile in self.service.list_profiles():
+            for person, _membership in self.service.profile_members(profile["id"]):
+                if self._person_name_present(person, patient_text):
+                    matches.append((profile["id"], person["id"]))
+        if len(matches) != 1:
+            return None
+        profile_id, person_id = matches[0]
+        return ProfileAssignment(
+            profile_id=profile_id,
+            person_ids=[person_id],
+            confidence=1.0,
+            matched_by=["Ausdrücklich genannte Patientin oder genannter Patient"],
+        )
+
+    def _explicit_patient_ids(self, profile_id, text):
+        """Prefer the named patient over relatives merely mentioned in a report."""
+        windows = re.findall(
+            r"\bPatient(?:in)?\b[^\r\n]{0,160}",
+            str(text or ""),
+            flags=re.IGNORECASE,
+        )
+        if not windows:
+            return []
+        patient_text = "\n".join(windows).casefold()
+        return [
+            person["id"]
+            for person, _membership in self.service.profile_members(profile_id)
+            if self._person_name_present(person, patient_text)
+        ]
+
+    def match_unique_profile_address(self, text):
+        """Resolve a property document from one uniquely matching street."""
+        normalized_text = self._normalize(text)
+        matches = []
+        for profile in self.service.list_profiles():
+            address = profile.get("address", {}) or {}
+            street = " ".join(filter(None, [
+                address.get("street"),
+                address.get("house_number"),
+            ])).strip()
+            normalized_street = self._normalize(street)
+            if len(normalized_street) >= 5 and normalized_street in normalized_text:
+                matches.append(profile)
+        if len(matches) != 1:
+            return None
+        return ProfileAssignment(
+            profile_id=matches[0]["id"],
+            person_ids=[],
+            confidence=0.9,
+            matched_by=["Eindeutige Objektanschrift"],
+        )
 
     def match_profile(self, profile_id, text, source_reason="Profilpostfach"):
         profile = self.service.get_profile(profile_id)
@@ -209,8 +287,17 @@ class ProfileMatcher:
         address = profile.get("address", {}) or {}
         street = " ".join(filter(None, [address.get("street"), address.get("house_number")])).strip()
         postal_city = " ".join(filter(None, [address.get("postal_code"), address.get("city")])).strip()
-        if street and postal_city and street.casefold() in text_lower and postal_city.casefold() in text_lower:
-            score += 0.35
+        normalized_text = self._normalize(text_lower)
+        if (
+            street
+            and postal_city
+            and self._normalize(street) in normalized_text
+            and self._normalize(postal_city) in normalized_text
+        ):
+            # A complete profile address reliably identifies the household or
+            # organization. It deliberately does not select an individual
+            # family member; person-level address matches remain weak below.
+            score += 0.85
             reasons.append("Profilanschrift")
         return score
 

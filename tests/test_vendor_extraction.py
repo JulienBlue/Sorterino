@@ -32,6 +32,64 @@ Gesamtbetrag EUR 1368,08
 
         self.assertEqual(vendor, "ITK Computer GmbH")
 
+    def test_outgoing_invoice_does_not_use_a_slogan_as_customer(self):
+        text = """
+Hades IT GmbH
+Lösungen finden und leicht
+Julien Blue Hirte
+Musterstraße 1
+Hades IT GmbH
+Rechnung vom 10.09.2026
+"""
+        company_profile = {"name": "Hades IT GmbH"}
+
+        vendor = DocumentAnalyzer([], company_profile, _Logger())._extract_vendor(text)
+
+        self.assertEqual(vendor, "Julien Blue Hirte")
+
+    def test_invoice_slogan_with_period_is_not_used_as_vendor(self):
+        text = """
+Lösungen finden und leicht fühlen.
+Natalie Eich
+Systemische Beratung und Coaching
+Rechnungsnummer: 01-09
+Rechnungsdatum: 10.09.2026
+"""
+
+        vendor = DocumentAnalyzer([], {}, _Logger())._extract_vendor(text)
+
+        self.assertEqual(vendor, "Natalie Eich")
+
+    def test_recipient_can_be_excluded_when_resolving_invoice_vendor(self):
+        text = """
+Lösungen finden und leicht fühlen.
+Julien Blue Hirte
+Schöne Aussicht 1
+Natalie Eich
+Systemische Beratung und Coaching
+Rechnungsnummer: 01-09
+"""
+
+        vendor = DocumentAnalyzer([], {}, _Logger())._extract_vendor(
+            text, excluded_names=["Julien Blue Hirte"]
+        )
+
+        self.assertEqual(vendor, "Natalie Eich")
+
+    def test_invoice_letterhead_before_recipient_is_used_as_vendor(self):
+        text = """
+Lil' Leo | Kalkarer Straße 10 | 50733 Köln
+Sabine Hirte
+Schöne Aussicht 1
+Rechnung 32337
+"""
+
+        vendor = DocumentAnalyzer([], {}, _Logger())._extract_vendor(
+            text, excluded_names=["Sabine Hirte"]
+        )
+
+        self.assertEqual(vendor, "Lil Leo")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -231,6 +231,52 @@ class DocumentTextExtractorTests(unittest.TestCase):
         self.assertIn("Seite 1", text)
         self.assertIn("Seite 2", text)
 
+    def test_long_pdf_preview_uses_first_five_and_last_two_pages(self):
+        service = TesseractOCR.__new__(TesseractOCR)
+        service.logger = _Logger()
+        service.language = "deu+eng+fra"
+        service.poppler_path = "poppler"
+        pages = [Image.new("RGB", (20, 20), "white") for _ in range(5)]
+        ending = [Image.new("RGB", (20, 20), "white") for _ in range(2)]
+
+        with patch(
+            "src.tesseract_ocr.pdfinfo_from_path",
+            return_value={"Pages": 31},
+        ), patch(
+            "src.tesseract_ocr.convert_from_path",
+            side_effect=[pages, ending],
+        ) as convert, patch(
+            "src.tesseract_ocr.pytesseract.image_to_string",
+            side_effect=[f"Seite {number}" for number in (1, 2, 3, 4, 5, 30, 31)],
+        ):
+            text, partial = service.extract_text_preview("Angebot.pdf")
+
+        self.assertTrue(partial)
+        self.assertIn("Seite 1", text)
+        self.assertIn("Seite 31", text)
+        self.assertEqual(convert.call_args_list[0].kwargs["first_page"], 1)
+        self.assertEqual(convert.call_args_list[0].kwargs["last_page"], 5)
+        self.assertEqual(convert.call_args_list[1].kwargs["first_page"], 30)
+        self.assertEqual(convert.call_args_list[1].kwargs["last_page"], 31)
+
+    def test_short_pdf_preview_uses_full_extraction(self):
+        service = TesseractOCR.__new__(TesseractOCR)
+        service.logger = _Logger()
+        service.poppler_path = "poppler"
+        with patch(
+            "src.tesseract_ocr.pdfinfo_from_path",
+            return_value={"Pages": 10},
+        ), patch.object(
+            service,
+            "_extract_from_pdf",
+            return_value="Vollständiger Text",
+        ) as full:
+            text, partial = service.extract_text_preview("Kurz.pdf")
+
+        self.assertFalse(partial)
+        self.assertEqual(text, "Vollständiger Text")
+        full.assert_called_once_with("Kurz.pdf")
+
     def test_heic_is_opened_through_pillow_plugin(self):
         from pillow_heif import from_pillow
 

@@ -4,17 +4,18 @@ from datetime import date
 from pathlib import Path
 
 from src.config import Config
-from src.gui.settings_page import matching_settings_category
 from src.reporting import DailyReportManager
+from src.gui.settings_page import SettingsPage
 
 
 class SettingsPageTests(unittest.TestCase):
-    def test_search_finds_user_facing_categories_and_synonyms(self):
-        self.assertEqual(matching_settings_category("Daily Report"), "reports")
-        self.assertEqual(matching_settings_category("OCR"), "recognition")
-        self.assertEqual(matching_settings_category("Postfach"), "email")
-        self.assertEqual(matching_settings_category("Backup"), "storage")
-        self.assertIsNone(matching_settings_category("Steuersatz"))
+    def test_last_settings_category_is_restored(self):
+        owner = type("Owner", (), {"_settings_category": "advanced"})()
+        self.assertEqual(SettingsPage.remembered_category(owner), "advanced")
+
+    def test_invalid_remembered_settings_category_falls_back_to_general(self):
+        owner = type("Owner", (), {"_settings_category": "missing"})()
+        self.assertEqual(SettingsPage.remembered_category(owner), "general")
 
     def test_daily_report_stays_enabled_for_existing_and_fresh_settings(self):
         with tempfile.TemporaryDirectory() as temp:

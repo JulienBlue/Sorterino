@@ -90,7 +90,7 @@ class DocumentRuleTests(unittest.TestCase):
             (
                 "Renteninformation 2026 - Julien_20260802_0001.pdf",
                 "Deutsche Rentenversicherung Renteninformation. Bitte Personalausweis bereithalten.",
-                "Rentenversicherung", "Renteninformationen", None,
+                "Rentenversicherung", "Renteninformation", None,
             ),
         ]
         for filename, text, category, document_type, insurance_type in cases:
@@ -108,8 +108,8 @@ class DocumentRuleTests(unittest.TestCase):
         )
         self.assertEqual(rent_document.extracted_data["date"], "02.08.2026")
         target = StoragePathBuilder(self.structures["adult"]).build(rent_document)
-        self.assertEqual(target.parts[:3], ("Rentenversicherung", "Renteninformationen", "2026"))
-        self.assertIn("Renteninformation", target.name)
+        self.assertEqual(target.parent, Path("Rentenversicherung", "Renteninformation"))
+        self.assertEqual(target.name, "Renteninformation 2026.pdf")
 
     def test_debeka_policy_keeps_type_provider_and_contract_number(self):
         document, classification = self.analyze(
@@ -124,6 +124,124 @@ class DocumentRuleTests(unittest.TestCase):
         self.assertEqual(
             target.name,
             "2021-02-22 - Tierhalterhaftpflichtversicherung - Debeka Allgemeine Versicherung AG - 22129575.7.pdf",
+        )
+
+    def test_gothaer_accident_policy_prefers_labelled_contract_over_phone(self):
+        text = """
+Versicherungsschein Privat Kompakt Gothaer
+Unfallversicherung
+Swiss Life Select Deutschland GmbH
+Telefon 0511 123242526
+Versicherungsnehmer Sabine Hirte
+Versicherungsnummer 95.007.078627 - 59.100 - PGP
+Vertragslaufzeit Beginn: 06.08.2026 00:00 Uhr
+Datum Ausgefertigt am 05.08.2026 um 18:03 Uhr
+Gothaer Allgemeine Versicherung AG
+"""
+
+        document, classification = self.analyze(text, "Unfall_20260812_0001.pdf")
+
+        self.assertEqual(classification.document_type, "Versicherungspolicen")
+        self.assertEqual(document.extracted_data["insurance_type"], "Unfallversicherung")
+        self.assertEqual(
+            document.extracted_data["vendor"],
+            "Gothaer Allgemeine Versicherung AG",
+        )
+        self.assertEqual(document.extracted_data["contract_number"], "95.007.078627")
+        self.assertEqual(document.extracted_data["date"], "05.08.2026")
+        target = StoragePathBuilder(self.structures["adult"]).build(document)
+        self.assertEqual(
+            target.name,
+            "2026-08-05 - Unfallversicherung - Gothaer Allgemeine Versicherung AG "
+            "- 95.007.078627.pdf",
+        )
+
+    def test_classifies_long_insurance_offer_without_treating_premium_as_invoice(self):
+        text = """
+Barmenia EINFACH. MENSCHLICH.
+Ihre Vertragsnummer (bitte stets angeben): Ihre Kundennummer: Datum:
+120747528 913426340 08.08.2026
+Angebot für eine Tierhalterhaftpflichtversicherung
+- Verbindliches Angebot
+- Versicherungsbedingungen zur Tierhalterhaftpflichtversicherung
+Angebots-Nr. 120747528
+Ausstellungsdatum/-grund 08.08.2026 Neuvertrag
+Barmenia Allgemeine Versicherungs-AG
+Bruttoprämie gemäß Zahlungsperiode 4,80 EUR
+Wichtiger Hinweis: An dieses Angebot halten wir uns bis zum 05.09.26 gebunden.
+"""
+
+        document, classification = self.analyze(text, "vollstaendiges_angebot.pdf")
+
+        self.assertEqual(classification.category, "Versicherungen")
+        self.assertEqual(classification.document_type, "Versicherungsangebote")
+        self.assertEqual(classification.confidence, 0.99)
+        self.assertEqual(
+            document.extracted_data["insurance_type"],
+            "Tierhalterhaftpflichtversicherung",
+        )
+        self.assertEqual(
+            document.extracted_data["vendor"],
+            "Barmenia Allgemeine Versicherungs-AG",
+        )
+        self.assertEqual(document.extracted_data["contract_number"], "120747528")
+        self.assertEqual(document.extracted_data["date"], "08.08.2026")
+        self.assertIsNone(document.extracted_data["amount"])
+        target = StoragePathBuilder(self.structures["adult"]).build(document)
+        self.assertEqual(
+            target,
+            Path(
+                "Versicherungen",
+                "Versicherungsangebote",
+                "2026",
+                "2026-08-08 - Tierhalterhaftpflichtversicherung - Angebot "
+                "- Barmenia Allgemeine Versicherungs-AG - 120747528.pdf",
+            ),
+        )
+
+    def test_classifies_policy_cover_letter_as_correspondence_not_policy(self):
+        text = """
+Gothaer Allgemeine Versicherung AG
+Versicherungsschein zu Ihrer Privat Kompakt Unfallversicherung
+Versicherungsnummer 95.007.078627 - 59.100 - PGP 05.08.2026
+Sehr geehrte Frau Hirte,
+Sie haben sich für die Privat Kompakt Unfallversicherung entschieden.
+Anbei erhalten Sie Ihren Versicherungsschein.
+Widerrufsbelehrung
+Versicherungsschein Privat Kompakt Unfallversicherung Seite 3 von 4
+"""
+
+        document, classification = self.analyze(
+            text,
+            "Unfall Anschreiben_20260812_0001.pdf",
+        )
+
+        self.assertEqual(classification.category, "Versicherungen")
+        self.assertEqual(classification.document_type, "Versicherungsschreiben")
+        self.assertEqual(
+            document.extracted_data["document_kind"],
+            "Begleitschreiben zum Versicherungsschein",
+        )
+        self.assertEqual(document.extracted_data["date"], "05.08.2026")
+        self.assertEqual(
+            document.extracted_data["insurance_type"],
+            "Unfallversicherung",
+        )
+        self.assertEqual(document.extracted_data["contract_number"], "95.007.078627")
+        self.assertEqual(
+            document.extracted_data["vendor"],
+            "Gothaer Allgemeine Versicherung AG",
+        )
+        target = StoragePathBuilder(self.structures["adult"]).build(document)
+        self.assertEqual(
+            target,
+            Path(
+                "Versicherungen",
+                "Versicherungsschreiben",
+                "2026",
+                "2026-08-05 - Begleitschreiben - Unfallversicherung "
+                "- Gothaer Allgemeine Versicherung AG - 95.007.078627.pdf",
+            ),
         )
 
     def test_policy_does_not_mistake_date_fragment_for_amount(self):
@@ -158,11 +276,230 @@ Die monatliche Arbeitszeit im Rahmen des Auftrags beträgt 120,00 Stunden.
         self.assertEqual(document.extracted_data["monthly_hours"], "120,00")
         self.assertIsNone(document.extracted_data["amount"])
         self.assertIsNone(document.extracted_data["currency"])
+        self.assertIsNone(document.extracted_data["vendor"])
         target = StoragePathBuilder(self.structures["adult"]).build(document)
         self.assertEqual(target.parts[:3], ("Arbeit und Karriere", "Einsatzunterlagen", "2022"))
         self.assertEqual(
             target.name,
             "2022-01-01 - Einsatzbegleitschein - WIRMED GmbH - St. Josef Haus Seniorenzentrum - Auftrag 80550116.pdf",
+        )
+
+    def test_assignment_sheet_cleans_known_truncated_client_name(self):
+        text = """
+WIRMED GmbH
+Einsatzbegleitschein (Einsatz als Leiharbeitnehmer)
+bei Kunde: Caritas-Seniorenzentrum Pulhei
+Auftrag Nr. 80650060
+Einsatzbeginn: 01.09.2021
+"""
+
+        document, classification = self.analyze(text, "EBS 2021_09.pdf")
+
+        self.assertEqual(classification.document_type, "Einsatzunterlagen")
+        self.assertEqual(
+            document.extracted_data["client"],
+            "Caritas-Seniorenzentrum Pulheim",
+        )
+        self.assertIsNone(document.extracted_data["vendor"])
+
+    def test_classifies_deferment_financial_statement(self):
+        text = """
+Aufstellung der zur Entscheidung über eine Stundung nach § 59 Abs. 1
+Satz 1 Nr. 1 Bundeshaushaltsordnung (BHO) benötigten Angaben
+Name, Vorname
+Hirte, Julien Blue
+Geschäftszeichen
+IV- 05 2 84 517 6/06
+1. Höhe meines Einkommens der letzten drei Monate
+2. Aufstellung über mein Vermögen
+3. Aufstellung über meine laufenden monatlichen Ausgaben
+"""
+
+        document, classification = self.analyze(
+            text,
+            "Aufstellung nach § 59 - Hirte 1-2.pdf",
+        )
+
+        self.assertEqual(classification.category, "Behörden und Leistungen")
+        self.assertEqual(classification.document_type, "Sonstige Bescheide")
+        self.assertEqual(
+            document.extracted_data["document_kind"],
+            "Vermögensauskunft zur Stundung",
+        )
+        self.assertEqual(
+            document.extracted_data["processing_reference"],
+            "IV- 05 2 84 517 6/06",
+        )
+        self.assertIsNone(document.extracted_data["amount"])
+        self.assertIsNone(document.extracted_data["currency"])
+        self.assertIsNone(document.extracted_data["vendor"])
+        target = StoragePathBuilder(self.structures["adult"]).build(document)
+        self.assertEqual(
+            target,
+            Path(
+                "Behörden und Leistungen",
+                "Sonstige Bescheide",
+                "Vermögensauskunft zur Stundung.pdf",
+            ),
+        )
+
+    def test_classifies_bafog_income_assessment_without_tax_false_positive(self):
+        text = """
+Einkommensermittlung
+nach § 18a BAföG
+Mein Geschäftszeichen im Bundesverwaltungsamt
+IV 01 - 76/1016
+Darlehensnehmer
+Name: Hirte, Julien Blue
+Zeitraum 30.08.2024 - 31.01.2025
+Arbeitslosengeld 1237,60 EUR
+"""
+
+        document, classification = self.analyze(
+            text,
+            "Einkommensermittlung nach § 18a - Hirte, Julien Blue.pdf",
+        )
+
+        self.assertEqual(classification.category, "Behörden und Leistungen")
+        self.assertEqual(classification.document_type, "Formulare")
+        self.assertEqual(
+            document.extracted_data["document_kind"],
+            "Einkommensermittlung nach § 18a BAföG",
+        )
+        self.assertEqual(document.extracted_data["date"], "30.08.2024")
+        self.assertEqual(document.extracted_data["income_period_end"], "31.01.2025")
+        self.assertEqual(document.extracted_data["vendor"], "Bundesverwaltungsamt")
+        self.assertIsNone(document.extracted_data["amount"])
+        self.assertIsNone(document.extracted_data["currency"])
+        target = StoragePathBuilder(self.structures["adult"]).build(document)
+        self.assertEqual(
+            target,
+            Path(
+                "Behörden und Leistungen",
+                "Formulare",
+                "2024",
+                "2024-08-30 - Einkommensermittlung nach § 18a BAföG "
+                "- Bundesverwaltungsamt.pdf",
+            ),
+        )
+
+    def test_repairs_ocr_damaged_bafog_income_period(self):
+        text = """
+Einkommensermittlung nach § 18a BAföG
+Mein Geschäftszeichen im Bundesverwaltungsamt
+Ehegattin/Ehegatte
+Ich habe monatliche Einkünfte/Einnahmen
+(bitte für den Zeitraum der letzten vier Monate angeben)
+01.112094 -- 01.02.2025
+"""
+
+        document, classification = self.analyze(
+            text,
+            "Einkommensermittlung nach § 18a - Hirte, Sabine.pdf",
+        )
+
+        self.assertEqual(classification.document_type, "Formulare")
+        self.assertEqual(document.extracted_data["date"], "01.11.2024")
+        self.assertEqual(
+            document.extracted_data["income_period_start"],
+            "01.11.2024",
+        )
+        self.assertEqual(
+            document.extracted_data["income_period_end"],
+            "01.02.2025",
+        )
+        target = StoragePathBuilder(self.structures["adult"]).build(document)
+        self.assertEqual(target.parts[:3], ("Behörden und Leistungen", "Formulare", "2024"))
+        self.assertEqual(
+            target.name,
+            "2024-11-01 - Einkommensermittlung nach § 18a BAföG "
+            "- Bundesverwaltungsamt.pdf",
+        )
+
+    def test_classifies_medical_discharge_letter_and_uses_discharge_date(self):
+        text = """
+KRANKENHAUS PORZ AM RHEIN gGmbH
+VORLÄUFIGES DOKUMENT
+Sehr geehrte Kolleginnen und Kollegen,
+wir berichten über die Patientin Sabine Hirte, geb. 17.11.1986, die sich
+vom 28.02.2026 bis 03.03.2026 bei
+uns in Behandlung befand.
+Patientendaten Anamnese Maternales Labor
+stationärer Aufenthalt
+Entlassuntersuchung
+Empfehlungen / Procedere
+Hirte Henri Mika, Lebendgeburt, Geschlecht männlich.
+"""
+
+        document, classification = self.analyze(text, "Entlassungsbrief.pdf")
+
+        self.assertEqual(classification.category, "Gesundheit")
+        self.assertEqual(classification.document_type, "Arztberichte und Befunde")
+        self.assertEqual(document.extracted_data["document_kind"], "Entlassungsbrief")
+        self.assertEqual(document.extracted_data["date"], "03.03.2026")
+        self.assertEqual(document.extracted_data["treatment_start"], "28.02.2026")
+        self.assertEqual(document.extracted_data["treatment_end"], "03.03.2026")
+        self.assertEqual(document.extracted_data["vendor"], "Krankenhaus Porz am Rhein")
+        self.assertIsNone(document.extracted_data["amount"])
+        target = StoragePathBuilder(self.structures["adult"]).build(document)
+        self.assertEqual(
+            target,
+            Path(
+                "Gesundheit",
+                "Arztberichte und Befunde",
+                "2026",
+                "2026-03-03 - Entlassungsbrief - Krankenhaus Porz am Rhein.pdf",
+            ),
+        )
+
+    def test_classifies_insurance_contribution_invoice_from_specific_fields(self):
+        text = """
+Gothaer Allgemeine Versicherung AG
+Beitragsrechnung zu Ihrer Privat Kompakt
+Versicherungsnummer 95.007.078627 - 59.100 PGP
+Aktenzeichen 477219234 06.08.2026
+Vereinbarungsgemäß buchen wir den Betrag in Höhe von 7,34 Euro ab.
+Beitragsrechnung:
+Versicherungen Erhebungszeitraum Beitrag Vers.Steuer Gesamt
+Unfall neu 06.08.2026 - 06.09.2026 6,17 1,17 7,34
+Beitrag, fällig zum 06.08.2026 7,34
+Besteht für Sie bei uns eine Tierhalterhaftpflichtversicherung?
+RunID_Print: 1619484
+"""
+
+        document, classification = self.analyze(
+            text,
+            "Beitragsrechnung_20260812_0001.pdf",
+        )
+
+        self.assertEqual(classification.category, "Versicherungen")
+        self.assertEqual(classification.document_type, "Versicherungsschreiben")
+        self.assertEqual(document.extracted_data["document_kind"], "Beitragsrechnung")
+        self.assertEqual(document.extracted_data["date"], "06.08.2026")
+        self.assertEqual(document.extracted_data["amount"], "7,34")
+        self.assertEqual(document.extracted_data["currency"], "EUR")
+        self.assertEqual(
+            document.extracted_data["vendor"],
+            "Gothaer Allgemeine Versicherung AG",
+        )
+        self.assertEqual(
+            document.extracted_data["contract_number"],
+            "95.007.078627",
+        )
+        self.assertEqual(
+            document.extracted_data["insurance_type"],
+            "Unfallversicherung",
+        )
+        target = StoragePathBuilder(self.structures["adult"]).build(document)
+        self.assertEqual(
+            target,
+            Path(
+                "Versicherungen",
+                "Versicherungsschreiben",
+                "2026",
+                "2026-08-06 - Beitragsrechnung - Gothaer Allgemeine Versicherung AG "
+                "- 95.007.078627 - 7,34.pdf",
+            ),
         )
 
     def test_terminations_use_their_respective_topic_folder(self):
@@ -219,11 +556,12 @@ Die monatliche Arbeitszeit im Rahmen des Auftrags beträgt 120,00 Stunden.
 
     def test_structure_and_filename_use_classified_destination(self):
         document, classification = self.analyze(
-            "09.08.2026 Einkommensteuerbescheid Finanzamt Steuernummer Rechtsbehelfsbelehrung"
+            "Bescheid für 2026 über Einkommensteuer vom 09.08.2026 "
+            "Finanzamt Steuernummer Rechtsbehelfsbelehrung"
         )
         self.assertEqual(classification.document_type, "Einkommensteuer")
         target = StoragePathBuilder(self.structures["adult"]).build(document)
-        self.assertEqual(target.parts[:5], ("Finanzamt und Steuern", "Einkommensteuer", "2026", "Steuerbescheide", "2026-08-09 - Einkommensteuerbescheid.pdf"))
+        self.assertEqual(target.parts[:5], ("Finanzamt und Steuern", "Einkommensteuer", "2026", "Steuerbescheide", "Einkommensteuerbescheid 2026.pdf"))
         self.assertIn("Einkommensteuerbescheid", target.name)
 
     def test_tax_notice_prefers_labeled_tax_year_over_earlier_reference_year(self):
@@ -241,6 +579,7 @@ Rechtsbehelfsbelehrung
         self.assertEqual(document.extracted_data["tax_year"], "2024")
         target = StoragePathBuilder(self.structures["family"]).build(document)
         self.assertEqual(target.parts[2:4], ("2024", "Steuerbescheide"))
+        self.assertEqual(target.name, "Einkommensteuerbescheid 2024.pdf")
 
     def test_classifies_police_report_as_legal_correspondence(self):
         text = """
@@ -431,9 +770,66 @@ Zahlungskonditionen 10 Tage
             "Rechnung_01-09-2026.pdf"
         )
 
-        self.assertTrue(data["force_outgoing"])
+        self.assertFalse(data["force_outgoing"])
         self.assertNotIn("invoice_number", data)
         self.assertNotIn("vendor", data)
+
+    def test_family_education_invitation_is_recognized_as_course(self):
+        _document, classification = self.analyze(
+            "Einladung zur DRK Familienbildung und Teilnahme am PEKiP Kurs",
+            "DRK FBildung - Einladung - PEKiP.pdf",
+        )
+
+        self.assertEqual(classification.category, "Gesundheit")
+        self.assertEqual(classification.document_type, "Kurse und Therapien")
+
+    def test_generic_terms_are_not_misclassified_as_invoices(self):
+        _document, classification = self.analyze(
+            "Allgemeine Geschäftsbedingungen für die DHL Online Frankierung Rechnung und Zahlung",
+            "dhl-agb-online-frankierung-202506.pdf",
+        )
+
+        self.assertEqual(classification.category, "MANUELL")
+        self.assertEqual(classification.document_type, "Allgemeine Informationen")
+
+    def test_invoice_total_is_preferred_over_item_price(self):
+        text = """
+Rechnung
+Artikel 1 44,99 € 44,99 €
+Zwischensumme                         80,98 €
+Gesamt netto                          72,17 €
+Umsatzsteuer (19,0%)                  13,71 €
+Gesamtsumme                           85,88 €
+"""
+
+        document, _classification = self.analyze(text, "Lil' Leo Rechnung.pdf")
+
+        self.assertEqual(document.extracted_data["amount"], "85,88")
+
+    def test_invoice_total_is_found_when_ocr_separates_labels_and_values(self):
+        text = """
+Rechnung
+Zwischensumme
+Versand
+Gesamt netto
+Umsatzsteuer (19,0%)
+Gesamtsumme
+Preis
+44,99
+35,99
+Summe
+44,99
+35,99
+80,98
+4,90
+72,17
+13,71
+85,88
+"""
+
+        document, _classification = self.analyze(text, "Lil' Leo Rechnung.pdf")
+
+        self.assertEqual(document.extracted_data["amount"], "85,88")
 
 
 if __name__ == "__main__":

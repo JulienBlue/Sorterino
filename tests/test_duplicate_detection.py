@@ -110,6 +110,33 @@ class ExactDuplicateTests(unittest.TestCase):
         self.assertEqual(suggestion["review_kind"], "exact_duplicate")
         self.assertEqual(Path(suggestion["duplicate_of"]), known)
 
+    def test_explicit_reanalysis_bypasses_duplicate_stop(self):
+        service = ProfileService(self.config)
+        backup_root = service.resolve_backup_directory()
+        known = backup_root / "Familie Hirte" / "original.pdf"
+        known.parent.mkdir(parents=True)
+        known.write_bytes(b"already archived")
+        candidate = self.root / "manual_sort" / "copy.pdf"
+        candidate.parent.mkdir()
+        candidate.write_bytes(b"already archived")
+        extractor = CountingEmptyExtractor()
+        pipeline = DocumentPipeline(
+            config=self.config,
+            sources=[],
+            ocr_service=extractor,
+            runtime_storage=FilesystemStorage(self.root / "runtime"),
+            archive_storage=FilesystemStorage(self.root / "archive"),
+            logger=NullLogger(),
+            rules={},
+            structure={},
+            profile_service=service,
+            allow_exact_duplicate=True,
+        )
+
+        pipeline._process(Document(str(candidate)))
+
+        self.assertEqual(extractor.paths, [candidate])
+
     def test_deleted_backup_remains_known_as_historical_duplicate(self):
         known = self.backup_root / "original.pdf"
         known.parent.mkdir(parents=True)

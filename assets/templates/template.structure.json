@@ -1,5 +1,5 @@
 {
-  "schema_version": 17,
+  "schema_version": 18,
   "default_template": "family",
   "Buchhaltung": {
     "Eingangsrechnungen": {"{year}": {"{month_number} {month_name}": {}}},
@@ -34,6 +34,7 @@
       },
       "Versicherungen": {
         "Versicherungspolicen": {},
+        "Versicherungsangebote": {"{year}": {}},
         "Versicherungsschreiben": {"{year}": {}},
         "Kündigungen": {"{year}": {}},
         "Schäden und Leistungen": {"{year}": {}}
@@ -64,6 +65,7 @@
       "Behörden und Leistungen": {
         "Familienleistungen": {"{year}": {}},
         "Führungszeugnisse": {"{year}": {}},
+        "Formulare": {"{year}": {}},
         "Sonstige Bescheide": {"{year}": {}}
       },
       "Identität und Urkunden": {
@@ -87,6 +89,9 @@
         "Retouren und Erstattungen": {"{year}": {}},
         "Garantien und Reklamationen": {"{year}": {}}
       },
+      "Haushalt": {
+        "Einkäufe und Kassenbons": {"{year}": {}}
+      },
       "Gesundheit": {
         "Krankenkassenschreiben": {"{year}": {}},
         "Arztberichte und Befunde": {"{year}": {}},
@@ -96,7 +101,7 @@
         "Kurse und Therapien": {"{year}": {}}
       },
       "Rentenversicherung": {
-        "Renteninformationen": {"{year}": {}},
+        "Renteninformation": {},
         "Bescheide und Schriftverkehr": {"{year}": {}}
       },
       "Reisen": {"{year}": {}},
@@ -144,6 +149,7 @@
       },
       "Behörden und Leistungen": {
         "Führungszeugnisse": {"{year}": {}},
+        "Formulare": {"{year}": {}},
         "Sonstige Bescheide": {"{year}": {}}
       },
       "Finanzen": {
@@ -171,11 +177,12 @@
         "Kurse und Therapien": {"{year}": {}}
       },
       "Rentenversicherung": {
-        "Renteninformationen": {"{year}": {}},
+        "Renteninformation": {},
         "Bescheide und Schriftverkehr": {"{year}": {}}
       },
       "Versicherungen": {
         "Versicherungspolicen": {},
+        "Versicherungsangebote": {"{year}": {}},
         "Versicherungsschreiben": {"{year}": {}},
         "Kündigungen": {"{year}": {}}
       },
@@ -198,6 +205,9 @@
         "Kassenbons": {"{year}": {}},
         "Retouren und Erstattungen": {"{year}": {}},
         "Garantien und Reklamationen": {"{year}": {}}
+      },
+      "Haushalt": {
+        "Einkäufe und Kassenbons": {"{year}": {}}
       },
       "Rechtliches und Vorsorge": {},
       "Korrespondenz": {"{year}": {}},
@@ -242,9 +252,13 @@
         "Kindergeld": {"{year}": {}},
         "Elterngeld": {"{year}": {}},
         "Führungszeugnisse": {"{year}": {}},
+        "Formulare": {"{year}": {}},
         "Sonstige Bescheide": {"{year}": {}}
       },
-      "Versicherungen": {"Kündigungen": {"{year}": {}}},
+      "Versicherungen": {
+        "Versicherungsangebote": {"{year}": {}},
+        "Kündigungen": {"{year}": {}}
+      },
       "Verträge und Abonnements": {
         "Telekommunikation": {"{year}": {}},
         "Allgemeine Verträge": {},
@@ -261,6 +275,9 @@
       "Anschaffungen und Garantien": {
         "Kaufbelege": {"{year}": {}},
         "Garantien und Reklamationen": {"{year}": {}}
+      },
+      "Haushalt": {
+        "Einkäufe und Kassenbons": {"{year}": {}}
       },
       "Korrespondenz": {"{year}": {}},
       "Sonstiges": {"{year}": {}}

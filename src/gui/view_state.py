@@ -87,6 +87,12 @@ def live_status_decision(
         return "Verarbeitung läuft …", "running"
     issue_count = len(readiness_issues or [])
     if issue_count:
+        if any("postfach" in str(issue).casefold() and "verbunden" in str(issue).casefold()
+               for issue in readiness_issues):
+            label = "Postfach erneut verbinden"
+            if issue_count > 1:
+                label += f" · {issue_count} Punkte"
+            return label, "configuration"
         label = "Einrichtung prüfen" if issue_count == 1 else f"Einrichtung prüfen · {issue_count} Punkte"
         return label, "configuration"
     attention = int(manual or 0) + int(errors or 0)

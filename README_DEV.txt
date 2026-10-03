@@ -131,7 +131,7 @@ Verarbeitung:
 GUI:
 
 - `src/gui/main_window.py`: persistente Navigation und Hauptbereiche
-- `src/gui/settings_page.py`: durchsuchbare, kartenbasierte Programmeinstellungen mit getrennten Bereichen für Automatisierung und Berichte
+- `src/gui/settings_page.py`: kartenbasierte Programmeinstellungen mit getrennten Bereichen für Automatisierung und Berichte
 - `src/gui/embedded.py`: eingebettete Seiten
 - `src/gui/profile_window.py`: Profile, Personen, Zuordnung und sichere Löschung
 - `src/gui/profile_deletion.py`: bestätigte Löschdialoge und sichere Archivpfade
@@ -497,7 +497,7 @@ BUILD UND RELEASE
 
 Beta-Releases verwenden das Format `Major.Minor.Patchbeta`. Bei jedem neuen
 Beta-Build wird die Patch-Zahl erhöht; auf `2.2.3beta` folgt also
-`2.2.4beta`. Das geplante stabile Release dieser Reihe ist `2.3`.
+`2.2.5beta`. Das geplante stabile Release dieser Reihe ist `2.3`.
 
 PyInstaller:
 
@@ -509,7 +509,7 @@ iscc installer.iss
 
 Prüfsumme für den Updater:
 
-python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2.3beta.exe
+python tools\create_release_checksum.py installer\Sorterino_Setup_v2.2.5beta.exe
 
 Der sichtbare Einstieg für die Deinstallation heißt `Sorterino_Uninstaller`.
 Er startet Inno Setup ohne dessen zusätzliche Standard-Rückfrage und zeigt
@@ -520,8 +520,8 @@ dem zugehörigen Deinstallationsprotokoll verwaltet.
 Ergebnisse:
 
 - `dist\Sorterino\`
-- `installer\Sorterino_Setup_v2.2.3beta.exe`
-- `installer\Sorterino_Setup_v2.2.3beta.exe.sha256`
+- `installer\Sorterino_Setup_v2.2.5beta.exe`
+- `installer\Sorterino_Setup_v2.2.5beta.exe.sha256`
 
 Der Updater fragt ausschließlich die GitHub-Releases von
 `JulienBlue/Sorterino` ab. Für ein installierbares Release müssen der Installer
@@ -537,9 +537,20 @@ Dieser Umstand wird vor der Installation ausdrücklich angezeigt. SHA-256
 schützt die Übertragung vor Beschädigung oder unbemerkter Veränderung, ersetzt
 aber keine unabhängige Herausgebersignatur.
 
-Buildverzeichnisse, lokale Third-Party-Binaries, AppData und echte Dokumente
-sind keine Source-Dateien. Fertige, versionierte Sorterino-Installer und ihre
-SHA-256-Dateien werden zusätzlich zum GitHub-Release im Repository geführt.
+Buildverzeichnisse, lokale Third-Party-Binaries, AppData, echte Dokumente und
+Installer-Dateien sind keine Source-Dateien. Fertige Installer und ihre
+SHA-256-Dateien werden als Assets am jeweiligen GitHub-Release veröffentlicht.
+
+Microsoft Store / MSIX:
+
+powershell -ExecutionPolicy Bypass -File tools\build_msix.ps1
+
+Die Store-Identität und der reproduzierbare Paketaufbau liegen unter `store`.
+Der Build erzeugt ein absichtlich unsigniertes MSIX in `installer\store`, das
+im Partner Center hochgeladen und dort von Microsoft signiert wird. Lokal lässt
+sich dieses Paket nur mit einem separaten Testzertifikat installieren. In einer
+Store-Installation ist der GitHub-Updater deaktiviert; Updates liefert der
+Microsoft Store. Die numerische MSIX-Version von `2.2.5beta` lautet `2.2.5.0`.
 
 
 BEKANNTE GRENZEN
@@ -564,7 +575,7 @@ GIT-HYGIENE
 Nicht versionieren:
 
 - `.venv`, IDE-Daten und Python-Caches
-- `build` und `dist`; versionierte Sorterino-Installer sind ausdrücklich erlaubt
+- `build`, `dist` und Installer-Binärdateien
 - lokale Tesseract-/Poppler-Binärdateien
 - `%APPDATA%\Sorterino`
 - Logs, echte Profile, Zugangsdaten und Nutzerdokumente

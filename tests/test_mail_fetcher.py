@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from email.message import EmailMessage
 from pathlib import Path
+from types import SimpleNamespace
 
 from src.mail_fetcher import MailImportState, _migrate_legacy_account_folder, fetch_account
 
@@ -51,6 +52,21 @@ class GapImap(FakeImap):
 
 
 class MailFetcherTests(unittest.TestCase):
+    def test_connection_issue_is_persisted_until_a_successful_connection(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = SimpleNamespace(state_root=Path(temp_dir))
+            account = {"id": "mail_1"}
+            state = MailImportState(config)
+            state.set_account_issue(account, "Das Microsoft-Postfach muss erneut verbunden werden.")
+
+            self.assertEqual(
+                MailImportState(config).account_issues()["mail_1"],
+                "Das Microsoft-Postfach muss erneut verbunden werden.",
+            )
+
+            state.clear_account_issue("mail_1")
+            self.assertEqual(MailImportState(config).account_issues(), {})
+
     def test_attachment_is_saved_flat_without_technical_id_directories(self):
         message = EmailMessage()
         message["Subject"] = "Invoice"

@@ -16,8 +16,6 @@ dist/
 build/
 installer_output/
 installer/*
-!installer/Sorterino_Setup_v*.exe
-!installer/Sorterino_Setup_v*.exe.sha256
 
 # Lokale OAuth-Registrierung für offizielle Release-Builds
 src/oauth_release_config.py

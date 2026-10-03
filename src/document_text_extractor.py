@@ -178,6 +178,19 @@ class DocumentTextExtractor:
                 f"{path.name} konnte nicht sicher gelesen werden: {exc}"
             ) from exc
 
+    def extract_preview_text(self, file_path):
+        path = Path(file_path)
+        preview = getattr(self.ocr, "extract_text_preview", None)
+        if path.suffix.casefold() != ".pdf" or not callable(preview):
+            return self.extract_text(path), False
+        text, partial = preview(path)
+        if text is None:
+            raise DocumentExtractionError("Die Texterkennung ist fehlgeschlagen.")
+        return _normalized_text(text), bool(partial)
+
+    def extract_full_text(self, file_path):
+        return self.extract_text(file_path)
+
     def _ocr(self, path):
         if not self.ocr:
             raise DocumentNeedsReview("Für dieses Format ist die Texterkennung erforderlich.")

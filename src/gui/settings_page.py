@@ -25,40 +25,28 @@ from src.version import APP_VERSION, LATEST_CHANGELOG
 
 
 SETTINGS_CATEGORIES = (
-    ("general", "Allgemein", "Darstellung Autostart Taskleiste Fenster Hintergrund"),
-    ("automation", "Automatisierung", "automatisch Verarbeitung Eingang Warteschlange Hintergrund"),
-    ("reports", "Berichte", "Tagesbericht Daily Report Uhrzeit E-Mail Empfänger Absender Versand"),
-    ("storage", "Speicherorte", "Dokumentenspeicher Eingang Ordner Profile Archiv Backup"),
-    ("recognition", "Dokumente und Erkennung", "OCR PDF Word DOCX DOC ODT RTF TXT Pages JPG PNG TIFF WebP HEIC EML MSG"),
-    ("email", "E-Mail-Import", "Postfach Mail OAuth IMAP Zeitraum Import Profile"),
-    ("data", "Daten und Sicherheit", "Datenbank AppData Datenschutz Zugangsdaten Sicherung"),
-    ("advanced", "Erweitert", "Protokoll Logs technische Konfiguration JSON Diagnose"),
-    ("about", "Über Sorterino", "Version Hilfe Informationen Update Aktualisierung Beta Stabil"),
+    ("general", "Allgemein"),
+    ("automation", "Automatisierung"),
+    ("reports", "Berichte"),
+    ("storage", "Speicherorte"),
+    ("recognition", "Dokumente und Erkennung"),
+    ("email", "E-Mail-Import"),
+    ("data", "Daten und Sicherheit"),
+    ("advanced", "Erweitert"),
+    ("about", "Über Sorterino"),
 )
-
-
-def matching_settings_category(query):
-    """Return the first settings category matching a human search phrase."""
-    words = [word.casefold() for word in str(query or "").split() if word.strip()]
-    if not words:
-        return None
-    for key, label, keywords in SETTINGS_CATEGORIES:
-        haystack = f"{label} {keywords}".casefold()
-        if all(word in haystack for word in words):
-            return key
-    return None
+SETTINGS_CATEGORY_KEYS = {item[0] for item in SETTINGS_CATEGORIES}
 
 
 class SettingsPage(ctk.CTkFrame):
-    """Searchable, category-based application settings."""
+    """Category-based application settings."""
 
     def __init__(self, parent, owner):
         super().__init__(parent, fg_color="transparent")
         self.owner = owner
         self.config = owner.config
-        self.active_category = "general"
+        self.active_category = self.remembered_category(owner)
         self.category_buttons = {}
-        self.search_after = None
         self._update_queue = queue.Queue()
         self._update_release = None
         self._update_poll_after = None
@@ -74,7 +62,7 @@ class SettingsPage(ctk.CTkFrame):
         ctk.CTkLabel(
             navigation, text="Einstellungen", font=("Arial", 23, "bold")
         ).pack(anchor="w", padx=8, pady=(4, 18))
-        for key, label, _keywords in SETTINGS_CATEGORIES:
+        for key, label in SETTINGS_CATEGORIES:
             button = ctk.CTkButton(
                 navigation,
                 text=label,
@@ -91,49 +79,18 @@ class SettingsPage(ctk.CTkFrame):
         right = ctk.CTkFrame(self, fg_color="transparent")
         right.grid(row=0, column=1, sticky="nsew", padx=(10, 30), pady=22)
         right.grid_columnconfigure(0, weight=1)
-        right.grid_rowconfigure(2, weight=1)
+        right.grid_rowconfigure(0, weight=1)
 
-        self.search_var = ctk.StringVar()
-        self.search_var.trace_add("write", self._search_changed)
-        search = ctk.CTkEntry(
-            right,
-            textvariable=self.search_var,
-            placeholder_text="In Einstellungen suchen",
-            height=38,
-        )
-        search.grid(row=0, column=0, sticky="ew", pady=(0, 8))
-        self.search_hint = ctk.CTkLabel(
-            right, text="", text_color=SECONDARY_TEXT, anchor="w"
-        )
-        self.search_hint.grid(row=1, column=0, sticky="ew")
         self.body = ctk.CTkScrollableFrame(right, fg_color="transparent")
-        self.body.grid(row=2, column=0, sticky="nsew", pady=(4, 0))
+        self.body.grid(row=0, column=0, sticky="nsew")
         self.body._scrollbar.configure(width=10)
         self.show_category(self.active_category)
 
-    def _search_changed(self, *_args):
-        if self.search_after:
-            self.after_cancel(self.search_after)
-        self.search_after = self.after(180, self._apply_search)
-
-    def _apply_search(self):
-        self.search_after = None
-        query = self.search_var.get().strip()
-        if not query:
-            self.search_hint.configure(text="")
-            return
-        category = matching_settings_category(query)
-        if category:
-            label = next(item[1] for item in SETTINGS_CATEGORIES if item[0] == category)
-            self.search_hint.configure(text=f"Passender Bereich: {label}")
-            self.show_category(category)
-        else:
-            self.search_hint.configure(text="Keine passende Einstellung gefunden.")
-
     def show_category(self, category):
-        if category not in {item[0] for item in SETTINGS_CATEGORIES}:
+        if category not in SETTINGS_CATEGORY_KEYS:
             category = "general"
         self.active_category = category
+        self.owner._settings_category = category
         for key, button in self.category_buttons.items():
             button.configure(
                 fg_color=self.owner.SIDEBAR_ACTIVE if key == category else "transparent"
@@ -152,6 +109,11 @@ class SettingsPage(ctk.CTkFrame):
             "about": self._build_about,
         }
         builders[category]()
+
+    @staticmethod
+    def remembered_category(owner):
+        category = getattr(owner, "_settings_category", "general")
+        return category if category in SETTINGS_CATEGORY_KEYS else "general"
 
     def _heading(self, title, subtitle):
         ctk.CTkLabel(self.body, text=title, font=("Arial", 24, "bold")).pack(
@@ -733,6 +695,8 @@ class SettingsPage(ctk.CTkFrame):
         self.owner.exit_application()
 
     def _build_about(self):
+        from src.runtime_environment import is_store_install
+
         self._heading("Über Sorterino", "Programminformationen und Aktualisierungen")
         card = self._card(
             f"Sorterino v{APP_VERSION}",
@@ -753,8 +717,22 @@ class SettingsPage(ctk.CTkFrame):
 
         card = self._card(
             "Softwareaktualisierung",
-            "Sorterino prüft ausschließlich offizielle GitHub-Releases. Tesseract und Poppler werden nur zusammen mit einer getesteten Sorterino-Version aktualisiert.",
+            (
+                "Updates werden automatisch durch den Microsoft Store bereitgestellt."
+                if is_store_install()
+                else "Sorterino prüft ausschließlich offizielle GitHub-Releases. Tesseract und Poppler werden nur zusammen mit einer getesteten Sorterino-Version aktualisiert."
+            ),
         )
+        if is_store_install():
+            ctk.CTkLabel(
+                card,
+                text=f"Installiert: {APP_VERSION} · Store-Ausgabe",
+                text_color=SECONDARY_TEXT,
+                justify="left",
+                wraplength=690,
+            ).pack(anchor="w", padx=18, pady=(6, 16))
+            return
+
         channel_row = ctk.CTkFrame(card, fg_color="transparent")
         channel_row.pack(fill="x", padx=18, pady=(4, 8))
         ctk.CTkLabel(channel_row, text="Updatekanal").pack(side="left")

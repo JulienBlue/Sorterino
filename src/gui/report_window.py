@@ -4,7 +4,7 @@ import customtkinter as ctk
 
 from src.gui.appearance import SECONDARY_TEXT
 from src.gui.embedded import EmbeddedPage
-from src.reporting import DailyReportManager
+from src.reporting import DailyReportManager, user_reason, user_target
 
 
 STATUS_LABELS = {
@@ -57,7 +57,11 @@ class ActivityReportPage(EmbeddedPage):
             ).pack(anchor="w", padx=14, pady=(10, 2))
             name = item.get("final_name") or item.get("original_name") or "Dokument"
             ctk.CTkLabel(row, text=name, anchor="w").pack(anchor="w", padx=14)
-            detail = item.get("reason") or item.get("target_folder") or ""
+            if item.get("status") == "success":
+                detail = f"Abgelegt unter: {user_target(item)}"
+            elif item.get("status") in {"manual", "error"}:
+                detail = user_reason(item)
+            else:
+                detail = user_reason(item) or user_target(item)
             if detail:
                 ctk.CTkLabel(row, text=str(detail), text_color=SECONDARY_TEXT, wraplength=760, justify="left").pack(anchor="w", padx=14, pady=(2, 10))
-

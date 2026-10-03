@@ -1,7 +1,52 @@
 import json
 from datetime import datetime, date
 from pathlib import Path
+from pathlib import PureWindowsPath
 from typing import Optional
+
+
+STATUS_LABELS = {
+    "success": "Automatisch abgelegt",
+    "manual": "Prüfung erforderlich",
+    "error": "Nicht verarbeitet",
+    "duplicate": "Bereits vorhanden",
+    "discarded": "Verworfen",
+}
+
+REASON_LABELS = {
+    "unsupported_format": "Das Dateiformat wird nicht unterstützt.",
+    "exact_duplicate": "Das Dokument ist bereits vorhanden.",
+    "extraction_error": "Der Dokumenttext konnte nicht gelesen werden.",
+    "extraction_needs_review": "Der Dokumentinhalt muss geprüft werden.",
+    "ocr_empty": "Es wurde kein lesbarer Text erkannt.",
+    "profile_conflict": "Postfach und Dokumentinhalt passen nicht eindeutig zusammen.",
+    "profile_unresolved": "Das passende Profil konnte nicht eindeutig erkannt werden.",
+    "profile_person_unresolved": "Die betreffende Person konnte nicht eindeutig erkannt werden.",
+    "classify_none": "Die Dokumentart konnte nicht sicher erkannt werden.",
+    "classification_low_confidence": "Die Dokumentart wurde nur unsicher erkannt.",
+    "invoice_context_review": "Die Zuordnung der Rechnung muss geprüft werden.",
+    "missing_required_data": "Wichtige Angaben für die automatische Ablage fehlen.",
+    "path_error": "Der vorgesehene Ablageort ist nicht erreichbar.",
+    "ok": "",
+}
+
+
+def user_status(item):
+    return STATUS_LABELS.get(item.get("status"), "Hinweis")
+
+
+def user_reason(item):
+    reason = str(item.get("reason") or "").strip()
+    return REASON_LABELS.get(reason, reason if "_" not in reason else "Das Dokument muss geprüft werden.")
+
+
+def user_target(item, max_parts=3):
+    raw = str(item.get("target_folder") or "").strip()
+    if not raw:
+        return "Ablageort nicht angegeben"
+    path = PureWindowsPath(raw) if "\\" in raw or ":" in raw else Path(raw)
+    parts = [part for part in path.parts if part not in {path.anchor, path.root, path.drive}]
+    return " › ".join(parts[-max_parts:]) if parts else raw
 
 
 class DailyReportManager:
@@ -49,22 +94,18 @@ class DailyReportManager:
         lines.append(f"- Erfolgreich: {report['summary']['success']}")
         lines.append(f"- Prüfung erforderlich: {report['summary']['manual']}")
         lines.append(f"- Fehler: {report['summary']['error']}")
-        lines.append("")
-        lines.append("Aktivitäten")
-        for item in report["items"]:
-            status = {
-                "success": "Abgelegt",
-                "manual": "Prüfen",
-                "error": "Fehler",
-                "discarded": "Verworfen",
-                "duplicate": "Duplikat",
-            }.get(item.get("status"), item.get("status") or "Unbekannt")
-            lines.append(
-                f"{status:18} | "
-                f"{item.get('original_name') or '-'} -> {item.get('final_name') or '-'} | "
-                f"{item.get('target_folder') or '-'} | "
-                f"{item.get('reason', '-')}"
-            )
+        successes = [item for item in report["items"] if item.get("status") == "success"]
+        attention = [item for item in report["items"] if item.get("status") in {"manual", "error"}]
+        if successes:
+            lines.extend(("", "Automatisch abgelegt"))
+            for item in successes:
+                name = item.get("final_name") or item.get("original_name") or "Dokument"
+                lines.append(f"- {name} -> {user_target(item)}")
+        if attention:
+            lines.extend(("", "Handlungsbedarf"))
+            for item in attention:
+                name = item.get("final_name") or item.get("original_name") or "Dokument"
+                lines.append(f"- {name}: {user_reason(item)}")
         return "\n".join(lines)
 
     def generate_daily_report(self, day: Optional[date] = None) -> Path:
@@ -76,6 +117,8 @@ class DailyReportManager:
             "success": sum(1 for e in events if e.get("status") == "success"),
             "manual": sum(1 for e in events if e.get("status") == "manual"),
             "error": sum(1 for e in events if e.get("status") == "error"),
+            "duplicate": sum(1 for e in events if e.get("status") == "duplicate"),
+            "discarded": sum(1 for e in events if e.get("status") == "discarded"),
         }
 
         report = {

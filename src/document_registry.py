@@ -170,6 +170,28 @@ class DocumentRegistry:
                 ),
             )
 
+    def assignment_for(self, document_id):
+        with self.database.read() as connection:
+            rows = connection.execute(
+                """
+                SELECT profile_id, person_id
+                FROM document_assignments
+                WHERE document_id = ?
+                """,
+                (document_id,),
+            ).fetchall()
+        profile_ids = {
+            row["profile_id"] for row in rows if row["profile_id"]
+        }
+        if len(profile_ids) != 1:
+            return None
+        return {
+            "profile_id": next(iter(profile_ids)),
+            "person_ids": list(dict.fromkeys(
+                row["person_id"] for row in rows if row["person_id"]
+            )),
+        }
+
     def location_is_current(self, path):
         path = Path(path)
         try:

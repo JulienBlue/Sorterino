@@ -197,11 +197,26 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
             )
             extracted.update(return_confirmation)
         elif cash_receipt:
+            everyday_purchase = bool(cash_receipt.get("brand"))
             classification = Classification(
-                "Anschaffungen und Garantien", 0.99, "Kassenbons",
-                reason="Kassenbon",
+                "Haushalt" if everyday_purchase else "Anschaffungen und Garantien",
+                0.99,
+                "Einkäufe und Kassenbons" if everyday_purchase else "Kassenbons",
+                reason="Kassenbon für den täglichen Bedarf" if everyday_purchase else "Kassenbon",
             )
             extracted.update(cash_receipt)
+        elif (
+            re.search(r"\brechnung\b", document.filename.casefold().replace("_", " "))
+            and extracted.get("date")
+            and extracted.get("amount")
+            and extracted.get("vendor")
+        ):
+            outgoing = self.is_own_invoice(text)
+            classification = Classification(
+                "Buchhaltung",
+                0.95,
+                "Ausgangsrechnungen" if outgoing else "Eingangsrechnungen",
+            )
         elif filename_info.get("force_outgoing"):
             classification = Classification("Buchhaltung", 1.0, "Ausgangsrechnungen")
         elif filename_info.get("force_incoming"):
@@ -234,6 +249,28 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
         if classification.document_type == "Einsatzunterlagen":
             extracted.update(self._extract_assignment_sheet(text, document.filename))
 
+        if classification.reason == "Vermögensauskunft zur Stundung":
+            extracted.update(self._extract_deferment_financial_statement(text))
+
+        if classification.reason == "Einkommensermittlung nach § 18a BAföG":
+            extracted.update(self._extract_bafog_income_assessment(text))
+
+        if classification.reason == "Entlassungsbrief":
+            extracted.update(self._extract_medical_discharge_letter(text))
+
+        if classification.reason == "Versicherungs-Beitragsrechnung":
+            extracted.update(self._extract_insurance_invoice(text))
+
+        if classification.reason == "Versicherungsangebot":
+            extracted.update(
+                self._extract_insurance_offer(text, document.filename)
+            )
+
+        if classification.reason == "Begleitschreiben zum Versicherungsschein":
+            extracted.update(
+                self._extract_insurance_cover_letter(text, document.filename)
+            )
+
         if classification.document_type == "Versicherungspolicen":
             extracted.update(self._extract_insurance_document(text, document.filename))
 
@@ -249,10 +286,14 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
             extracted.update({
                 "amount": None,
                 "currency": None,
-                "document_kind": "Teilnahmebescheinigung",
+                "document_kind": (
+                    "Einladung Familienbildung"
+                    if classification.reason == "Einladung Familienbildung"
+                    else "Teilnahmebescheinigung"
+                ),
             })
 
-        if classification.document_type == "Renteninformationen":
+        if classification.document_type == "Renteninformation":
             extracted.update(self._extract_pension_information(text, document.filename))
 
         if classification.document_type == "Instandhaltung" and (
@@ -333,7 +374,7 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
             name,
             flags=re.IGNORECASE,
         ):
-            return {"force_outgoing": True, "force_incoming": False}
+            return {"force_outgoing": False, "force_incoming": False}
 
         out_pattern = r"^rechnung[_\s-]*(\d+)\s*(?:vom\s*)?(\d{2}\.\d{2}\.\d{4})?\s*(.+)?$"
         m = re.match(out_pattern, name, flags=re.IGNORECASE)
@@ -666,11 +707,58 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
                 value = float(raw.replace(",", "."))
             return f"{value:.2f}".replace(".", ",")
 
+        money_pattern = (
+            r"\d{1,3}(?:\.\d{3})*,\d{2}|"
+            r"\d{1,3}(?:,\d{3})*\.\d{2}|"
+            r"\d+[.,]\d{2}"
+        )
+        strong_total_labels = (
+            "gesamtsumme", "gesamtbetrag", "endbetrag", "rechnungsbetrag",
+            "zu zahlen", "zahlbetrag", "invoice total", "amount due",
+        )
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        high_priority_totals = []
+        for line in lines:
+            lower = line.casefold()
+            if not any(label in lower for label in strong_total_labels):
+                continue
+            for match in re.findall(money_pattern, line):
+                try:
+                    high_priority_totals.append(float(normalize_amount(match).replace(",", ".")))
+                except Exception:
+                    continue
+        if high_priority_totals:
+            return f"{max(high_priority_totals):.2f}".replace(".", ",")
+
+        # OCR often reads invoice tables column by column: all labels first and
+        # all values afterwards. In that layout the total label and its value do
+        # not share a line. Only activate this fallback when an unambiguous total
+        # label exists, then prefer the largest monetary value in the remaining
+        # OCR text (normally subtotal, shipping, net, tax and grand total).
+        folded_text = text.casefold()
+        total_positions = [
+            folded_text.rfind(label)
+            for label in strong_total_labels
+            if label in folded_text
+        ]
+        if total_positions:
+            suffix = text[max(total_positions):]
+            separated_total_candidates = []
+            for match in re.findall(money_pattern, suffix):
+                try:
+                    separated_total_candidates.append(
+                        float(normalize_amount(match).replace(",", "."))
+                    )
+                except Exception:
+                    continue
+            if separated_total_candidates:
+                return f"{max(separated_total_candidates):.2f}".replace(".", ",")
+
         receipt_candidates = []
-        for line in [l.strip() for l in text.splitlines() if l.strip()]:
+        for line in lines:
             lower = line.lower()
             if "brutto" in lower or re.search(r"\b\d{1,2}%\b", lower):
-                matches = re.findall(r"\d{1,3}(?:\.\d{3})*,\d{2}|\d{1,3}(?:,\d{3})*\.\d{2}|\d+[.,]\d{2}", line)
+                matches = re.findall(money_pattern, line)
                 for match in matches:
                     try:
                         receipt_candidates.append(float(normalize_amount(match).replace(",", ".")))
@@ -849,9 +937,13 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
 
         return None
 
-    def _extract_vendor(self, text):
+    def _extract_vendor(self, text, excluded_names=None):
 
         lines = [l.strip() for l in text.splitlines() if l.strip()]
+        excluded = {
+            re.sub(r"\s+", " ", str(value)).strip().casefold()
+            for value in (excluded_names or []) if str(value).strip()
+        }
         own_tokens = self._company_name_tokens()
         own_invoice = self.is_own_invoice(text, log_check=False)
 
@@ -899,6 +991,9 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
             ).strip()
             l = line_for_checks.lower()
 
+            if any(name == l or name in l for name in excluded):
+                return False
+
             if self._is_own_entity(line):
                 return False
 
@@ -939,7 +1034,11 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
 
             return (
                 any(x in l for x in company_suffixes)
-                or ("." in line_for_checks and not any(c.isdigit() for c in line_for_checks))
+                or bool(re.search(
+                    r"\b[\w-]+\.(?:de|com|net|org|eu)\b",
+                    line_for_checks,
+                    flags=re.IGNORECASE,
+                ))
                 or (len(line_for_checks.split()) in [2, 3] and not any(c.isdigit() for c in line_for_checks))
             )
 
@@ -1015,6 +1114,14 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
 
             return None
 
+        for line in lines[:12]:
+            header_match = re.match(r"^(.+?)\s*\|\s*.+\d", line)
+            if not header_match:
+                continue
+            candidate = header_match.group(1).strip(" -|:+")
+            if candidate and is_valid(candidate) and len(candidate.split()) <= 4:
+                return clean(candidate)
+
         if own_invoice:
             own_indices = [i for i, line in enumerate(lines) if self._is_own_entity(line)]
 
@@ -1035,7 +1142,7 @@ class DocumentAnalyzer(DomainDocumentExtractors, DocumentClassificationSupport):
                         continue
 
                     cleaned = clean(line)
-                    if cleaned and len(cleaned.split()) >= 2:
+                    if is_valid(line) and looks_like_company(line) and cleaned:
                         return cleaned
 
         own_index = None

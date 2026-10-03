@@ -16,6 +16,7 @@ from src.initialize_workspace import get_base_path
 from src.reporting import DailyReportManager
 from src.report_mailer import deliver_daily_report
 from src.gui.appearance import apply_appearance
+from src.logger import FileLogger
 
 BASE_DIR = get_base_path()
 
@@ -25,6 +26,10 @@ ICON_PATH = BASE_DIR / "assets" / "icons" / "default_icon_128.ico"
 class TrayApp:
     def __init__(self):
         self.config = Config()
+        self.logger = FileLogger(
+            self.config.logs_root,
+            developer_mode=self.config.get("developer_mode", False),
+        )
 
         self._auto_thread = None
 
@@ -65,7 +70,7 @@ class TrayApp:
             self.window.protocol("WM_DELETE_WINDOW", self._on_window_close)
             return self.window
         except Exception as e:
-            print(f"[ERROR] MainWindow konnte nicht geöffnet werden: {e}")
+            self.logger.error(f"MainWindow konnte nicht geöffnet werden: {e}")
             return None
 
     def process_documents(self, icon=None, item=None):
@@ -131,7 +136,7 @@ class TrayApp:
             app.attributes("-topmost", True)
             app.after(200, lambda: app.attributes("-topmost", False))
         except Exception as e:
-            print(f"[WARN] Fenster konnte nicht fokussiert werden: {e}")
+            self.logger.warning(f"Fenster konnte nicht fokussiert werden: {e}")
 
     def _on_window_close(self):
         if self.window:
@@ -176,7 +181,7 @@ class TrayApp:
                 ]
             subprocess.Popen(command, cwd=str(BASE_DIR))
         except OSError as exc:
-            print(f"[DEVELOPER CONSOLE ERROR] {exc}")
+            self.logger.error(f"Entwicklerkonsole konnte nicht geöffnet werden: {exc}")
 
     def _check_for_updates_once(self):
         if self.window and self.window.winfo_exists():
@@ -187,22 +192,22 @@ class TrayApp:
         from main import run_pipeline
         from src.config import Config
 
-        print("[AUTO] Thread gestartet")
+        self.logger.info("[AUTO] Thread gestartet")
 
         while True:
             try:
                 config = Config()
 
                 if not config.get("auto_mode"):
-                    print("[AUTO] beendet")
+                    self.logger.info("[AUTO] beendet")
                     break
 
-                print("[AUTO] Tick → starte Pipeline")
+                self.logger.info("[AUTO] Tick → starte Pipeline")
 
                 run_pipeline()
 
             except Exception as e:
-                print(f"[AUTO ERROR] {e}")
+                self.logger.error(f"[AUTO] Verarbeitung fehlgeschlagen: {e}")
 
             time.sleep(10)
 
@@ -216,7 +221,7 @@ class TrayApp:
 
                 if config.get("auto_mode"):
                     if not self._auto_thread or not self._auto_thread.is_alive():
-                        print("[AUTO] dynamisch gestartet")
+                        self.logger.info("[AUTO] dynamisch gestartet")
 
                         self._auto_thread = threading.Thread(
                             target=self._auto_loop,
@@ -225,7 +230,7 @@ class TrayApp:
                         self._auto_thread.start()
 
             except Exception as e:
-                print(f"[AUTO MONITOR ERROR] {e}")
+                self.logger.error(f"[AUTO] Überwachung fehlgeschlagen: {e}")
 
             time.sleep(5)
 
@@ -261,8 +266,8 @@ class TrayApp:
                         if config.get("daily_report_email_enabled", False):
                             result = deliver_daily_report(config, today)
                             if result.get("failed"):
-                                print(
-                                    f"[REPORT WARNING] Versand teilweise fehlgeschlagen: "
+                                self.logger.warning(
+                                    f"[REPORT] Versand teilweise fehlgeschlagen: "
                                     f"{result.get('failed')} Empfänger"
                                 )
                             else:
@@ -271,7 +276,7 @@ class TrayApp:
                             reporter.set_last_report_date(today)
 
             except Exception as e:
-                print(f"[REPORT ERROR] {e}")
+                self.logger.error(f"[REPORT] Erstellung oder Versand fehlgeschlagen: {e}")
 
             time.sleep(60)
 

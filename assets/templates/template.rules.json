@@ -211,7 +211,7 @@
     },
     {
       "id": "pension_information", "label": "Renteninformation",
-      "category": "Rentenversicherung", "document_type": "Renteninformationen",
+      "category": "Rentenversicherung", "document_type": "Renteninformation",
       "strong_keywords": ["renteninformation"],
       "keywords": ["deutsche rentenversicherung", "rentenversicherungsnummer", "regelaltersrente", "rentenanpassung"],
       "support_with_strong": 1

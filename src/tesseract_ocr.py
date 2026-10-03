@@ -5,7 +5,7 @@ from typing import List
 from pathlib import Path
 
 import pytesseract
-from pdf2image import convert_from_path
+from pdf2image import convert_from_path, pdfinfo_from_path
 import pdf2image.pdf2image as pdf2image_backend
 from PIL import Image, ImageFile, ImageOps, ImageSequence
 
@@ -101,13 +101,11 @@ class TesseractOCR:
 
     # OCR / ENTRY
     def extract_text(self, file_path: str):
-
         if not file_path:
             self.logger.error("OCR Fehler: file_path ist None oder leer")
             return None
 
         file_path_str = str(file_path)
-
         if not os.path.exists(file_path_str):
             self.logger.error(f"OCR Fehler Datei existiert nicht {file_path_str}")
             return None
@@ -116,12 +114,58 @@ class TesseractOCR:
             with _suppress_windows_console_popups():
                 if file_path_str.lower().endswith(".pdf"):
                     return self._extract_from_pdf(file_path_str)
-                else:
-                    return self._extract_from_image(file_path_str)
-
-        except Exception as e:
-            self.logger.error(f"OCR Fehler bei {file_path_str} {e}")
+                return self._extract_from_image(file_path_str)
+        except Exception as exc:
+            self.logger.error(f"OCR Fehler bei {file_path_str} {exc}")
             return None
+
+    def extract_text_preview(
+        self,
+        file_path: str,
+        page_threshold: int = 10,
+        first_pages: int = 5,
+        last_pages: int = 2,
+    ):
+        """OCR representative PDF pages and report whether text is partial."""
+        file_path_str = str(file_path)
+        if not file_path_str.lower().endswith(".pdf"):
+            return self.extract_text(file_path_str), False
+        try:
+            with _suppress_windows_console_popups():
+                info = pdfinfo_from_path(
+                    file_path_str,
+                    poppler_path=self.poppler_path,
+                )
+                page_count = int(info.get("Pages", 0) or 0)
+                if page_count <= page_threshold:
+                    return self._extract_from_pdf(file_path_str), False
+
+                ranges = [(1, min(first_pages, page_count))]
+                last_start = max(ranges[0][1] + 1, page_count - last_pages + 1)
+                if last_start <= page_count:
+                    ranges.append((last_start, page_count))
+                self.logger.info(
+                    f"Langes PDF ({page_count} Seiten): analysiere zunächst "
+                    f"Seiten 1-{ranges[0][1]} und {last_start}-{page_count}"
+                )
+                text_output = []
+                for first_page, last_page in ranges:
+                    images = convert_from_path(
+                        file_path_str,
+                        poppler_path=self.poppler_path,
+                        dpi=300,
+                        first_page=first_page,
+                        last_page=last_page,
+                    )
+                    text_output.extend(
+                        self._ocr_pdf_images(images, file_path_str, first_page)
+                    )
+                return "\n".join(text_output), True
+        except Exception as exc:
+            self.logger.warning(
+                f"PDF-Schnellanalyse nicht möglich, analysiere vollständig: {exc}"
+            )
+            return self._extract_from_pdf(file_path_str), False
 
     # OCR / PDF
     def _extract_from_pdf(self, file_path: str) -> str:
@@ -144,8 +188,17 @@ class TesseractOCR:
             self.logger.warning("Keine Bilder aus PDF erzeugt")
             return ""
 
-        text_output: List[str] = []
+        text_output = self._ocr_pdf_images(images, file_path, 1)
 
+        final_text = "\n".join(text_output)
+
+        if not final_text.strip():
+            self.logger.warning("Kein OCR Text aus PDF extrahiert")
+
+        return final_text
+
+    def _ocr_pdf_images(self, images, file_path, first_page=1):
+        text_output: List[str] = []
         for index, img in enumerate(images):
             try:
                 img.thumbnail((3500, 3500))
@@ -160,16 +213,11 @@ class TesseractOCR:
 
             except Exception as e:
                 self.logger.warning(
-                    f"OCR Seitenfehler bei {file_path} Seite {index + 1} {e}"
+                    f"OCR Seitenfehler bei {file_path} "
+                    f"Seite {first_page + index} {e}"
                 )
                 continue
-
-        final_text = "\n".join(text_output)
-
-        if not final_text.strip():
-            self.logger.warning("Kein OCR Text aus PDF extrahiert")
-
-        return final_text
+        return text_output
 
     # OCR / IMAGE
     def _extract_from_image(self, file_path: str) -> str:

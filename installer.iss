@@ -1,6 +1,6 @@
 #define MyAppName "Sorterino"
-#define MyAppVersion "v2.2.3beta"
-#define MyAppFileVersion "2.2.3.0"
+#define MyAppVersion "v2.2.5beta"
+#define MyAppFileVersion "2.2.5.0"
 #define MyAppPublisher "Seraph IT GmbH"
 #define MyAppPublisherURL "https://seraph-it.de"
 #define MyAppProjectURL "https://github.com/JulienBlue/Sorterino"

@@ -26,6 +26,129 @@ def available_years(current_year=None):
     return [str(value) for value in range(year, 1949, -1)]
 
 
+def _mousewheel_scroll_units(event):
+    """Return Tk scroll units for Windows/macOS and X11 wheel events."""
+    delta = getattr(event, "delta", 0)
+    if delta:
+        return -8 if delta > 0 else 8
+    button = getattr(event, "num", None)
+    if button == 4:
+        return -8
+    if button == 5:
+        return 8
+    return 0
+
+
+class ScrollableOptionMenu(ctk.CTkOptionMenu):
+    """Option menu whose popup remains usable with many long destinations."""
+
+    def __init__(self, *args, **kwargs):
+        self._scroll_popup = None
+        self._scroll_frame = None
+        super().__init__(*args, **kwargs)
+
+    def _open_dropdown_menu(self):
+        if self._scroll_popup and self._scroll_popup.winfo_exists():
+            self._close_scroll_popup()
+            return
+
+        row_height = 34
+        popup_height = min(max(len(self._values), 1), 10) * row_height + 12
+        popup_width = min(
+            max(self.winfo_width(), 420),
+            max(420, self.winfo_screenwidth() - 24),
+        )
+        x = min(
+            max(0, self.winfo_rootx()),
+            max(0, self.winfo_screenwidth() - popup_width - 8),
+        )
+        below = self.winfo_rooty() + self.winfo_height() + 2
+        y = below if below + popup_height <= self.winfo_screenheight() else self.winfo_rooty() - popup_height - 2
+
+        popup = ctk.CTkToplevel(self)
+        self._scroll_popup = popup
+        popup.withdraw()
+        popup.overrideredirect(True)
+        popup.geometry(f"{popup_width}x{popup_height}+{x}+{max(0, y)}")
+        popup.transient(self.winfo_toplevel())
+
+        scroll = ctk.CTkScrollableFrame(popup, corner_radius=6)
+        self._scroll_frame = scroll
+        scroll.pack(fill="both", expand=True)
+        self._bind_mousewheel(popup)
+        self._bind_mousewheel(scroll)
+        self._bind_mousewheel(getattr(scroll, "_parent_canvas", None))
+        for value in self._values:
+            button = ctk.CTkButton(
+                scroll,
+                text=value,
+                height=row_height,
+                anchor="w",
+                fg_color="transparent",
+                hover_color=CONTROL_BUTTON,
+                text_color=PRIMARY_TEXT,
+                command=lambda selected=value: self._select_scroll_value(selected),
+            )
+            button.pack(fill="x")
+            self._bind_mousewheel(button)
+
+        popup.bind("<Escape>", lambda _event: self._close_scroll_popup())
+        popup.bind("<Button-1>", self._close_scroll_popup_on_outside_click, add="+")
+        popup.protocol("WM_DELETE_WINDOW", self._close_scroll_popup)
+        popup.deiconify()
+        popup.lift()
+        popup.grab_set()
+        popup.focus_set()
+
+    def _bind_mousewheel(self, widget):
+        if widget is None:
+            return
+        widget.bind("<MouseWheel>", self._scroll_with_mousewheel, add="+")
+        widget.bind("<Button-4>", self._scroll_with_mousewheel, add="+")
+        widget.bind("<Button-5>", self._scroll_with_mousewheel, add="+")
+
+    def _scroll_with_mousewheel(self, event):
+        canvas = getattr(self._scroll_frame, "_parent_canvas", None)
+        units = _mousewheel_scroll_units(event)
+        if canvas is not None and units:
+            canvas.yview_scroll(units, "units")
+        return "break"
+
+    def _close_scroll_popup_on_outside_click(self, event):
+        popup = self._scroll_popup
+        if not popup or not popup.winfo_exists():
+            return
+        left = popup.winfo_rootx()
+        top = popup.winfo_rooty()
+        right = left + popup.winfo_width()
+        bottom = top + popup.winfo_height()
+        if not (left <= event.x_root < right and top <= event.y_root < bottom):
+            self._close_scroll_popup()
+            return "break"
+
+    def _select_scroll_value(self, value):
+        self.set(value)
+        if self._command is not None:
+            self._command(value)
+        self._close_scroll_popup()
+
+    def _close_scroll_popup(self):
+        popup = self._scroll_popup
+        self._scroll_popup = None
+        self._scroll_frame = None
+        if popup and popup.winfo_exists():
+            try:
+                if popup.grab_current() == popup:
+                    popup.grab_release()
+            except Exception:
+                pass
+            popup.destroy()
+
+    def destroy(self):
+        self._close_scroll_popup()
+        super().destroy()
+
+
 class PlaceholderComboBox(ctk.CTkComboBox):
     """Editable CTkComboBox with a real, focus-clearing placeholder."""
 
@@ -104,19 +227,24 @@ class PlaceholderComboBox(ctk.CTkComboBox):
                 command=lambda selected=value: self._select_compact_value(selected),
             ).pack(fill="x")
         popup.bind("<Escape>", lambda _event: self._close_compact_popup())
-        popup.bind("<FocusOut>", lambda _event: popup.after(50, self._close_if_focus_left_popup))
+        popup.bind("<Button-1>", self._close_compact_popup_on_outside_click, add="+")
         popup.protocol("WM_DELETE_WINDOW", self._close_compact_popup)
         popup.deiconify()
         popup.lift()
-        popup.focus_force()
+        popup.grab_set()
+        popup.focus_set()
 
-    def _close_if_focus_left_popup(self):
+    def _close_compact_popup_on_outside_click(self, event):
         popup = self._compact_popup
         if not popup or not popup.winfo_exists():
             return
-        focused = popup.focus_get()
-        if focused is None or not str(focused).startswith(str(popup)):
+        left = popup.winfo_rootx()
+        top = popup.winfo_rooty()
+        right = left + popup.winfo_width()
+        bottom = top + popup.winfo_height()
+        if not (left <= event.x_root < right and top <= event.y_root < bottom):
             self._close_compact_popup()
+            return "break"
 
     def _select_compact_value(self, value):
         self.set(value)
@@ -128,6 +256,11 @@ class PlaceholderComboBox(ctk.CTkComboBox):
         popup = self._compact_popup
         self._compact_popup = None
         if popup and popup.winfo_exists():
+            try:
+                if popup.grab_current() == popup:
+                    popup.grab_release()
+            except Exception:
+                pass
             popup.destroy()
 
     def destroy(self):
@@ -138,11 +271,19 @@ class PlaceholderComboBox(ctk.CTkComboBox):
 class ManualReviewWindow(EmbeddedPage):
     help_context = "manual_review"
     NEW_DESTINATION = "＋ Neuen Unterordner anlegen …"
-    def __init__(self, master, config, document_path, on_filed=None):
+    def __init__(
+        self,
+        master,
+        config,
+        document_path,
+        on_filed=None,
+        on_reanalyze=None,
+    ):
         super().__init__(master)
         self.config = config
         self.document_path = Path(document_path)
         self.on_filed = on_filed
+        self.on_reanalyze = on_reanalyze
         self.profiles = ProfileService(config)
         self.filing = ManualFilingService(config, self.profiles)
         self.profile_items = self.profiles.list_profiles()
@@ -282,7 +423,7 @@ class ManualReviewWindow(EmbeddedPage):
         )
         self.person_menu.pack(fill="x", padx=24)
         self._label("Ablage")
-        self.destination_menu = ctk.CTkOptionMenu(
+        self.destination_menu = ScrollableOptionMenu(
             content,
             values=["Kein Ablageziel verfügbar"],
             command=self._destination_changed,
@@ -377,7 +518,17 @@ class ManualReviewWindow(EmbeddedPage):
             justify="left",
             wraplength=650,
             text_color=("#5c3900", "#ffe7b8"),
-        ).pack(anchor="w", padx=16, pady=(0, 14))
+        ).pack(anchor="w", padx=16, pady=(0, 10))
+        if self.on_reanalyze:
+            ctk.CTkButton(
+                frame,
+                text="Erneut analysieren und ablegen",
+                command=self._reanalyze_duplicate,
+            ).pack(anchor="w", padx=16, pady=(0, 14))
+
+    def _reanalyze_duplicate(self):
+        if self.on_reanalyze and self.on_reanalyze(self.document_path):
+            self.finish()
 
     def _build_invoice_context(self):
         self.invoice_context = True
@@ -625,6 +776,8 @@ class ManualReviewWindow(EmbeddedPage):
 
     def _private_purchase_destination(self):
         if self.suggestion.get("document_label") == "Kassenbon":
+            if self.suggestion.get("category") == "Haushalt":
+                return "Haushalt", "Einkäufe und Kassenbons"
             return "Anschaffungen und Garantien", "Kassenbons"
         return "Anschaffungen und Garantien", "Kaufbelege"
 

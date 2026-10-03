@@ -3,7 +3,8 @@ import unittest
 from pathlib import Path
 
 from src.config import Config
-from src.gui.help_window import HELP_CONTENT, diagnose
+from src.gui.help_window import HELP_CONTENT, diagnose, mail_accounts_requiring_attention
+from src.mail_fetcher import MailImportState
 from src.profile_service import ProfileService
 
 
@@ -62,6 +63,25 @@ class ContextHelpTests(unittest.TestCase):
         self.assertFalse(deleted_company_folder.exists())
         self.assertEqual(issues, [])
         self.assertEqual(status, "Sorterino ist einsatzbereit")
+
+    def test_mail_issue_identifies_the_account_for_direct_navigation(self):
+        service = ProfileService(self.config)
+        profile = service.create_family("Familie Test")
+        account = service.save_email_account(profile["id"], {
+            "label": "Bine - Live",
+            "provider": "microsoft",
+            "auth_method": "oauth2",
+            "imap_server": "outlook.office365.com",
+            "username": "bine@example.test",
+            "enabled": True,
+        })
+        MailImportState(self.config).set_account_issue(
+            account, "Das Microsoft-Postfach muss erneut verbunden werden."
+        )
+
+        accounts = mail_accounts_requiring_attention(self.config)
+
+        self.assertEqual([item["id"] for item in accounts], [account["id"]])
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from src.config import Config
 from src.database import SorterinoDatabase
-from src.report_mailer import deliver_daily_report, normalize_recipients
+from src.report_mailer import _report_bodies, deliver_daily_report, normalize_recipients
 from src.reporting import DailyReportManager
 
 
@@ -24,6 +24,32 @@ class _FakeSMTP:
 
 
 class ReportMailerTests(unittest.TestCase):
+    def test_user_report_lists_successful_destinations_and_hides_reason_codes(self):
+        report = {
+            "date": "2026-10-01",
+            "summary": {"total": 2, "success": 1, "manual": 1, "error": 0},
+            "items": [
+                {
+                    "status": "success",
+                    "final_name": "Rechnung Oktober.pdf",
+                    "target_folder": r"E:\\Dokumente\\Familie Hirte\\Finanzen\\Rechnungen",
+                    "reason": "ok",
+                },
+                {
+                    "status": "manual",
+                    "final_name": "Scan.pdf",
+                    "reason": "profile_unresolved",
+                },
+            ],
+        }
+
+        _title, plain, html_body = _report_bodies(report)
+
+        self.assertIn("Rechnung Oktober.pdf -> Familie Hirte › Finanzen › Rechnungen", plain)
+        self.assertIn("Das passende Profil konnte nicht eindeutig erkannt werden.", plain)
+        self.assertNotIn("profile_unresolved", plain)
+        self.assertNotIn("profile_unresolved", html_body)
+
     def test_recipients_are_validated_deduplicated_and_bounded(self):
         values = "A@example.de; invalid, a@example.de\nb@example.org"
         self.assertEqual(normalize_recipients(values), ["a@example.de", "b@example.org"])

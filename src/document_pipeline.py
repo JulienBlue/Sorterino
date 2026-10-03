@@ -7,7 +7,7 @@ from src.storage_utils import FilesystemStorage, SourceFileBusyError, StoragePat
 from src.document_analyzer import DocumentAnalyzer
 from src.models import Document, DocumentStatus
 from src.reporting import DailyReportManager
-from src.profile_matcher import ProfileMatcher
+from src.profile_matcher import ProfileAssignment, ProfileMatcher
 from src.policy_resolver import PolicyResolver
 from src.manual_review_suggestions import (
     ManualReviewSuggestionStore,
@@ -32,6 +32,7 @@ class DocumentPipeline:
         structure,
         profile_service=None,
         stop_requested=None,
+        allow_exact_duplicate=False,
     ):
         self.sources = sources
         self.ocr = ocr_service
@@ -39,6 +40,7 @@ class DocumentPipeline:
         self.archive = archive_storage
         self.logger = logger
         self.stop_requested = stop_requested or (lambda: False)
+        self.allow_exact_duplicate = bool(allow_exact_duplicate)
 
         self.config = config
         self.rules = rules
@@ -249,16 +251,46 @@ class DocumentPipeline:
         return [key for key, value in required.items() if not value]
 
     @staticmethod
-    def _requires_invoice_context_review(metadata, active_profile):
+    def _preview_requires_full_analysis(classification, metadata, extracted):
+        if not classification or classification.category == "MANUELL":
+            return True
+        if classification.confidence < 0.8:
+            return True
+        doc_type = metadata.document_type if metadata else ""
+        required_by_type = {
+            "Eingangsrechnungen": ("date", "vendor"),
+            "Ausgangsrechnungen": ("date", "vendor"),
+            "Gehaltsabrechnungen": ("employer",),
+        }
+        return any(
+            not extracted.get(field)
+            for field in required_by_type.get(doc_type, ())
+        )
+
+    @staticmethod
+    def _requires_invoice_context_review(metadata, active_profile, assignment=None):
         return bool(
             metadata
             and (
-                metadata.document_type == "Kassenbons"
+                metadata.document_type in {"Kassenbons", "Einkäufe und Kassenbons"}
                 or metadata.document_type == "Eingangsrechnungen"
                 and active_profile
                 and active_profile.get("type") != "organization"
+                and not (assignment and len(assignment.person_ids) == 1)
             )
             and active_profile
+        )
+
+    @staticmethod
+    def _requires_person_assignment(classification, active_profile, assignment):
+        """Keep inherently personal career documents out of family shared storage."""
+        return bool(
+            classification
+            and classification.category == "Arbeit und Karriere"
+            and active_profile
+            and active_profile.get("type") == "family"
+            and assignment
+            and not assignment.person_ids
         )
 
     def _process(self, document: Document):
@@ -306,7 +338,8 @@ class DocumentPipeline:
         step("DUPLIKAT", "Prüfung abgeschlossen", duplicate=bool(duplicate_match))
         if self._cancelled(document):
             return
-        if duplicate_match:
+        historical_assignment = None
+        if duplicate_match and not self.allow_exact_duplicate:
             duplicate_path = duplicate_match.path
             duplicate_notice = (
                 "Bytegleiches Duplikat erkannt"
@@ -335,15 +368,43 @@ class DocumentPipeline:
             )
             document.status = DocumentStatus.STORED
             return
+        if duplicate_match:
+            self.logger.info(
+                f"Duplikatschutz bewusst übergangen: {filename} wird erneut analysiert"
+            )
+            step(
+                "DUPLIKAT",
+                "Erneute Analyse ausdrücklich angefordert",
+                duplicate_of=str(duplicate_match.path or ""),
+            )
+            stored_assignment = self.duplicates.registry.assignment_for(
+                duplicate_match.document_id
+            )
+            if (
+                stored_assignment
+                and self.profile_service
+                and self.profile_service.get_profile(stored_assignment["profile_id"])
+            ):
+                historical_assignment = ProfileAssignment(
+                    profile_id=stored_assignment["profile_id"],
+                    person_ids=stored_assignment["person_ids"],
+                    confidence=1.0,
+                    matched_by=["Frühere Ablage desselben Dokuments"],
+                )
 
         self.logger.debug("Dokumentinhalt wird gelesen")
         step("EXTRAKTION", "Dokumentinhalt wird gelesen")
+        partial_text = False
         if not self.ocr:
             self.logger.warning("Dokumentextraktion deaktiviert → direkt manuell")
             text = ""
         else:
             try:
-                text = self.ocr.extract_text(document.source_path)
+                preview_reader = getattr(self.ocr, "extract_preview_text", None)
+                if ext == ".pdf" and callable(preview_reader):
+                    text, partial_text = preview_reader(document.source_path)
+                else:
+                    text = self.ocr.extract_text(document.source_path)
             except DocumentNeedsReview as exc:
                 if self._cancelled(document):
                     return
@@ -384,13 +445,66 @@ class DocumentPipeline:
         step("EXTRAKTION", "Texterkennung abgeschlossen", characters=len(text))
 
         document.mark_analyzed(text)
+        if partial_text:
+            preview_classification, preview_metadata, preview_extracted = (
+                self.analyzer.analyze(document)
+            )
+            if self._preview_requires_full_analysis(
+                preview_classification,
+                preview_metadata,
+                preview_extracted,
+            ):
+                self.logger.info(
+                    "Schnellanalyse nicht eindeutig – analysiere alle PDF-Seiten"
+                )
+                full_reader = getattr(self.ocr, "extract_full_text", None)
+                full_text = (
+                    full_reader(document.source_path)
+                    if callable(full_reader)
+                    else self.ocr.extract_text(document.source_path)
+                )
+                if full_text is None:
+                    self.logger.error("Vollständige Dokumentextraktion fehlgeschlagen")
+                    self._store_runtime(
+                        document,
+                        self.error_target,
+                        filename,
+                        "ERROR",
+                        "error",
+                        "extraction_error",
+                    )
+                    document.status = DocumentStatus.ERROR
+                    return
+                text = full_text
+                document.mark_analyzed(text)
+            else:
+                self.logger.info(
+                    "Schnellanalyse eindeutig – weitere PDF-Seiten werden nicht benötigt"
+                )
         assignment = None
         active_profile = None
         analyzer = self.analyzer
         if self.profile_matcher:
             matching_text = f"{text}\n{filename}"
             hinted_profile_id = self._mail_profile_hint(document.source_path)
-            detected_assignment = self.profile_matcher.match_document(text, filename)
+            detected_assignment = (
+                self.profile_matcher.match_document(text, filename)
+                or historical_assignment
+            )
+            preview = None
+            preview_metadata = None
+            preview_extracted = None
+            if not detected_assignment:
+                preview, preview_metadata, preview_extracted = analyzer.analyze(document)
+                if (
+                    preview.category == "Wohnen"
+                    and preview.document_type == "Immobilienunterlagen"
+                ):
+                    detected_assignment = (
+                        self.profile_matcher.match_unique_profile_address(
+                            matching_text
+                        )
+                    )
             if (
                 hinted_profile_id
                 and detected_assignment
@@ -414,7 +528,8 @@ class DocumentPipeline:
                 if hinted_profile_id else detected_assignment
             )
             if not assignment:
-                preview, _metadata, _extracted = analyzer.analyze(document)
+                if preview is None:
+                    preview, preview_metadata, preview_extracted = analyzer.analyze(document)
                 if preview.category and preview.category != "MANUELL":
                     self.logger.info(
                         "Profil nicht eindeutig erkannt "
@@ -429,7 +544,12 @@ class DocumentPipeline:
                     "MANUAL",
                     "manual",
                     "profile_unresolved",
-                    self._manual_suggestion(document, preview, _metadata, _extracted),
+                    self._manual_suggestion(
+                        document,
+                        preview,
+                        preview_metadata,
+                        preview_extracted,
+                    ),
                 )
                 document.status = DocumentStatus.STORED
                 return
@@ -459,6 +579,27 @@ class DocumentPipeline:
             extracted["profile_confidence"] = assignment.confidence
             extracted["profile_matched_by"] = assignment.matched_by
 
+            if classification.document_type == "Eingangsrechnungen" and assignment.person_ids:
+                assigned_names = []
+                for person_id in assignment.person_ids:
+                    person = self.profile_service.get_person(person_id)
+                    if person and person.get("display_name"):
+                        assigned_names.append(person["display_name"])
+                vendor = str(extracted.get("vendor") or "").casefold()
+                if vendor and any(
+                    name.casefold() in vendor or vendor in name.casefold()
+                    for name in assigned_names
+                ):
+                    corrected_vendor = analyzer._extract_vendor(
+                        document.extracted_text or "",
+                        excluded_names=assigned_names,
+                    )
+                    if corrected_vendor:
+                        extracted["vendor"] = corrected_vendor
+                        self.logger.info(
+                            f"Rechnungsaussteller korrigiert: {corrected_vendor}"
+                        )
+
         self.logger.info(
             f"Klassifikation {classification.category} "
             f"{classification.confidence:.2f}"
@@ -477,6 +618,25 @@ class DocumentPipeline:
             self._store_runtime(
                 document, self.manual_sort_target, filename, "MANUAL", "manual", "classify_none",
                 self._manual_suggestion(document, classification, metadata, extracted, assignment),
+            )
+            document.status = DocumentStatus.STORED
+            return
+
+        if classification.confidence < 0.8:
+            self.logger.info(
+                "Klassifikation zu unsicher für automatische Ablage "
+                f"({classification.confidence:.2f}) manuell"
+            )
+            self._store_runtime(
+                document,
+                self.manual_sort_target,
+                filename,
+                "MANUAL",
+                "manual",
+                "classification_low_confidence",
+                self._manual_suggestion(
+                    document, classification, metadata, extracted, assignment
+                ),
             )
             document.status = DocumentStatus.STORED
             return
@@ -510,8 +670,30 @@ class DocumentPipeline:
             document.status = DocumentStatus.STORED
             return
 
-        if self._requires_invoice_context_review(metadata, active_profile):
-            label = "Kassenbon" if metadata.document_type == "Kassenbons" else "Rechnung"
+        if self._requires_person_assignment(classification, active_profile, assignment):
+            self.logger.info(
+                "Persönliches Karriere- oder Bewerbungsdokument ohne erkannte Profilperson manuell"
+            )
+            self._store_runtime(
+                document,
+                self.manual_sort_target,
+                filename,
+                "MANUAL",
+                "manual",
+                "profile_person_unresolved",
+                self._manual_suggestion(
+                    document, classification, metadata, extracted, assignment
+                ),
+            )
+            document.status = DocumentStatus.STORED
+            return
+
+        if self._requires_invoice_context_review(metadata, active_profile, assignment):
+            label = (
+                "Kassenbon"
+                if metadata.document_type in {"Kassenbons", "Einkäufe und Kassenbons"}
+                else "Rechnung"
+            )
             self.logger.info(f"{label}: private oder geschäftliche Verwendung prüfen")
             self._store_runtime(
                 document,

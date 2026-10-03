@@ -18,7 +18,7 @@ from src.mail_auth import (
     secure_ssl_context,
 )
 from src.profile_service import ProfileService
-from src.reporting import DailyReportManager
+from src.reporting import DailyReportManager, user_reason, user_target
 
 
 PROVIDER_SMTP = {
@@ -64,16 +64,28 @@ def _report_bodies(report, level="compact"):
     summary = report.get("summary", {})
     attention = int(summary.get("manual", 0)) + int(summary.get("error", 0))
     title = f"Sorterino Tagesbericht – {report.get('date')}"
-    text = [title, "", f"Verarbeitet: {summary.get('total', 0)}", f"Erfolgreich: {summary.get('success', 0)}", f"Handlungsbedarf: {attention}"]
-    rows = []
-    if level != "compact":
-        for item in report.get("items", []):
+    text = [title, "", f"Verarbeitet: {summary.get('total', 0)}", f"Automatisch abgelegt: {summary.get('success', 0)}", f"Handlungsbedarf: {attention}"]
+    successes = [item for item in report.get("items", []) if item.get("status") == "success"]
+    action_items = [item for item in report.get("items", []) if item.get("status") in {"manual", "error"}]
+    success_rows = []
+    action_rows = []
+    if successes:
+        text.extend(("", "Automatisch abgelegt"))
+        for item in successes:
             name = str(item.get("final_name") or item.get("original_name") or "Dokument")
-            status = str(item.get("status") or "-")
-            reason = str(item.get("reason") or "")
-            text.append(f"- {name}: {status}" + (f" – {reason}" if reason else ""))
-            rows.append(
-                "<tr><td>" + html.escape(name) + "</td><td>" + html.escape(status) + "</td><td>" + html.escape(reason) + "</td></tr>"
+            target = user_target(item)
+            text.append(f"- {name} -> {target}")
+            success_rows.append(
+                "<tr><td>" + html.escape(name) + "</td><td>" + html.escape(target) + "</td></tr>"
+            )
+    if action_items:
+        text.extend(("", "Handlungsbedarf"))
+        for item in action_items:
+            name = str(item.get("final_name") or item.get("original_name") or "Dokument")
+            reason = user_reason(item)
+            text.append(f"- {name}: {reason}")
+            action_rows.append(
+                "<tr><td>" + html.escape(name) + "</td><td>" + html.escape(reason) + "</td></tr>"
             )
     body = f"""<!doctype html><html><body style='font-family:Arial,sans-serif;color:#202124'>
 <h2>{html.escape(title)}</h2>
@@ -81,7 +93,8 @@ def _report_bodies(report, level="compact"):
 <tr><td>Erfolgreich abgelegt</td><td><b>{int(summary.get('success', 0))}</b></td></tr>
 <tr><td>Prüfung erforderlich</td><td><b>{int(summary.get('manual', 0))}</b></td></tr>
 <tr><td>Fehler</td><td><b>{int(summary.get('error', 0))}</b></td></tr></table>
-{"<h3>Aktivitäten</h3><table cellpadding='7' border='1' style='border-collapse:collapse'><tr><th>Dokument</th><th>Status</th><th>Hinweis</th></tr>" + ''.join(rows) + "</table>" if rows else ""}
+{"<h3>Automatisch abgelegt</h3><table cellpadding='7' border='1' style='border-collapse:collapse'><tr><th>Dokument</th><th>Ablageort</th></tr>" + ''.join(success_rows) + "</table>" if success_rows else ""}
+{"<h3>Handlungsbedarf</h3><table cellpadding='7' border='1' style='border-collapse:collapse'><tr><th>Dokument</th><th>Hinweis</th></tr>" + ''.join(action_rows) + "</table>" if action_rows else ""}
 <p style='color:#666'>Automatisch durch Sorterino erstellt.</p></body></html>"""
     return title, "\n".join(text), body
 

@@ -326,7 +326,7 @@ class StoragePathBuilder:
                 parts.append(amount_label)
             return " - ".join(parts) + ext
 
-        if doc_type == "Kassenbons":
+        if doc_type in {"Kassenbons", "Einkäufe und Kassenbons"}:
             parts = []
             if date:
                 try:
@@ -499,6 +499,31 @@ class StoragePathBuilder:
                 parts.append(f"Auftrag {sanitize(data['assignment_number'])}")
             return " - ".join(parts) + ext
 
+        if data.get("document_kind") == "Einkommensermittlung nach § 18a BAföG":
+            parts = []
+            if date:
+                try:
+                    day, month, year = date.split(".")
+                    parts.append(f"{year}-{month}-{day}")
+                except ValueError:
+                    parts.append(sanitize(date))
+            parts.append("Einkommensermittlung nach § 18a BAföG")
+            if data.get("vendor"):
+                parts.append(sanitize(data["vendor"]))
+            return " - ".join(parts) + ext
+
+        if data.get("document_kind") == "Entlassungsbrief":
+            parts = []
+            if date:
+                date_parts = split_german_date(date)
+                if date_parts:
+                    day, month, year = date_parts
+                    parts.append(f"{year}-{month}-{day}")
+            parts.append("Entlassungsbrief")
+            if data.get("vendor"):
+                parts.append(sanitize(data["vendor"]))
+            return " - ".join(parts) + ext
+
         if doc_type == "Einkommensteuer":
             if data.get("document_kind") == "ELSTER-Versandbestätigung":
                 parts = []
@@ -514,6 +539,8 @@ class StoragePathBuilder:
                 return " - ".join(parts) + ext
             tax_year = data.get("tax_year")
             kind = data.get("document_kind")
+            if kind == "Einkommensteuerbescheid" and tax_year:
+                return f"Einkommensteuerbescheid {sanitize(str(tax_year))}{ext}"
             parts = []
             if kind == "Einkommensteuerbescheid" and date:
                 try:
@@ -617,6 +644,21 @@ class StoragePathBuilder:
                 parts.append(sanitize(data["contract_number"]))
             return " - ".join(parts) + ext
 
+        if doc_type == "Versicherungsangebote":
+            parts = []
+            if date:
+                date_parts = split_german_date(date)
+                if date_parts:
+                    day, month, year = date_parts
+                    parts.append(f"{year}-{month}-{day}")
+            parts.append(data.get("insurance_type") or "Versicherungsangebot")
+            parts.append("Angebot")
+            if vendor:
+                parts.append(sanitize(vendor))
+            if data.get("contract_number"):
+                parts.append(sanitize(data["contract_number"]))
+            return " - ".join(parts) + ext
+
         if doc_type == "Allgemeine Verträge" and data.get("document_kind") == "Beratungsvertrag":
             parts = []
             if date:
@@ -641,18 +683,18 @@ class StoragePathBuilder:
             parts.append(sanitize(data["document_kind"]))
             return " - ".join(parts) + ext
 
-        if doc_type == "Renteninformationen":
-            parts = []
-            if date:
-                try:
-                    day, month, year = date.split(".")
-                    parts.append(f"{year}-{month}-{day}")
-                except ValueError:
-                    parts.append(sanitize(date))
-            parts.append(data.get("document_kind") or "Renteninformation")
-            if vendor:
-                parts.append(sanitize(vendor))
-            return " - ".join(parts) + ext
+        if doc_type == "Renteninformation":
+            year = None
+            date_parts = split_german_date(date) if date else None
+            if date_parts:
+                _day, _month, year = date_parts
+            if not year:
+                year_match = re.search(
+                    r"\b((?:19|20)\d{2})\b",
+                    document.filename,
+                )
+                year = year_match.group(1) if year_match else None
+            return f"Renteninformation{f' {year}' if year else ''}{ext}"
 
         if doc_type == "Eheurkunde" and data.get("document_kind") == "Eheurkunde":
             parts = []
@@ -690,6 +732,47 @@ class StoragePathBuilder:
             if vendor:
                 parts.append(sanitize(vendor))
             return " - ".join(parts) + ext
+
+        if (
+            doc_type == "Versicherungsschreiben"
+            and data.get("document_kind") == "Beitragsrechnung"
+        ):
+            parts = []
+            if date:
+                date_parts = split_german_date(date)
+                if date_parts:
+                    day, month, year = date_parts
+                    parts.append(f"{year}-{month}-{day}")
+            parts.append("Beitragsrechnung")
+            if vendor:
+                parts.append(sanitize(vendor))
+            if data.get("contract_number"):
+                parts.append(sanitize(data["contract_number"]))
+            if amount:
+                parts.append(sanitize(amount))
+            return " - ".join(parts) + ext
+
+        if (
+            doc_type == "Versicherungsschreiben"
+            and data.get("document_kind") == "Begleitschreiben zum Versicherungsschein"
+        ):
+            parts = []
+            if date:
+                date_parts = split_german_date(date)
+                if date_parts:
+                    day, month, year = date_parts
+                    parts.append(f"{year}-{month}-{day}")
+            parts.append("Begleitschreiben")
+            if data.get("insurance_type"):
+                parts.append(sanitize(data["insurance_type"]))
+            if vendor:
+                parts.append(sanitize(vendor))
+            if data.get("contract_number"):
+                parts.append(sanitize(data["contract_number"]))
+            return " - ".join(parts) + ext
+
+        if data.get("document_kind") == "Vermögensauskunft zur Stundung":
+            return "Vermögensauskunft zur Stundung" + ext
 
         if doc_type == "Instandhaltung" and data.get("document_kind") == "Mängeldokumentation":
             parts = []

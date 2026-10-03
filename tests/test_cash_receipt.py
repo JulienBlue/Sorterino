@@ -55,9 +55,9 @@ Seriennr. Kasse: KAS04-EH070570
         document.metadata = metadata
         document.extracted_data = data
 
-        self.assertEqual(classification.category, "Anschaffungen und Garantien")
-        self.assertEqual(classification.document_type, "Kassenbons")
-        self.assertEqual(classification.reason, "Kassenbon")
+        self.assertEqual(classification.category, "Haushalt")
+        self.assertEqual(classification.document_type, "Einkäufe und Kassenbons")
+        self.assertEqual(classification.reason, "Kassenbon für den täglichen Bedarf")
         self.assertEqual(data["document_kind"], "Kassenbon")
         self.assertEqual(data["brand"], "EDEKA")
         self.assertEqual(data["store_name"], "AKTIV Markt Gebr. Hein")
@@ -71,7 +71,7 @@ Seriennr. Kasse: KAS04-EH070570
         self.assertEqual(
             StoragePathBuilder(self.structure).build(document),
             Path(
-                "Anschaffungen und Garantien", "Kassenbons", "2026",
+                "Haushalt", "Einkäufe und Kassenbons", "2026",
                 "2026-07-28 - Kassenbon - EDEKA AKTIV Markt Gebr. Hein - 6,44 EUR.pdf",
             ),
         )

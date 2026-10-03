@@ -118,7 +118,12 @@ def _apply_invoice_context_hint(suggestion, document, data, profile_service=None
     filename_words = re.sub(r"[_\-]+", " ", document.filename).casefold()
     document_type = suggestion.get("document_type")
     invoice_like = (
-        document_type in {"Eingangsrechnungen", "Ausgangsrechnungen", "Kassenbons"}
+        document_type in {
+            "Eingangsrechnungen",
+            "Ausgangsrechnungen",
+            "Kassenbons",
+            "Einkäufe und Kassenbons",
+        }
         or bool(re.search(r"\b(?:rechnung|invoice|kassenbon)\b", filename_words))
         or bool(data.get("invoice_number") and data.get("vendor"))
     )
@@ -128,15 +133,24 @@ def _apply_invoice_context_hint(suggestion, document, data, profile_service=None
         profile_service.get_profile(suggestion["profile_id"])
         if profile_service and suggestion.get("profile_id") else None
     )
-    if document_type == "Kassenbons":
+    if document_type in {"Kassenbons", "Einkäufe und Kassenbons"}:
         is_organization = bool(profile and profile.get("type") == "organization")
+        everyday_purchase = document_type == "Einkäufe und Kassenbons"
         suggestion.update({
             "review_kind": "invoice_context",
             "document_label": "Kassenbon",
             "invoice_usage": "business" if is_organization else "private",
             "tax_relevant": False,
-            "category": "Buchhaltung" if is_organization else "Anschaffungen und Garantien",
-            "document_type": "Eingangsrechnungen" if is_organization else "Kassenbons",
+            "category": (
+                "Buchhaltung" if is_organization
+                else "Haushalt" if everyday_purchase
+                else "Anschaffungen und Garantien"
+            ),
+            "document_type": (
+                "Eingangsrechnungen" if is_organization
+                else "Einkäufe und Kassenbons" if everyday_purchase
+                else "Kassenbons"
+            ),
         })
     elif not profile or profile.get("type") != "organization":
         suggestion.update({

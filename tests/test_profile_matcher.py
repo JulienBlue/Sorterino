@@ -1,4 +1,5 @@
 import tempfile
+import unicodedata
 import unittest
 from pathlib import Path
 
@@ -35,6 +36,26 @@ class ProfileMatcherTests(unittest.TestCase):
         self.assertEqual(result.profile_id, family["id"])
         self.assertEqual(result.person_ids, [person["id"]])
         self.assertIn("Personenname in Formularfeldern", result.matched_by)
+
+    def test_medical_report_assigns_named_patient_not_mentioned_child(self):
+        family = self.service.create_family("Familie Hirte")
+        mother = self.service.create_person("Sabine", "Hirte")
+        child = self.service.create_person("Henri", "Hirte", ["Mika"], is_minor=True)
+        self.service.add_membership(family["id"], mother["id"], role="member")
+        self.service.add_membership(family["id"], child["id"], role="child")
+
+        result = ProfileMatcher(self.service).match_document(
+            "Wir berichten über die Patientin Sabine Hirte, geb. 17.11.1986.\n"
+            "Kindsdaten: Hirte Henri Mika, Lebendgeburt.",
+            "Entlassungsbrief.pdf",
+        )
+
+        self.assertEqual(result.profile_id, family["id"])
+        self.assertEqual(result.person_ids, [mother["id"]])
+        self.assertIn(
+            "Ausdrücklich genannte Patientin oder genannter Patient",
+            result.matched_by,
+        )
 
     def test_name_matching_uses_later_close_occurrences_from_signature(self):
         family = self.service.create_family("Familie Hirte")
@@ -78,6 +99,48 @@ class ProfileMatcherTests(unittest.TestCase):
 
         self.assertEqual(result.profile_id, family["id"])
         self.assertEqual(result.person_ids, [people[0]["id"]])
+
+    def test_complete_profile_address_assigns_household_without_person(self):
+        family = self.service.create_family("Familie Hirte")
+        self.service.update_profile(family["id"], {
+            "address": {
+                "street": "Schöne Aussicht",
+                "house_number": "1",
+                "postal_code": "51149",
+                "city": "Köln",
+            },
+        })
+        decomposed_address = unicodedata.normalize(
+            "NFD",
+            "Energieausweis Schöne Aussicht 1, 51149 Köln",
+        )
+
+        result = ProfileMatcher(self.service).match(decomposed_address)
+
+        self.assertEqual(result.profile_id, family["id"])
+        self.assertEqual(result.person_ids, [])
+        self.assertIn("Profilanschrift", result.matched_by)
+
+    def test_unique_property_street_in_decomposed_filename_assigns_profile(self):
+        family = self.service.create_family("Familie Hirte")
+        self.service.update_profile(family["id"], {
+            "address": {
+                "street": "Schöne Aussicht",
+                "house_number": "1",
+                "postal_code": "51149",
+                "city": "Köln",
+            },
+        })
+        filename = unicodedata.normalize(
+            "NFD",
+            "Energieausweis Schöne Aussicht 1 1300_2030-10-16.pdf",
+        )
+
+        result = ProfileMatcher(self.service).match_unique_profile_address(filename)
+
+        self.assertEqual(result.profile_id, family["id"])
+        self.assertEqual(result.person_ids, [])
+        self.assertIn("Eindeutige Objektanschrift", result.matched_by)
 
     def test_rejects_ambiguous_person_in_private_and_company_context(self):
         person = self.service.create_person("Julien", "Hirte")

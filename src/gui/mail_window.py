@@ -25,7 +25,8 @@ from src.mail_auth import (
     store_refresh_token,
     store_password,
 )
-from src.mail_fetcher import test_account_connection
+from src.logger import FileLogger
+from src.mail_fetcher import MailImportState, test_account_connection
 from src.profile_service import ProfileService
 
 
@@ -127,6 +128,10 @@ class ProfileMailAccountDialog(EmbeddedPage):
         self.account = service.get_email_account(account_id) if account_id else None
         self.on_saved = on_saved
         self._busy = False
+        self.logger = FileLogger(
+            self.config.logs_root,
+            developer_mode=self.config.get("developer_mode", False),
+        )
         self._build()
         self._load()
 
@@ -357,6 +362,8 @@ class ProfileMailAccountDialog(EmbeddedPage):
         if self._busy:
             return
         self._set_busy(True, busy_text)
+        label = (self.account or {}).get("label") or self.username.get().strip() or "Postfach"
+        self.logger.info(f"[MAIL] {label}: Verbindung wird hergestellt")
 
         results = queue.Queue(maxsize=1)
 
@@ -379,18 +386,22 @@ class ProfileMailAccountDialog(EmbeddedPage):
                     self.after(100, poll)
                 return
             if succeeded:
+                self.logger.info(f"[MAIL] {label}: Verbindung erfolgreich")
                 if on_success:
                     self._set_busy(False)
                     on_success(result)
                 else:
                     self._finish_async_success(success_text)
             else:
+                self.logger.warning(f"[MAIL] {label}: Verbindung fehlgeschlagen - {result}")
                 self._finish_async_error(result)
 
         threading.Thread(target=worker, name="SorterinoMailAuth", daemon=True).start()
         self.after(100, poll)
 
     def _finish_async_success(self, text):
+        if self.account:
+            MailImportState(self.config).clear_account_issue(self.account["id"])
         self._set_busy(False, text)
         messagebox.showinfo("Verbindung erfolgreich", text, parent=self)
 

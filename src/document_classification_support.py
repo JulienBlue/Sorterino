@@ -11,6 +11,150 @@ class DocumentClassificationSupport:
         filename_lower = Path(filename).stem.casefold()
         property_context = f"{filename_lower} {text_lower}"
 
+        generic_legal_attachment = bool(
+            re.search(r"\b(?:agb|widerrufsrecht)\b", filename_lower)
+            or "allgemeine geschäftsbedingungen" in text_lower
+        )
+        if generic_legal_attachment:
+            return Classification(
+                "MANUELL", 0.99, "Allgemeine Informationen",
+                reason="Allgemeine Bedingungen",
+            )
+
+        bafog_income_context = f"{filename_lower} {text_lower}"
+        bafog_income_signals = sum(
+            value in bafog_income_context
+            for value in (
+                "einkommensermittlung",
+                "18a bafög",
+                "18a bafog",
+                "bundesverwaltungsamt",
+                "darlehensnehmer",
+            )
+        )
+        if "einkommensermittlung" in bafog_income_context and bafog_income_signals >= 2:
+            return Classification(
+                "Behörden und Leistungen",
+                0.99,
+                "Formulare",
+                reason="Einkommensermittlung nach § 18a BAföG",
+            )
+
+        medical_discharge_signals = sum(
+            value in text_lower
+            for value in (
+                "wir berichten über die patientin",
+                "wir berichten uber die patientin",
+                "entlassuntersuchung",
+                "stationärer aufenthalt",
+                "stationarer aufenthalt",
+                "empfehlungen / procedere",
+            )
+        )
+        if (
+            "entlassungsbrief" in filename_lower
+            or "entlassungsbericht" in filename_lower
+            or medical_discharge_signals >= 2
+        ):
+            return Classification(
+                "Gesundheit",
+                0.99,
+                "Arztberichte und Befunde",
+                reason="Entlassungsbrief",
+            )
+
+        deferment_statement_signals = sum(
+            value in text_lower
+            for value in (
+                "entscheidung über eine stundung",
+                "entscheidung uber eine stundung",
+                "§ 59 abs. 1",
+                "bundeshaushaltsordnung",
+                "höhe meines einkommens",
+                "aufstellung über mein vermögen",
+                "laufenden monatlichen ausgaben",
+            )
+        )
+        if (
+            deferment_statement_signals >= 2
+            or (
+                "aufstellung nach § 59" in filename_lower
+                and "stundung" in text_lower
+            )
+        ):
+            return Classification(
+                "Behörden und Leistungen",
+                0.99,
+                "Sonstige Bescheide",
+                reason="Vermögensauskunft zur Stundung",
+            )
+
+        insurance_invoice_signals = sum(
+            value in text_lower
+            for value in (
+                "beitragsrechnung zu ihrer",
+                "beitragsrechnung:",
+                "versicherungsnummer",
+                "versicherungsbeitrag",
+                "beitrag, fällig",
+                "beitrag, fallig",
+            )
+        )
+        if (
+            "beitragsrechnung" in f"{filename_lower} {text_lower}"
+            and insurance_invoice_signals >= 2
+        ):
+            return Classification(
+                "Versicherungen",
+                0.99,
+                "Versicherungsschreiben",
+                reason="Versicherungs-Beitragsrechnung",
+            )
+
+        insurance_offer_signals = sum(
+            value in text_lower
+            for value in (
+                "angebot für eine",
+                "verbindliches angebot",
+                "angebots-nr.",
+                "angebots-nr",
+                "an dieses angebot halten wir uns",
+                "ausstellungsdatum/-grund",
+            )
+        )
+        if insurance_offer_signals >= 2 and "versicherung" in text_lower:
+            return Classification(
+                "Versicherungen",
+                0.99,
+                "Versicherungsangebote",
+                reason="Versicherungsangebot",
+            )
+
+        if (
+            "anschreiben" in filename_lower
+            and "anbei erhalten sie ihren versicherungsschein" in text_lower
+        ):
+            return Classification(
+                "Versicherungen",
+                0.99,
+                "Versicherungsschreiben",
+                reason="Begleitschreiben zum Versicherungsschein",
+            )
+
+        family_course_context = f"{filename_lower} {text_lower}"
+        if (
+            any(value in family_course_context for value in (
+                "familienbildung", "pekip", "mit kind", "eltern-kind",
+            ))
+            and any(value in family_course_context for value in (
+                "einladung", "kurs", "veranstaltung", "teilnahme",
+            ))
+        ):
+            return Classification(
+                "Gesundheit", 0.96, "Kurse und Therapien",
+                reason="Einladung Familienbildung",
+            )
+
         if "energieausweis" in property_context:
             return Classification(
                 "Wohnen", 0.99, "Immobilienunterlagen",
@@ -82,7 +226,7 @@ class DocumentClassificationSupport:
         )
         if "renteninformation" in (text_lower + " " + filename_lower) and pension_signals >= 2:
             return Classification(
-                "Rentenversicherung", 0.99, "Renteninformationen",
+                "Rentenversicherung", 0.99, "Renteninformation",
                 reason="Renteninformation",
             )
 
@@ -190,6 +334,26 @@ class DocumentClassificationSupport:
                 )
                 if match:
                     valid_until = ".".join(match.groups())
+                else:
+                    # OCR may separate individual digits, for example:
+                    # Gültig bis: 1 6. 1 0.2030. Compact only the short value
+                    # area after the label so unrelated dates are ignored.
+                    label = re.search(
+                        r"g.{0,2}ltig\s+bis\s*:?",
+                        combined,
+                        flags=re.IGNORECASE,
+                    )
+                    if label:
+                        value_area = combined[label.end():label.end() + 40]
+                        compact = re.sub(r"\s+", "", value_area)
+                        spaced_date = re.match(
+                            r"(0[1-9]|[12]\d|3[01])\."
+                            r"(0[1-9]|1[0-2])\."
+                            r"((?:19|20)\d{2})",
+                            compact,
+                        )
+                        if spaced_date:
+                            valid_until = ".".join(spaced_date.groups())
 
         return {
             "date": None,
@@ -234,15 +398,265 @@ class DocumentClassificationSupport:
             if period:
                 assignment_start = f"01.{period.group(2)}.{period.group(1)}"
         employer = "WIRMED GmbH" if "wirmed" in text.casefold() else None
+        client = match(r"(?:bei\s+Kunde|Entleiher)\s*:\s*([^\r\n]+)")
+        if client and client.casefold() == "caritas-seniorenzentrum pulhei":
+            client = "Caritas-Seniorenzentrum Pulheim"
         return {
             "amount": None,
             "currency": None,
+            # The generic vendor extraction commonly picks up the form title
+            # here. Employer and client are the meaningful parties.
+            "vendor": None,
             "document_kind": "Einsatzbegleitschein",
             "employer": employer,
-            "client": match(r"(?:bei\s+Kunde|Entleiher)\s*:\s*([^\r\n]+)"),
+            "client": client,
             "assignment_number": match(r"Auftrag\s*(?:Nr\.?|Nummer)\s*[:#-]?\s*([A-Z0-9./-]+)"),
             "assignment_start": assignment_start,
             "monthly_hours": match(r"monatliche\s+Arbeitszeit[^\d]{0,60}([0-9]+,[0-9]{2})"),
+        }
+
+    @staticmethod
+    def _extract_deferment_financial_statement(text):
+        reference = re.search(
+            r"Gesch[aä]ftszeichen\s*[\r\n:.-]*\s*"
+            r"([A-Z0-9][A-Z0-9 /.-]{4,40})",
+            text,
+            flags=re.IGNORECASE,
+        )
+        processing_reference = None
+        if reference:
+            processing_reference = re.sub(
+                r"\s+",
+                " ",
+                reference.group(1),
+            ).strip(" .:-")
+        return {
+            "amount": None,
+            "currency": None,
+            "vendor": None,
+            "description": None,
+            "document_kind": "Vermögensauskunft zur Stundung",
+            "processing_reference": processing_reference,
+        }
+
+    @staticmethod
+    def _extract_bafog_income_assessment(text):
+        period = re.search(
+            r"\b(\d{2}\.\d{2}\.\d{4})\b[^\d\r\n]{0,12}"
+            r"\b(\d{2}\.\d{2}\.\d{4})\b",
+            text,
+        )
+        reference = re.search(
+            r"(?:Gesch[aä]ftszeichen(?:\s+im\s+Bundesverwaltungsamt)?)"
+            r"\s*[:\r\n-]+\s*(IV\s*[A-Z0-9 /.-]{4,40})",
+            text,
+            flags=re.IGNORECASE,
+        )
+        processing_reference = None
+        if reference:
+            processing_reference = re.sub(r"\s+", " ", reference.group(1)).strip(" .:-")
+
+        period_start = period.group(1) if period else None
+        period_end = period.group(2) if period else None
+        if not period:
+            # Scanned forms often lose the separator before the year and may
+            # confuse one year digit (for example 01.112094 instead of
+            # 01.11.2024). Restrict recovery to the explicitly labelled
+            # four-month income period so unrelated dates remain untouched.
+            label = re.search(r"letzten\s+vier\s+monate", text, re.IGNORECASE)
+            if label:
+                period_text = text[label.end():label.end() + 350]
+                candidates = re.findall(
+                    r"\b(\d{2})\.(\d{2})\.?((?:19|20)\d{2})\b",
+                    period_text,
+                )
+                if len(candidates) >= 2:
+                    start_day, start_month, start_year = candidates[0]
+                    end_day, end_month, end_year = candidates[1]
+                    start_year_number = int(start_year)
+                    end_year_number = int(end_year)
+                    if abs(start_year_number - end_year_number) > 1:
+                        start_year_number = end_year_number - (
+                            1 if int(start_month) > int(end_month) else 0
+                        )
+                    period_start = (
+                        f"{start_day}.{start_month}.{start_year_number:04d}"
+                    )
+                    period_end = f"{end_day}.{end_month}.{end_year}"
+        return {
+            "date": period_start,
+            "amount": None,
+            "currency": None,
+            "vendor": "Bundesverwaltungsamt",
+            "description": None,
+            "document_kind": "Einkommensermittlung nach § 18a BAföG",
+            "income_period_start": period_start,
+            "income_period_end": period_end,
+            "processing_reference": processing_reference,
+        }
+
+    @staticmethod
+    def _extract_medical_discharge_letter(text):
+        stay = re.search(
+            r"(?:vom|von)\s+(\d{2}\.\d{2}\.\d{4})\s+"
+            r"bis\s+(\d{2}\.\d{2}\.\d{4})[\s\S]{0,120}?"
+            r"(?:Behandlung|Aufenthalt)",
+            text,
+            flags=re.IGNORECASE,
+        )
+        treatment_start = stay.group(1) if stay else None
+        treatment_end = stay.group(2) if stay else None
+
+        hospital = None
+        if "krankenhaus porz am rhein" in text.casefold():
+            hospital = "Krankenhaus Porz am Rhein"
+
+        return {
+            "date": treatment_end,
+            "amount": None,
+            "currency": None,
+            "vendor": hospital,
+            "description": None,
+            "document_kind": "Entlassungsbrief",
+            "treatment_start": treatment_start,
+            "treatment_end": treatment_end,
+        }
+
+    @staticmethod
+    def _extract_insurance_invoice(text):
+        folded = text.casefold()
+
+        date = None
+        for pattern in (
+            r"Aktenzeichen[^\r\n]{0,60}?(\d{2}\.\d{2}\.\d{4})",
+            r"Seite\s+\d+\s+vom\s+(\d{2}\.\d{2}\.\d{4})",
+            r"\b(?:GoSMART\s+)?(\d{2}\.\d{2}\.\d{4})\b",
+        ):
+            match = re.search(pattern, text, flags=re.IGNORECASE)
+            if match:
+                date = match.group(1)
+                break
+
+        contract = re.search(
+            r"Versicherungsnummer\s+(\d[\d.]{5,})",
+            text,
+            flags=re.IGNORECASE,
+        )
+
+        amount = None
+        for pattern in (
+            r"Betrag\s+in\s+H[oö]he\s+von\s+(\d+(?:[.,]\d{2}))",
+            r"Beitrag,\s*f[aä]llig[^\r\n]{0,80}?(\d+(?:[.,]\d{2}))",
+        ):
+            match = re.search(pattern, text, flags=re.IGNORECASE)
+            if match:
+                amount = match.group(1).replace(".", ",")
+                break
+
+        vendor = None
+        if "gothaer allgemeine versicherung" in folded:
+            vendor = "Gothaer Allgemeine Versicherung AG"
+        elif "debeka allgemeine versicherung" in folded:
+            vendor = "Debeka Allgemeine Versicherung AG"
+
+        insurance_type = None
+        if re.search(r"(?im)^\s*unfall(?:\s+neu)?\b", text):
+            insurance_type = "Unfallversicherung"
+        elif "privathaftpflicht" in folded:
+            insurance_type = "Privathaftpflichtversicherung"
+        elif "hausrat" in folded:
+            insurance_type = "Hausratversicherung"
+        elif "tierhalterhaftpflicht" in folded:
+            insurance_type = "Tierhalterhaftpflichtversicherung"
+
+        return {
+            "date": date,
+            "amount": amount,
+            "currency": "EUR" if amount else None,
+            "vendor": vendor,
+            "invoice_number": None,
+            "contract_number": contract.group(1) if contract else None,
+            "description": None,
+            "insurance_type": insurance_type,
+            "document_kind": "Beitragsrechnung",
+        }
+
+    @classmethod
+    def _extract_insurance_offer(cls, text, filename):
+        date = re.search(
+            r"(?:Datum|Ausstellungsdatum(?:/-grund)?)\s*:?\s*"
+            r"(\d{2}\.\d{2}\.\d{4})",
+            text,
+            flags=re.IGNORECASE,
+        )
+        number = re.search(
+            r"Ihre\s+Vertragsnummer[^\r\n]*[\r\n]+\s*"
+            r"([A-Z0-9./-]{5,30})",
+            text,
+            flags=re.IGNORECASE,
+        ) or re.search(
+            r"(?:Ihre\s+Vertragsnummer|Angebots-Nr\.?)\s*"
+            r"(?:\(bitte stets angeben\))?\s*:?\s*([A-Z0-9./-]{5,30})",
+            text,
+            flags=re.IGNORECASE,
+        )
+        folded = text.casefold()
+        if "barmenia allgemeine versicherung" in folded:
+            vendor = "Barmenia Allgemeine Versicherungs-AG"
+        elif "gothaer allgemeine versicherung" in folded:
+            vendor = "Gothaer Allgemeine Versicherung AG"
+        else:
+            vendor = None
+        return {
+            "date": date.group(1) if date else None,
+            "amount": None,
+            "currency": None,
+            "vendor": vendor,
+            "contract_number": number.group(1) if number else None,
+            "description": None,
+            "insurance_type": cls._insurance_type_from_text_and_filename(
+                text, filename
+            ),
+            "document_kind": "Versicherungsangebot",
+        }
+
+    @classmethod
+    def _extract_insurance_cover_letter(cls, text, filename):
+        date = re.search(
+            r"Versicherungsnummer[^\r\n]{0,80}?"
+            r"(\d{2}\.\d{2}\.\d{4})",
+            text,
+            flags=re.IGNORECASE,
+        ) or re.search(
+            r"(?:PNC-POST|erstellt(?:\s+am)?)\s*"
+            r"(\d{2}\.\d{2}\.\d{4})",
+            text,
+            flags=re.IGNORECASE,
+        )
+        number = re.search(
+            r"Versicherungsnummer\s*[:#-]?\s*"
+            r"(\d{2,3}(?:\.\d{3,6}){1,3}|\d{6,12}(?:\.\d+)?)",
+            text,
+            flags=re.IGNORECASE,
+        )
+        folded = text.casefold()
+        if "gothaer allgemeine versicherung" in folded:
+            vendor = "Gothaer Allgemeine Versicherung AG"
+        elif "debeka allgemeine versicherung" in folded:
+            vendor = "Debeka Allgemeine Versicherung AG"
+        else:
+            vendor = None
+        return {
+            "date": date.group(1) if date else None,
+            "amount": None,
+            "currency": None,
+            "vendor": vendor,
+            "contract_number": number.group(1) if number else None,
+            "description": None,
+            "insurance_type": cls._insurance_type_from_text_and_filename(
+                text, filename
+            ),
+            "document_kind": "Begleitschreiben zum Versicherungsschein",
         }
 
     @staticmethod
@@ -252,6 +666,7 @@ class DocumentClassificationSupport:
             (("tierhalterhaftpflicht", "tierhaftpflicht", " thv"), "Tierhalterhaftpflichtversicherung"),
             (("privathaftpflicht", "privat haftpflicht", " phv"), "Privathaftpflichtversicherung"),
             (("hausrat", " hr_", " hr "), "Hausratversicherung"),
+            (("unfallversicherung", "unfall_", "unfall "), "Unfallversicherung"),
         )
         for markers, label in mappings:
             if any(marker in combined for marker in markers):
@@ -261,14 +676,30 @@ class DocumentClassificationSupport:
     @classmethod
     def _extract_insurance_document(cls, text, filename):
         combined = f"{filename}\n{text}"
-        number = re.search(
-            r"(?:Versicherungsnummer\s*[:#-]?\s*)?\b(\d{6,12}(?:\.\d+)?)\b",
-            combined,
+        labelled_number = re.search(
+            r"Versicherungsnummer\s*[:#-]?\s*"
+            r"(\d{2,3}(?:\.\d{3,6}){1,3}|\d{6,12}(?:\.\d+)?)",
+            text,
             flags=re.IGNORECASE,
         )
+        fallback_number = re.search(
+            r"\b(\d{6,12}(?:\.\d+)?)\b",
+            Path(filename).stem,
+            flags=re.IGNORECASE,
+        )
+        number = labelled_number or fallback_number
         lower = combined.casefold()
-        vendor = "Debeka Allgemeine Versicherung AG" if "debeka" in lower else None
-        date_match = re.search(r"\b(\d{2}\.\d{2}\.\d{4})\b", Path(filename).stem)
+        if "gothaer allgemeine versicherung" in lower:
+            vendor = "Gothaer Allgemeine Versicherung AG"
+        elif "debeka" in lower:
+            vendor = "Debeka Allgemeine Versicherung AG"
+        else:
+            vendor = None
+        date_match = re.search(
+            r"Ausgefertigt\s+am\s+(\d{2}\.\d{2}\.\d{4})",
+            text,
+            flags=re.IGNORECASE,
+        ) or re.search(r"\b(\d{2}\.\d{2}\.\d{4})\b", Path(filename).stem)
         return {
             "date": date_match.group(1) if date_match else None,
             "amount": None,

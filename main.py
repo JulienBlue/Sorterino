@@ -15,6 +15,7 @@ from src.logger import FileLogger
 from src.document_pipeline import DocumentPipeline
 from src.mail_fetcher import fetch_attachments
 from src.profile_service import ProfileService, ProfileValidationError
+from src.manual_review_suggestions import ManualReviewSuggestionStore
 
 _pipeline_running = False
 _pipeline_lock = threading.Lock()
@@ -81,7 +82,7 @@ def _load_profile_service(config, logger):
 
 
 # PIPELINE / RUN
-def run_pipeline(document_path=None) -> None:
+def run_pipeline(document_path=None, *, force_reprocess=False) -> None:
     global _pipeline_running
 
     if not _pipeline_lock.acquire(blocking=False):
@@ -116,9 +117,9 @@ def run_pipeline(document_path=None) -> None:
         
         if document_path is None:
             try:
-                fetch_attachments(config, profile_service)
+                fetch_attachments(config, profile_service, logger=logger)
             except Exception as e:
-                print(f"[MAIL ERROR] {e}")
+                logger.error(f"[MAIL] Abruf fehlgeschlagen: {e}")
 
         
         # OCR (OPTIONAL)
@@ -131,9 +132,9 @@ def run_pipeline(document_path=None) -> None:
                 tesseract_path=str(config.tesseract_path),
                 logger=logger
             )
-            print("[OCR] Initialisiert")
+            logger.info("[OCR] Initialisiert")
         except Exception as e:
-            print(f"[OCR WARNING] OCR deaktiviert: {e}")
+            logger.warning(f"[OCR] OCR deaktiviert: {e}")
 
         document_extractor = DocumentTextExtractor(ocr_service, logger)
 
@@ -146,12 +147,26 @@ def run_pipeline(document_path=None) -> None:
             source = FolderDocumentSource(config.incoming_root)
         else:
             selected = Path(document_path).resolve()
-            incoming_root = Path(config.incoming_root).resolve()
+            allowed_root = Path(
+                config.manual_root if force_reprocess else config.incoming_root
+            ).resolve()
             try:
-                selected.relative_to(incoming_root)
+                selected.relative_to(allowed_root)
             except ValueError:
-                logger.warning("Einzeldokument liegt nicht im Eingangsordner")
+                logger.warning(
+                    "Einzeldokument liegt nicht im erlaubten Verarbeitungsordner"
+                )
                 return
+            if force_reprocess:
+                suggestions = ManualReviewSuggestionStore(config)
+                suggestion = suggestions.load(selected)
+                if suggestion.get("review_kind") not in {
+                    "exact_duplicate", "same_import_duplicate"
+                }:
+                    logger.warning(
+                        "Erneute Analyse abgelehnt: Dokument ist nicht als Duplikat markiert"
+                    )
+                    return
             source = FileDocumentSource(selected)
 
         pipeline = DocumentPipeline(
@@ -165,13 +180,16 @@ def run_pipeline(document_path=None) -> None:
             structure=load_json_safe(config.structure_path, {}),
             profile_service=profile_service,
             stop_requested=_pipeline_stop_requested.is_set,
+            allow_exact_duplicate=force_reprocess,
         )
 
         # RUN
         try:
             pipeline.run()
+            if force_reprocess and not selected.exists():
+                suggestions.remove(selected)
         except Exception as e:
-            print(f"[ERROR] Pipeline Lauf fehlgeschlagen: {e}")
+            logger.error(f"Pipeline Lauf fehlgeschlagen: {e}")
 
     except Exception as e:
         print(f"[ERROR] Unerwarteter Fehler in run_pipeline: {e}")

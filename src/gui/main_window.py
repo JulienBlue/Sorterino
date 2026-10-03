@@ -223,6 +223,7 @@ class MainWindow(ctk.CTkToplevel):
         self._restoring_geometry = True
         self._close_pending = False
         self._settings_page = None
+        self._settings_category = "general"
         self.title("Sorterino")
         self.minsize(1080, 700)
         saved_geometry = self.config.get("window_geometry") or {}
@@ -267,6 +268,9 @@ class MainWindow(ctk.CTkToplevel):
             self.destroy()
 
     def _check_for_updates_at_startup(self):
+        from src.runtime_environment import is_store_install
+        if is_store_install():
+            return
         if not self.config.get("automatic_update_checks", True):
             return
         from datetime import datetime
@@ -886,6 +890,15 @@ class MainWindow(ctk.CTkToplevel):
                     width=70,
                     command=lambda p=path: self._review_document(p),
                 ).pack(side="right", padx=(8, 4), pady=6)
+                if suggestion.get("review_kind") in {
+                    "exact_duplicate", "same_import_duplicate"
+                }:
+                    ctk.CTkButton(
+                        row,
+                        text="Erneut analysieren",
+                        width=125,
+                        command=lambda p=path: self._reanalyze_duplicate(p),
+                    ).pack(side="right", padx=(8, 0), pady=6)
             elif error:
                 ctk.CTkButton(
                     row, text="Erneut versuchen", width=120,
@@ -1452,7 +1465,61 @@ class MainWindow(ctk.CTkToplevel):
 
     def _review_document(self, path):
         from src.gui.manual_review_window import ManualReviewWindow
-        self.open_view(lambda parent: ManualReviewWindow(parent, Config(), path), "documents")
+        self.open_view(
+            lambda parent: ManualReviewWindow(
+                parent,
+                Config(),
+                path,
+                on_filed=self._review_action_finished,
+                on_reanalyze=self._reanalyze_duplicate,
+            ),
+            "documents",
+        )
+
+    def _review_action_finished(self):
+        self._document_snapshot = None
+        self._refresh_document_lists()
+        self._next_readiness_check = 0.0
+
+    def _reanalyze_duplicate(self, path):
+        path = Path(path)
+        if self._thread_running or is_pipeline_running():
+            messagebox.showinfo(
+                "Verarbeitung läuft",
+                "Bitte warte, bis die aktuelle Verarbeitung abgeschlossen ist.",
+                parent=self,
+            )
+            return False
+        if not path.is_file():
+            self._review_action_finished()
+            return False
+        if not messagebox.askyesno(
+            "Duplikat erneut analysieren",
+            "Soll Sorterino dieses Dokument trotz erkanntem Duplikat erneut vollständig "
+            "analysieren und nach den aktuellen Regeln ablegen?\n\n"
+            f"{path.name}\n\n"
+            "Die bestehende Datei und die Verarbeitungshistorie bleiben erhalten.",
+            parent=self,
+        ):
+            return False
+
+        self._active_single_document = path
+        self._thread_running = True
+        self._set_live_status(f"Analysiere erneut: {path.name}", "running")
+        if self.sidebar_run_button.winfo_exists():
+            self.sidebar_run_button.configure(
+                state="disabled", text="Verarbeitung läuft …"
+            )
+        self._refresh_document_lists()
+
+        def worker():
+            try:
+                run_pipeline(path, force_reprocess=True)
+            finally:
+                self.after(0, self._single_document_finished)
+
+        threading.Thread(target=worker, daemon=True).start()
+        return True
 
     def _ensure_initial_storage(self):
         if self._initial_storage_prompted or self.config.get("user_path"):

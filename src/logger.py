@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 import json
+import sys
 import threading
 
 
@@ -68,8 +69,21 @@ class FileLogger:
     def _emit(self, level: str, message: str):
         line = self._format(level, str(message))
         self._write_file(line)
-        if self.developer_mode or level in {"ERROR", "WARNING"}:
-            print(line)
+        # Source launches (for example ``python -m src.gui.app`` in VS Code)
+        # always mirror the same lines that the file-backed developer console
+        # displays. Frozen GUI builds stay quiet unless developer mode is on.
+        if not getattr(sys, "frozen", False) or self.developer_mode or level in {"ERROR", "WARNING"}:
+            try:
+                print(line)
+            except UnicodeEncodeError:
+                # Some Windows terminals still expose a legacy code page. A
+                # decorative character in a log line must never abort OCR or
+                # document processing.
+                encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+                safe_line = line.encode(encoding, errors="replace").decode(
+                    encoding, errors="replace"
+                )
+                print(safe_line)
 
     def processing_step(self, operation_id, step, message, **details):
         """Record one structured, secret-free processing step for diagnostics."""

@@ -68,6 +68,10 @@ class DocumentNavigationTests(unittest.TestCase):
         decide = MainWindow._live_status_decision
         self.assertEqual(decide(True, 1, 2, 0, ["Fehler"])[1], "running")
         self.assertEqual(decide(False, 1, 2, 0, ["Fehler"])[1], "configuration")
+        self.assertEqual(
+            decide(False, 0, 0, 0, ["Postfach „Bine - Live“ muss erneut verbunden werden."])[0],
+            "Postfach erneut verbinden",
+        )
         self.assertEqual(decide(False, 1, 2, 0, [])[1], "attention")
         self.assertEqual(decide(False, 1, 0, 0, [])[1], "incoming")
         self.assertEqual(decide(False, 0, 0, 0, [])[0], "Sorterino ist einsatzbereit")

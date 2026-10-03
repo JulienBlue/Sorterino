@@ -41,6 +41,21 @@ class PropertyDocumentTests(unittest.TestCase):
             Path("Wohnen/Immobilienunterlagen/Energieausweis - gültig bis 2030-10-16.pdf"),
         )
 
+    def test_energy_certificate_reads_spaced_ocr_expiry_date(self):
+        document, classification, data = self.analyze(
+            "2345.pdf",
+            "Energieausweis\nGültig bis: 1 6. 1 0.2030\nGebäudefoto",
+        )
+
+        self.assertEqual(classification.document_type, "Immobilienunterlagen")
+        self.assertEqual(data["valid_until"], "16.10.2030")
+        self.assertEqual(
+            StoragePathBuilder(
+                {"Wohnen": {"Immobilienunterlagen": {}}}
+            ).build(document).name,
+            "Energieausweis - gültig bis 2030-10-16.pdf",
+        )
+
     def test_floor_plan_is_recognized_from_its_unambiguous_filename(self):
         document, classification, data = self.analyze(
             "Grundriss[1].pdf",

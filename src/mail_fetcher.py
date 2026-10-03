@@ -130,6 +130,28 @@ class MailImportState:
         account_state["last_uid"] = max(int(account_state.get("last_uid") or 0), int(uid))
         self.save()
 
+    def set_account_issue(self, account, message):
+        state = self.data.setdefault("accounts", {}).setdefault(account["id"], {})
+        state["connection_issue"] = str(message).strip()
+        state["connection_issue_at"] = datetime.now().isoformat(timespec="seconds")
+        self.save()
+
+    def clear_account_issue(self, account_id):
+        state = self.data.setdefault("accounts", {}).get(account_id)
+        if not state:
+            return
+        changed = state.pop("connection_issue", None) is not None
+        changed = state.pop("connection_issue_at", None) is not None or changed
+        if changed:
+            self.save()
+
+    def account_issues(self):
+        return {
+            account_id: state.get("connection_issue")
+            for account_id, state in self.data.get("accounts", {}).items()
+            if state.get("connection_issue")
+        }
+
     def profile_hint(self, source_path, profile_service):
         entry = self.data.get("files", {}).get(self._file_key(source_path)) or {}
         account = profile_service.get_email_account(entry.get("account_id")) if entry else None
@@ -163,16 +185,26 @@ def mail_profile_hint(config, source_path, profile_service):
     return MailImportState(config).profile_hint(source_path, profile_service)
 
 
-def fetch_attachments(config, profile_service=None):
+def _mail_log(logger, level, message):
+    message = f"[MAIL] {message}"
+    if logger is not None:
+        getattr(logger, level)(message)
+    else:
+        print(message)
+
+
+def fetch_attachments(config, profile_service=None, logger=None):
     """Fetch every profile mailbox without relying on read/unread flags."""
     if not config.incoming_root:
-        print("[MAIL] Eingangsordner fehlt")
+        _mail_log(logger, "warning", "Eingangsordner fehlt")
         return 0
     accounts = profile_service.list_email_accounts(enabled_only=True) if profile_service else []
     state_store = MailImportState(config)
     state_store.prune(account.get("id") for account in accounts)
     total = 0
     for account in accounts:
+        label = account.get("label") or "Postfach"
+        _mail_log(logger, "info", f"{label}: Anmeldung wird geprüft")
         _migrate_legacy_account_folder(config.incoming_root, account, state_store)
         try:
             if account.get("auth_method") == "oauth2":
@@ -180,28 +212,34 @@ def fetch_attachments(config, profile_service=None):
             else:
                 credential = load_password(account["id"])
         except MailAuthenticationError as exc:
-            print(f"[MAIL] {account.get('label') or 'Postfach'}: {exc}")
+            state_store.set_account_issue(account, exc)
+            _mail_log(logger, "warning", f"{label}: {exc}")
             continue
-        total += fetch_account(
+        state_store.clear_account_issue(account["id"])
+        _mail_log(logger, "info", f"{label}: Anmeldung erfolgreich")
+        account_total = fetch_account(
             account,
             credential,
             Path(config.incoming_root),
             state_store=state_store,
+            logger=logger,
         )
+        total += account_total
+        _mail_log(logger, "info", f"{label}: Abruf abgeschlossen - {account_total} neue Anhänge")
     return total
 
 
 def fetch_account(
     account, credential, target_directory, imap_factory=imaplib.IMAP4_SSL,
-    state_store=None,
+    state_store=None, logger=None,
 ):
     try:
         server, port, username = validate_imap_settings(account)
     except MailAuthenticationError as exc:
-        print(f"[MAIL] {account.get('label') or 'Postfach'}: {exc}")
+        _mail_log(logger, "warning", f"{account.get('label') or 'Postfach'}: {exc}")
         return 0
     if not account.get("enabled", True) or not credential:
-        print(f"[MAIL] Konto '{account.get('label') or 'Unbenannt'}' ist unvollständig")
+        _mail_log(logger, "warning", f"Konto '{account.get('label') or 'Unbenannt'}' ist unvollständig")
         return 0
     target = Path(target_directory)
     target.mkdir(parents=True, exist_ok=True)
@@ -227,7 +265,7 @@ def fetch_account(
         except TypeError:
             status, _ = mail.select(mailbox)
         if status != "OK":
-            print(f"[MAIL] Postfach '{mailbox}' konnte nicht geöffnet werden")
+            _mail_log(logger, "warning", f"Postfach '{mailbox}' konnte nicht geöffnet werden")
             return 0
 
         uid_validity = _imap_response_number(mail, "UIDVALIDITY") or "unknown"
@@ -263,7 +301,7 @@ def fetch_account(
                 break
             raw_message = message_data[0][1]
             if not isinstance(raw_message, bytes) or len(raw_message) > MAX_MESSAGE_BYTES:
-                print(f"[MAIL] {account.get('label') or 'Postfach'}: Nachricht ist zu groß und wurde übersprungen")
+                _mail_log(logger, "warning", f"{account.get('label') or 'Postfach'}: Nachricht ist zu groß und wurde übersprungen")
                 if state_store:
                     state_store.advance_cursor(account_state, uid)
                 else:
@@ -305,6 +343,11 @@ def fetch_account(
                 destination = _unique_path(target / safe_name)
                 destination.write_bytes(payload)
                 saved_count += 1
+                _mail_log(
+                    logger,
+                    "info",
+                    f"{account.get('label') or 'Postfach'}: Anhang heruntergeladen - {destination.name}",
+                )
                 if state_store:
                     state_store.record_attachment(
                         account, account_state, attachment_key, destination, uid
@@ -322,8 +365,12 @@ def fetch_account(
             if uid_next and state_store:
                 state_store.advance_cursor(account_state, max(0, int(uid_next) - 1))
         return saved_count
-    except Exception:
-        print(f"[MAIL ERROR] {account.get('label') or 'Postfach'}: Sicherer Abruf fehlgeschlagen")
+    except Exception as exc:
+        _mail_log(
+            logger,
+            "error",
+            f"{account.get('label') or 'Postfach'}: Sicherer Abruf fehlgeschlagen ({type(exc).__name__})",
+        )
         return saved_count
     finally:
         if mail:

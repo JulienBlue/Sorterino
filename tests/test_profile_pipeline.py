@@ -66,6 +66,26 @@ class ProfilePipelineTests(unittest.TestCase):
             Path("Gemeinsame Dokumente", "Wohnen", "Strom.pdf"),
         )
 
+    def test_family_career_document_without_person_requires_review(self):
+        family = self.service.create_family("Familie Hirte")
+        assignment = ProfileAssignment(family["id"], [], 0.98)
+        classification = Classification(
+            "Arbeit und Karriere", 0.96, "Bewerbungsunterlagen"
+        )
+
+        self.assertTrue(
+            self._pipeline()._requires_person_assignment(
+                classification, family, assignment
+            )
+        )
+
+        assignment.person_ids = ["person_1"]
+        self.assertFalse(
+            self._pipeline()._requires_person_assignment(
+                classification, family, assignment
+            )
+        )
+
     def test_global_company_storage_adds_company_folder(self):
         company = self.service.create_organization("Hades IT")
         assignment = ProfileAssignment(company["id"], [], 1.0)
@@ -95,6 +115,17 @@ class ProfilePipelineTests(unittest.TestCase):
 
         self.assertTrue(
             self._pipeline()._requires_invoice_context_review(metadata, family)
+        )
+
+    def test_family_invoice_with_one_recognized_person_can_be_filed_automatically(self):
+        family = self.service.create_family("Familie Hirte")
+        metadata = DocumentMetadata("Buchhaltung", "Eingangsrechnungen")
+        assignment = ProfileAssignment(family["id"], ["person_1"], 1.0)
+
+        self.assertFalse(
+            self._pipeline()._requires_invoice_context_review(
+                metadata, family, assignment
+            )
         )
 
     def test_family_outgoing_invoice_can_be_filed_automatically(self):
@@ -229,8 +260,8 @@ class ProfilePipelineTests(unittest.TestCase):
 
         suggestion = self._pipeline()._manual_suggestion(
             document,
-            Classification("Anschaffungen und Garantien", 0.99, "Kassenbons"),
-            DocumentMetadata("Anschaffungen und Garantien", "Kassenbons"),
+            Classification("Haushalt", 0.99, "Einkäufe und Kassenbons"),
+            DocumentMetadata("Haushalt", "Einkäufe und Kassenbons"),
             {
                 "date": "28.07.2026",
                 "vendor": "EDEKA AKTIV Markt Gebr. Hein",
@@ -245,7 +276,7 @@ class ProfilePipelineTests(unittest.TestCase):
         self.assertEqual(suggestion["invoice_usage"], "private")
         self.assertEqual(
             suggestion["destination_parts"],
-            ["Anschaffungen und Garantien", "Kassenbons"],
+            ["Haushalt", "Einkäufe und Kassenbons"],
         )
         self.assertEqual(
             suggestion["suggested_name"],
